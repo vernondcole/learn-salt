@@ -1,0 +1,23 @@
+---
+# this salt pillar file will define basic access codes for all bevy machines (including the master)
+{{ pillar['salt_managed_message'] }}
+
+# the bevy Salt provision will supply users "administrator", "atomizer", and the one defined here.
+
+{# Dear maintainer:
+     Don't be confused...
+     The 'pillar.get' values here will be initially supplied by the bevy master bootstrap code.
+     After the initial definition of the bevy master, this file will replicate itself,
+     unless someone re-runs the bevy_master state with a forced pillar={'my_linux_user'...
+        #}
+# linux username to own files and run user jobs on server machines...
+my_linux_user: {{ salt['pillar.get']('my_linux_user') }}
+#
+my_linux_uid: '{{ salt['pillar.get']('my_linux_uid') }}'
+my_linux_gid: '{{ salt['pillar.get']('my_linux_gid') }}'
+#
+# Linux password hash for interactive user
+linux_password_hash: "{{ salt['pillar.get']('linux_password_hash', '') }}"
+#
+force_linux_user_password: {{ salt['pillar.get']('force_linux_user_password', true) }}
+...

@@ -1,0 +1,33 @@
+# stub minion configuration file for stand-alone bevy master bootstrapping.
+#
+master: localhost
+
+id: bevymaster
+
+file_client: local  # run as masterless
+
+file_roots:    # use this directory before /srv/salt
+  base:
+    - /bevy_srv/salt    # use directory from git repository
+    - /srv/salt         # then the one we dynamically create
+
+top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
+
+pillar_roots:  # use this directory before /srv/pillar
+  base:
+    - /bevy_srv/pillar
+    - /srv/pillar
+
+pillar_source_merging_strategy: recurse
+
+file_ignore_regex:
+  - '/\.git($|/)'
+
+fileserver_backend:
+  - roots
+
+grains:
+  datacenter: bevy
+  environment: dev
+  groups:
+    - dynamux

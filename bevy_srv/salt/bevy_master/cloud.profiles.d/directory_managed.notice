@@ -1,0 +1,10 @@
+{{ pillar['salt_managed_directory'] }}
+#
+# Make any permanent template updates to bevy_master/bevy_srv/salt/bevy_master/cloud_profiles.d
+# and push to the git repo from there.
+#
+# Refresh your working copy using "salt-call state.apply bevy_master"
+#
+# Files not found in the source directory will not be replaced.  Make your local definitions in new
+# configuration files with unique names.
+#
