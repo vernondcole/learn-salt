@@ -2,8 +2,8 @@
 # vi: set ft=ruby :
 
 # this configuration file is written in Ruby.
-# I had to spend a day learning enough Ruby to add smart features,
-# so if it is not particularly good Ruby code, I'm sorry. -- VDC
+# I spent a whole day learning enough Ruby to add smart features,
+# so if this is not particularly good Ruby code, I'm sorry. -- VDC
 
 require 'etc'  # import a Ruby module used to get your user info
 
@@ -27,23 +27,41 @@ Vagrant.configure(2) do |config|
   login = Etc.getlogin    # get your own user info to use in the VM
   info = Etc.getpwnam(login)
 
-  config.ssh.forward_agent = true
+  config.ssh.forward_agent = true  # let guest OS use your ssh private key
 
   # Creates a private network, using hard-assigned private IP addresses.
   # These assresses will also be hard-assigned in Salt configuration files.
   # If you change these addresses, also change them in Salt.
   # Your host workstation will be at x.x.x.1 (172.17.2.1) on that network.
 
+  # . . . . . . . . . . . . Define machine QUAIL1 . . . . . . . . . . . . . .
+  config.vm.define "quail1", primary: true do |quail_config|
+    quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
+    quail_config.vm.hostname = "quail1." + DOMAIN
+    quail_config.vm.network "private_network", ip: "172.17.2.101"
+    # quail_config.vm.synced_folder ".", "/vagrant", disabled: true
+    quail_config.vm.provider "virtualbox" do |v|
+        v.memory = 1024       # limit memory for the virtual box
+        v.cpus = 1
+        v.linked_clone = true # make a soft copy of the base Vagrant box
+        v.customize ["modifyvm", :id, "--natnet1", "172.17.101.0/24"]  # do not use 10.0 network for NAT
+	end
+    quail_config.vm.provider "vmware" do |v|
+        v.memory = 1024       # limit memory for the vmware box, too
+        v.cpus = 1
+	v.linked_clone = true # make a soft copy of the base Vagrant box
+	end
+  end
 
   # . . . . .  . Configuration for the Salt (and salt-cloud) master . . . . . . .
-  config.vm.define "bevymaster", primary: true do |master_config|
+  config.vm.define "bevymaster", autostart: false do |master_config|
     # if you want to change what OS your VM will be running, do it here ...
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
 
     master_config.vm.hostname = BEVYMASTER
     
     # the Salt master is expected to be at this address...
-	master_config.vm.network "private_network", ip: "172.17.2.2"
+	master_config.vm.network "private_network", ip: "172.17.2.100"
 
     # kludge to enable guest VM user to use your credentials
     master_config.vm.synced_folder "~", "/my_home", :group => "staff", :mount_options => ["umask=0002"]
@@ -64,7 +82,7 @@ Vagrant.configure(2) do |config|
         v.memory = 1024       # limit memory for the virtual box
         v.cpus = 1            # the Salt master does not need much power
         v.linked_clone = true # make a soft copy of the base Vagrant box
-        v.customize ["modifyvm", :id, "--natnet1", "172.17.1/24"]  # do not use 10.0 network for NAT
+        v.customize ["modifyvm", :id, "--natnet1", "172.17.100/24"]  # do not use 10.0 network for NAT
 	end
     master_config.vm.provider "vmware" do |v|  # now say it again in case we use e.g. --provider=vmware_fusion
         v.memory = 1024       # limit machine size for the vmware box, too
@@ -118,12 +136,11 @@ Vagrant.configure(2) do |config|
   end
 
 
-
-  # . . . . . . . . Configuration for the first minion "quail16" running Ubuntu 16.04 . . . . . . . . .
+  # . . . . . . . . Configuration for minion "quail16" running Ubuntu 16.04 . . . . . . . . .
   config.vm.define "quail16", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail16." + DOMAIN
-    quail_config.vm.network "private_network", ip: "172.17.2.3"  # needed so saltify_profiles.conf can find this unit
+    quail_config.vm.network "private_network", ip: "172.17.2.16"  # needed so saltify_profiles.conf can find this unit
     quail_config.vm.synced_folder ".", "/vagrant", disabled: true  # do not use the default shared directory
 
     quail_config.vm.provider "virtualbox" do |v|
@@ -141,11 +158,11 @@ Vagrant.configure(2) do |config|
   end
 
 
-  # . . . . . . . .  Configuration for the second minion "quail14" running Ubuntu 14.04 . . . . . . 
+  # . . . . . . . .  Configuration for minion "quail14" running Ubuntu 14.04 . . . . . . 
   config.vm.define "quail14", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/trusty64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail14." + DOMAIN
-    quail_config.vm.network "private_network", ip: "172.17.2.4"  # needed so saltify_profiles.conf can find this unit
+    quail_config.vm.network "private_network", ip: "172.17.2.14"  # needed so saltify_profiles.conf can find this unit
     quail_config.vm.synced_folder ".", "/vagrant", disabled: true
 
     quail_config.vm.provider "virtualbox" do |v|
