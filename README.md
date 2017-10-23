@@ -14,7 +14,7 @@ Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really 
 Examples will be configured and tested to operate from any random directory you like.  
 But, for simplicity sake, all examples will be given as if they were in `/projects/learn-salt`.
 
-[1]: see [how to git stuff](http://lessons/git.html) if you don't understand what "clone" means.
+[1]: see [how to git stuff](http://lessons/git/how_to_git_stuff.md) if you don't understand what "clone" means.
 
 [2]: Windows users -- use the `C:\projects\learn-salt` folder. All future instructions will use POSIX names with right-leaning slashes and no drive letter. Live with it. If you need help, look in the [Linux for Windows Users](lessons/windows/Linux_for_Windows_users) lesson.
 
