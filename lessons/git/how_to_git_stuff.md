@@ -19,9 +19,9 @@ MacOS ships with a version of git pre-installed.
 
 ## GitHub
 
-GitHub is a popular web site used for storing repositories of software
+[GitHub](https://github.com/) is a popular web site used for storing repositories of software
 which are maintained using `git`.  It is free to use for open source
-projects. Other web sites (such as [BitBucket](https://bitbucket.org/))
+projects. Other free-to-use web sites (such as [BitBucket](https://bitbucket.org/))
 also use `git`.  
 
 Open source projects can be freely downloaded from GitHub using `http:`,
