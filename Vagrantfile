@@ -1,183 +1,210 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
+#  .  .  .  .  NOTE  .  .  .  .
+# This configuration file is written in Ruby.
+# I invested one entire day in learning Ruby,
+# so if this is not particularly good Ruby code, I'm sorry.
+# -- vernondcole 2017 .  .  .  .
+require 'etc'
+#
+# . v . v . enter your customized values below . v . v . v . v . v . v .
+# .
+BEVY = "bevy1"  # change this to avoid domain name conflicts
+NETWORK = "172.17"  # the first two bytes of your private network IP ("192.168")
+# ^ ^ your host-only network will be at NETWORK.2.0/24
+# ^ ^ and each VM will have a network somewhere in NETWORK.17.x/27.
+DOMAIN = BEVY + ".test"  # .test is an ICANN reserved private top-level domain
+# .
+INTERFACE_GUESS = '' # enter the Windows description for your IP interface here
+# .
+BEVYMASTER = "bevymaster." + DOMAIN  # the name for your bevy master
+# .
+HASHFILE_NAME = 'bevy_linux_password.hash'  # filename for your Linux password hash
+hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)  # where to store it ^ ^ ^
+# .
+# . ^ . ^ . end of customize things . ^ . ^ . ^ . ^ . ^ . ^ .
+# . v . v . the program starts here . v . v . v . v . v . v .
+#
+vagrant_command = ARGV[0]
 
-# this configuration file is written in Ruby.
-# I spent a whole day learning enough Ruby to add smart features,
-# so if this is not particularly good Ruby code, I'm sorry. -- VDC
+# we must supply a list of names to avoid Vagrant asking for interactive input
+# Ubuntu uses weird network adapter names, so we need to scan for them.
+def get_good_ifc()   # try to find a working Ubuntu network adapter name
+  addr_infos = Socket.getifaddrs
+  addr_infos.each do |info|
+    a = info.addr
+    if a and a.ip? and not a.ip_address.start_with?("127.")
+     return info.name  # this may be a good name.
+     end
+  end
+  return "eth0"  # nothing found. fall back to an old reliable name
+end
 
-require 'etc'  # import a Ruby module used to get your user info
-
-# your environment needs a name. This will define it...
-BEVY = "bevy1"
-DOMAIN = BEVY + ".test"
-BEVYMASTER = "bevymaster." + DOMAIN
-
-# let's use your own username (from this workstation) as the log-in user
-# on each of your Salt minions.
-# .. In order to log in, or approve an action, you may need
-# .. to type your password.  When Salt configures your minions,
-# .. it will install the password hash (defined here) on each minion.
-# .. You can create a hash using the included pwd_hash.py script.
-HASHFILE_NAME = 'bevy_linux_password.hash'
-hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)
-
-VAGRANT_COMMAND = ARGV[0]  # the "xxx" from "vagrant xxx yyy zzz"
-
-Vagrant.configure(2) do |config|
-  login = Etc.getlogin    # get your own user info to use in the VM
+Vagrant.configure(2) do |config|  # the literal "2" is required.
+  login = Etc.getlogin    # get your own user information to use in the VM
   info = Etc.getpwnam(login)
 
-  config.ssh.forward_agent = true  # let guest OS use your ssh private key
+  config.ssh.forward_agent = true
 
-  # Creates a private network, using hard-assigned private IP addresses.
-  # These assresses will also be hard-assigned in Salt configuration files.
-  # If you change these addresses, also change them in Salt.
-  # Your host workstation will be at x.x.x.1 (172.17.2.1) on that network.
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on your network.
+  #
+  # For the bridged network interface, try to detect name, then guess MacOS names, too
+  #    finally, try the entry keyed in above -- for Windows or something else
+  interface_guesses = [get_good_ifc(), 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
+  config.vm.network "public_network", bridge: interface_guesses
+  if ARGV[0] == "up"
+    puts "Trying bridge network using interfaces: #{interface_guesses}"
+  end
+  config.vm.provision "shell", inline: "ip address", run: "always"  # what did we get?
+
 
   # . . . . . . . . . . . . Define machine QUAIL1 . . . . . . . . . . . . . .
-  config.vm.define "quail1", primary: true do |quail_config|
+  config.vm.define "quail1", primary: true do |quail_config|  # this will be the default machine
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail1." + DOMAIN
-    quail_config.vm.network "private_network", ip: "172.17.2.101"
+    quail_config.vm.network "private_network", ip: NETWORK + ".2.8"  # needed so saltify_profiles.conf can find this unit
     # quail_config.vm.synced_folder ".", "/vagrant", disabled: true
-    quail_config.vm.provider "virtualbox" do |v|
+
+    quail_config.vm.provider "virtualbox" do |v|  # only for VirtualBox boxes
         v.memory = 1024       # limit memory for the virtual box
         v.cpus = 1
         v.linked_clone = true # make a soft copy of the base Vagrant box
-        v.customize ["modifyvm", :id, "--natnet1", "172.17.101.0/24"]  # do not use 10.0 network for NAT
-	end
-    quail_config.vm.provider "vmware" do |v|
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.0/27"]  # do not use 10.0 network for NAT
+	end  #                                                     ^  ^/27 is the smallest network allowed.
+    quail_config.vm.provider "vmware" do |v|  # only for VMware boxes
         v.memory = 1024       # limit memory for the vmware box, too
         v.cpus = 1
-	v.linked_clone = true # make a soft copy of the base Vagrant box
+		v.linked_clone = true
 	end
   end
 
-  # . . . . .  . Configuration for the Salt (and salt-cloud) master . . . . . . .
+
+  # . . . . . . .  Define the BEVYMASTER . . . . . . . . . . . . . . . .
   config.vm.define "bevymaster", autostart: false do |master_config|
-    # if you want to change what OS your VM will be running, do it here ...
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
-
     master_config.vm.hostname = BEVYMASTER
-    
-    # the Salt master is expected to be at this address...
-	master_config.vm.network "private_network", ip: "172.17.2.100"
-
-    # kludge to enable guest VM user to use your credentials
-    master_config.vm.synced_folder "~", "/my_home", :group => "staff", :mount_options => ["umask=0002"]
- 
-    # used for configuration. your bevy_srv subfolder will appear on the VM as /srv
-    master_config.vm.synced_folder "bevy_srv", "/srv", :group => "staff", :mount_options => ["umask=0002"]
-
-	# as a convenience, this directory will appear on your VM as /vagrant
+    master_config.vm.network "private_network", ip: NETWORK + ".2.2"  # your host machine will be at NETWORK.2.1
+    master_config.vm.synced_folder "~", "/my_home", :group => "staff", :mount_options => ["umask=0002"]  # kludge to enable guest os user to use your credentials
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
 
-    if VAGRANT_COMMAND == "ssh"
-        master_config.ssh.username = login  # if you type "vagrant ssh", use your own username
-        master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
-        master_config.ssh.forward_agent = true
+
+    if vagrant_command == "ssh"
+      master_config.ssh.username = login  # if you type "vagrant ssh", use this username
+      master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
+      master_config.ssh.forward_agent = true
     end
 
-    master_config.vm.provider "virtualbox" do |v|  # configuration for a Virtualbox VM 
+    master_config.vm.provider "virtualbox" do |v|
         v.memory = 1024       # limit memory for the virtual box
-        v.cpus = 1            # the Salt master does not need much power
+        v.cpus = 1
         v.linked_clone = true # make a soft copy of the base Vagrant box
-        v.customize ["modifyvm", :id, "--natnet1", "172.17.100/24"]  # do not use 10.0 network for NAT
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.32/27"]  # do not use 10.0 network for NAT
 	end
-    master_config.vm.provider "vmware" do |v|  # now say it again in case we use e.g. --provider=vmware_fusion
-        v.memory = 1024       # limit machine size for the vmware box, too
+    master_config.vm.provider "vmware" do |v|
+        v.memory = 1024       # limit memory for the vmware box, too
         v.cpus = 1
 		v.linked_clone = true
 	end
 
-    # to provision this VM we will first run a shell script...
-    script = "mkdir -p /srv/pillar\n"
-    script += "echo '# placeholder file created by Vagrant provision' > /srv/pillar/my_user_settings.sls"
+    script = "mkdir -p /srv/pillar\n"  # put a skeleton /srv on the new master
+    script += "echo '# placeholder file created by Vagrant provision' > /srv/pillar/my_user_settings.sls\n"
+    script += "echo '# placeholder file created by Vagrant provision' > /srv/pillar/01_bootstrap_settings.sls\n"
+    script += "mkdir -p /srv/salt/ssh_keys\n"
+    script += "chown -R vagrant:staff /srv/salt\n"
+    script += "chmod -R 775 /srv/salt\n"
     master_config.vm.provision "shell", inline: script
 
-    # the hard work will next be done by running a stand-alone Salt minion on it...
-    master_config.vm.provision :salt do |salt|
-        salt.install_type = "stable"
-        salt.verbose = true
-        salt.colorize = true
-        salt.bootstrap_options = "-M -P -X -c /tmp"  # install salt-master and minion, do not start them
-        salt.masterless = true  # the provisioning script for the master is masterless
-        salt.run_highstate = true  # run a Salt "highstate" to do the provisioning
-        salt.minion_config = "configure_master/minion"  # find the configuration here
+    master_config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/srv/salt/ssh_keys/" + login + ".pub"
 
-	  
-		# read the password hash file from your workstation
-        password_hash = ''
-        if File.exists?(hash_path)
-          File.foreach(hash_path, 'r') do |hashline|
-            hashline.strip!
-            if hashline.length > 0
-              password_hash += hashline
-            end
+    master_config.vm.provision :salt do |salt|
+       salt.install_type = "git"  # TODO: use stable when OXYGEN is released
+       salt.verbose = true
+       salt.colorize = true
+       salt.bootstrap_options = "-P -M -L -c /tmp"  # install salt-cloud and salt-master
+       salt.masterless = true  # the provisioning script for the master is masterless
+       salt.run_highstate = true
+       salt.minion_config = "configure_machine/minion"
+       password_hash = ''
+       if File.exists?(hash_path)
+         File.foreach(hash_path, 'r') do |hashline|
+           hashline.strip!
+           if hashline.length > 0
+             password_hash += hashline
+           end
+         end
+       else
+         puts "NOTE: file #{hash_path} not found. No linux password will be supplied."
+       end
+       if info  # info is Null on Windows boxes
+         uid = info.uid
+         gid = info.gid
+       else
+         uid = ''
+         gid = ''
+       end
+       salt.pillar({ # configure a new interactive user on the new VM
+         "my_linux_user" => login,
+         "my_linux_uid" => uid,
+         "my_linux_gid" => gid,
+         "bevy_root" => "/vagrant/bevy_srv",
+         "bevy" => BEVY,
+         "node_name" => "bevymaster",
+         "bevymaster_address" => 'localhost',
+         "run_second_minion" => false,
+         "linux_password_hash" => password_hash,
+         "force_linux_user_password" => true,
+         "vagranthost" => "bevymaster",
+         "runas" => login,
+         "cwd" => Dir.pwd,
+         "doing_bootstrap" => true,
+                   }
+       )
+          if vagrant_command == "up"
+            puts "using password hash=#{password_hash}"
           end
-        else
-          puts "NOTE: file #{hash_path} not found. No linux password will be supplied."
-        end
-        salt.pillar({                 # configure a new interactive user on the new VM
-          "my_linux_user" => login,
-          "my_linux_uid" => info.uid,
-          "my_linux_gid" => info.gid,
-          "bevy" => BEVY,
-          "bevymaster_name" => BEVYMASTER,
-          "run_second_minion" => false,
-          "linux_password_hash" => password_hash,
-          "force_linux_user_password" => true
-                    }
-        )
-        if VAGRANT_COMMAND == "up" 
-            puts "password_hash=#{password_hash}"
-        end
-    end
+     end
   end
 
 
-  # . . . . . . . . Configuration for minion "quail16" running Ubuntu 16.04 . . . . . . . . .
+  # . . . . . . . . . . . . Define machine QUAIL16 . . . . . . . . . . . . . . 
   config.vm.define "quail16", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail16." + DOMAIN
-    quail_config.vm.network "private_network", ip: "172.17.2.16"  # needed so saltify_profiles.conf can find this unit
-    quail_config.vm.synced_folder ".", "/vagrant", disabled: true  # do not use the default shared directory
+    quail_config.vm.network "private_network", ip: NETWORK + ".2.3"  # needed so saltify_profiles.conf can find this unit
+    # quail_config.vm.synced_folder ".", "/vagrant", disabled: true
 
     quail_config.vm.provider "virtualbox" do |v|
         v.memory = 1024       # limit memory for the virtual box
         v.cpus = 1
         v.linked_clone = true # make a soft copy of the base Vagrant box
-        v.customize ["modifyvm", :id, "--natnet1", "172.17.3/24"]  # do not use 10.0 network for NAT
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.64/27"]  # do not use 10.0 network for NAT
 	end
     quail_config.vm.provider "vmware" do |v|
         v.memory = 1024       # limit memory for the vmware box, too
         v.cpus = 1
-		v.linked_clone = true # make a soft copy of the base Vagrant box
+		v.linked_clone = true
 	end
-    quail_config.vm.provision :shell, path: "vagrant_quail_provision.sh"
   end
 
 
-  # . . . . . . . .  Configuration for minion "quail14" running Ubuntu 14.04 . . . . . . 
+ # . . . . . . . . . . . . Define machine QUAIL14 . . . . . . . . . . . . . . 
   config.vm.define "quail14", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/trusty64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail14." + DOMAIN
-    quail_config.vm.network "private_network", ip: "172.17.2.14"  # needed so saltify_profiles.conf can find this unit
-    quail_config.vm.synced_folder ".", "/vagrant", disabled: true
+    quail_config.vm.network "private_network", ip: NETWORK + ".2.4"  # needed so saltify_profiles.conf can find this unit
+    # quail_config.vm.synced_folder ".", "/vagrant", disabled: true
 
     quail_config.vm.provider "virtualbox" do |v|
         v.memory = 1024       # limit memory for the virtual box
         v.cpus = 1
         v.linked_clone = true # make a soft copy of the base Vagrant box
-        v.customize ["modifyvm", :id, "--natnet1", "172.17.4/24"]  # do not use 10.0 network for NAT
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.96/27"]  # do not use 10.0 network for NAT
 	end
     quail_config.vm.provider "vmware" do |v|
         v.memory = 1024       # limit memory for the vmware box, too
         v.cpus = 1
-		v.linked_clone = true # make a soft copy of the base Vagrant box
+		v.linked_clone = true
 	end
-    quail_config.vm.provision :shell, path: "vagrant_quail_provision.sh"
   end
-
 end
-

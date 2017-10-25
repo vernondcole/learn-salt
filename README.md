@@ -48,7 +48,7 @@ along with a big complex *Vagrantfile*,
 and a few other handy files.
 
 The [lessons](./lessons) directory contains 
-the [lesson index](http://.lessons/index.html).
+the [lesson index](.lessons/index.md).
 
 [comment]: # (The file index.md is the source for index.html)
 
