@@ -16,7 +16,7 @@ But, for simplicity sake, all examples will be given as if they were in `/projec
 
 [1]: see [how to git stuff](lessons/git/how_to_git_stuff.md) if you don't understand what "clone" means.
 
-[2]: Windows users -- use the `C:\projects\learn-salt` folder. All future instructions will use POSIX names with right-leaning slashes and no drive letter. Live with it. If you need help, look in the [Linux for Windows Users](lessons/windows/Linux_for_Windows_users) lesson.
+[2]: Windows users -- use the `C:\projects\learn-salt` folder. All future instructions will use POSIX names with right-leaning slashes and no drive letter. Live with it. If you need help, look in the [Linux for Windows Users](lessons/windows/Linux_for_Windows_users.md) lesson.
 
 
 ### What the #&*$%! is a `bevy`?
@@ -48,7 +48,7 @@ along with a big complex *Vagrantfile*,
 and a few other handy files.
 
 The [lessons](./lessons) directory contains 
-the [lesson index](.lessons/index.md).
+the [lesson index](lessons/index.md).
 
 [comment]: # (The file index.md is the source for index.html)
 
