@@ -6,13 +6,24 @@ This project uses a salt-cloud network with Vagrant-powered VirtualBox virtual m
 
 ### Installation
 
-Clone [1] [this git repo](https://github.com/vernondcole/learn-salt) onto your target environment --
+Clone [1] [this git repository](https://github.com/vernondcole/learn-salt) onto your target environment --
 which should be the workstation where you plan to do the lessons. You will control your bevy
 from this place.
 
 Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really have to put it there. All lessons should work if you put it somewhere else, like `/home/myusername/learn` or wherever. 
 Examples will be configured and tested to operate from any random directory you like.  
 But, for simplicity sake, all examples will be given as if they were in `/projects/learn-salt`.
+
+Before editing any files in this project,
+please switch to a new branch in `git`.
+
+```
+git branch my_edits
+git checkout my_edits
+```
+If you need to return to the original text, you can use `git`
+to restore it.
+`git checkout master`
 
 [1]: see [how to git stuff](lessons/git/how_to_git_stuff.md) if you don't understand what "clone" means.
 
@@ -92,34 +103,7 @@ v v v v v v v v v v Text below should be moved to individual class lessons v v v
 
 Each machine is automatically connected to and accepted by your salt master.
 https://github.com/vernondcole/learn-salt
-#### Running VMs on your workstation
 
-A Vagrantfile is supplied to create virtual machines on your workstation
-with the aid of [Vagrant](https://www.vagrantup.com/).
-You can use such a VM to run the Salt Master for your "bevy", or
-to run one or more
-application servers which you may wish to monitor or debug, or both.
-
-Vagrant will use either [VirtualBox](https://www.virtualbox.org/) (the default)
-or [vmware](https://www.vmware.com/) to run the VMs. If you wish to use vmware,
-you will need to buy a commercial [VMware provider](https://www.vagrantup.com/docs/vmware/)
-for your workstation. If you use only VirtualBox VMs there is nothing to buy.
-
-You can create a Salt cloud master ("bevymaster") as a virtual machine on your workstation.
-This can be very conventient, except for one restriction: your application servers 
-(salt minions) will be trying to connect to their master at a fixed address. You will
-need to consistently use the same network connection for your host workstation so that your minions can find you.
-
-The Vagrantfile can also spin up a simple empty Ubuntu 16.04 VM (named "quail16")
- suitable for management by Salt scripts on the bevy master.
-This may be convenient for developing Salt scripts or debugging the server software.
-  
-There is also an Ubuntu 14.04 VM (named "quail14") defined in the Vagrantfile. 
-
-Each of these has a pre-defined IP address for a Vagrant "private" network adapter used  to connect a virtual directory,
-and as the address Salt-cloud uses to find the machines. 
-If you wish to add local VMs other than these three, you will need to edit the Vagrantfile. Simply asking salt-cloud to
-create another instance will not work.
 
 ### Decide where to install your bevy master.
 

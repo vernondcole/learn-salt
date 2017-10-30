@@ -36,6 +36,10 @@ key to it. Instructions for this are clearly available on the site.
 a new sub-directory at the location where you type the `clone` command.  All other 
 `git` commands are typed from within that sub-directory.
 
+- branch: make a new name for versions of software in your repository.
+
+- checkout: switch the text in your working files to a different branch.
+
 - pull: you get updates of an upstream repository using the `git pull` command. 
 
 - add: you must mark any changed files which should be commited to the repository
@@ -47,8 +51,6 @@ to the repository.  Commits must always have a comment, so the simplest command
 is `git commit -m "this is my comment"`.
 
 - push: send all committed changes to the upstream repository.
-
-- branch: make a new name for versions of software in your repository.
 
 - merge: combine work from one branch into another branch.
 
