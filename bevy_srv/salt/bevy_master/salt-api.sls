@@ -13,17 +13,16 @@ salt-api:
 cherrypy:
   pip.installed:
     - names:
-      - CherryPy == 8.7.0
-      - pyOpenSSL == 16.2.0
+      - CherryPy
+      - pyOpenSSL
       - ws4py
 
-create-cert:
+tls.create_self_signed_cert:
   module.run:
-    - name: tls.create_self_signed_cert
     - kwargs:
-      - O: 'Sling TV'
-      - L: 'American Fork'
-      - emailAddress: {{ salt['config.get']('my_linux_user') }}@sling.com # will not really work
+      - O: {{ salt['pillar.get']('salt-api:tls_organization') }}
+      - L: {{ salt['pillar.get']('salt-api:tls_location') }}
+      - emailAddress: {{ salt['pillar.get']('salt-api:tls_emailAddress') }}
 
 /etc/salt/master.d/api.conf:
   file.managed:

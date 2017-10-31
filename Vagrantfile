@@ -6,24 +6,28 @@
 # so if this is not particularly good Ruby code, I'm sorry.
 # -- vernondcole 2017 .  .  .  .
 require 'etc'
+login = Etc.getlogin    # get your own user information to use in the VM
 #
 # . v . v . enter your customized values below . v . v . v . v . v . v .
 # .
+VAGRANT_HOST_NAME = Socket.gethostname  #
 BEVY = "bevy1"  # change this to avoid domain name conflicts
-NETWORK = "172.17"  # the first two bytes of your private network IP ("192.168")
-# ^ ^ your host-only network will be at NETWORK.2.0/24
-# ^ ^ and each VM will have a network somewhere in NETWORK.17.x/27.
+NETWORK = "172.17"  # the first two bytes of your host-only network IP ("192.168")
+# ^ ^ your VM host will be NETWORK.2.1, the others as set below.
+# ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
 DOMAIN = BEVY + ".test"  # .test is an ICANN reserved private top-level domain
 # .
-INTERFACE_GUESS = '' # enter the Windows description for your IP interface here
+INTERFACE_GUESS = ''  # enter the Windows description for your IP interface if needed
+BRIDGED_NETWORK_MASK = '' # (if blank will try automatic) often "192.168.0.0/16"
 # .
 BEVYMASTER = "bevymaster." + DOMAIN  # the name for your bevy master
 # .
+MY_LINUX_USER = login  # username used for login to VM
 HASHFILE_NAME = 'bevy_linux_password.hash'  # filename for your Linux password hash
-hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)  # where to store it ^ ^ ^
+hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)  # where you store it ^ ^ ^
 # .
-# . ^ . ^ . end of customize things . ^ . ^ . ^ . ^ . ^ . ^ .
-# . v . v . the program starts here . v . v . v . v . v . v .
+# . ^ . ^ . end of customize things . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ .
+# . v . v . the program starts here . v . v . v . v . v . v . v . v . v .
 #
 vagrant_command = ARGV[0]
 
@@ -33,15 +37,27 @@ def get_good_ifc()   # try to find a working Ubuntu network adapter name
   addr_infos = Socket.getifaddrs
   addr_infos.each do |info|
     a = info.addr
-    if a and a.ip? and not a.ip_address.start_with?("127.")
-     return info.name  # this may be a good name.
+    if a and a.ip? and a.ipv4? and not a.ipv4_loopback? and not a.address.starts_with?(NETWORK)
+      # this may be a good name.
+      addy = a.ip_address.split('.')
+      if BRIDGED_NETWORK_MASK.empty?
+        if addy[0] == "10"  # make a netmask for the 10 net
+          network_mask = "10.0.0.0/8"
+        else  # make a generic netmask.  Will not be perfect, might work.
+          addy[2] = "0"
+          addy[3] = "0"
+          network_mask = addy.join(".") + "/16"
+        end
+      else
+        network_mask = BRIDGED_NETWORK_MASK
+      end
+      return info.name, network_mask
      end
   end
-  return "eth0"  # nothing found. fall back to an old reliable name
+  return "eth0", BRIDGED_NETWORK_MASK   # nothing found. fall back to default
 end
 
 Vagrant.configure(2) do |config|  # the literal "2" is required.
-  login = Etc.getlogin    # get your own user information to use in the VM
   info = Etc.getpwnam(login)
 
   config.ssh.forward_agent = true
@@ -51,9 +67,11 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   #
   # For the bridged network interface, try to detect name, then guess MacOS names, too
   #    finally, try the entry keyed in above -- for Windows or something else
-  interface_guesses = [get_good_ifc(), 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
+  ifc_name, network_mask = get_good_ifc()
+  interface_guesses = [ifc_name, 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
   config.vm.network "public_network", bridge: interface_guesses
   if ARGV[0] == "up"
+    puts "Running on host #{VAGRANT_HOST_NAME}"
     puts "Trying bridge network using interfaces: #{interface_guesses}"
   end
   config.vm.provision "shell", inline: "ip address", run: "always"  # what did we get?
@@ -82,15 +100,16 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
   # . . . . . . .  Define the BEVYMASTER . . . . . . . . . . . . . . . .
   config.vm.define "bevymaster", autostart: false do |master_config|
+    if not File.exists?("01_bootstrap_settings.sls.master")
+      raise RuntimeError, "Sorry. You must run bootstrap_bevy_member_here.py before running this Vagrant up"
+    end
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     master_config.vm.hostname = BEVYMASTER
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"  # your host machine will be at NETWORK.2.1
-    master_config.vm.synced_folder "~", "/my_home", :group => "staff", :mount_options => ["umask=0002"]  # kludge to enable guest os user to use your credentials
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
 
-
     if vagrant_command == "ssh"
-      master_config.ssh.username = login  # if you type "vagrant ssh", use this username
+      master_config.ssh.username = MY_LINUX_USER  # if you type "vagrant ssh", use this username
       master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
       master_config.ssh.forward_agent = true
     end
@@ -100,7 +119,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.cpus = 1
         v.linked_clone = true # make a soft copy of the base Vagrant box
         v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.32/27"]  # do not use 10.0 network for NAT
-	end
+    end
+
     master_config.vm.provider "vmware" do |v|
         v.memory = 1024       # limit memory for the vmware box, too
         v.cpus = 1
@@ -108,17 +128,17 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 	end
 
     script = "mkdir -p /srv/pillar\n"  # put a skeleton /srv on the new master
-    script += "echo '# placeholder file created by Vagrant provision' > /srv/pillar/my_user_settings.sls\n"
-    script += "echo '# placeholder file created by Vagrant provision' > /srv/pillar/01_bootstrap_settings.sls\n"
+    script += "test -e /srv/pillar/my_user_settings.sls || echo '# placeholder file created by Vagrant provision' > /srv/pillar/my_user_settings.sls\n"
     script += "mkdir -p /srv/salt/ssh_keys\n"
     script += "chown -R vagrant:staff /srv/salt\n"
     script += "chmod -R 775 /srv/salt\n"
     master_config.vm.provision "shell", inline: script
 
-    master_config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/srv/salt/ssh_keys/" + login + ".pub"
+    master_config.vm.provision "file", source: '01_bootstrap_settings.sls.master', destination: "/srv/pillar/01_bootstrap_settings.sls"
+    master_config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/srv/salt/ssh_keys/" + MY_LINUX_USER + ".pub"
 
     master_config.vm.provision :salt do |salt|
-       salt.install_type = "git"  # TODO: use stable when OXYGEN is released
+       salt.install_type = "git develop"  # TODO: use stable when OXYGEN is released
        salt.verbose = true
        salt.colorize = true
        salt.bootstrap_options = "-P -M -L -c /tmp"  # install salt-cloud and salt-master
@@ -144,7 +164,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
          gid = ''
        end
        salt.pillar({ # configure a new interactive user on the new VM
-         "my_linux_user" => login,
+         "my_linux_user" => MY_LINUX_USER,
          "my_linux_uid" => uid,
          "my_linux_gid" => gid,
          "bevy_root" => "/vagrant/bevy_srv",
@@ -154,10 +174,11 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
          "run_second_minion" => false,
          "linux_password_hash" => password_hash,
          "force_linux_user_password" => true,
-         "vagranthost" => "bevymaster",
+         "vagranthost" => VAGRANT_HOST_NAME,
+         "network_mask" => network_mask,
          "runas" => login,
          "cwd" => Dir.pwd,
-         "doing_bootstrap" => true,
+         "doing_bootstrap" => true,  # flag for Salt state system
                    }
        )
           if vagrant_command == "up"

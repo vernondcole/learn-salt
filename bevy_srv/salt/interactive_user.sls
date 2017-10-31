@@ -38,4 +38,3 @@ staff:
     - unless:
       - test -d /home/{{ my_user }}/Desktop  {# do not alter a workstation user's information #}
 ...
-i

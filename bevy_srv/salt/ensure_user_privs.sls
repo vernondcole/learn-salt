@@ -13,13 +13,6 @@ include:
     - group: {{ my_linux_user }}
     - dir_mode: 755
 
-bitbucket_known_hosts:
-  ssh_known_hosts.present:
-    - name: p-bitbucket.imovetv.com
-    - fingerprint: {{ pillar['bitbucket_fingerprint'] }}
-    - user: {{ my_linux_user }}
-
-
 ssh_public_key:
   ssh_auth.present:
     - user: {{ pillar["my_linux_user"] }}

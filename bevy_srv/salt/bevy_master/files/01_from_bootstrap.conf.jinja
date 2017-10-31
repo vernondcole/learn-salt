@@ -1,9 +1,13 @@
+{#- this is the jinja template used to create
+     /etc/salt/minion.d/01_from_bootstrap.conf
+     -#}
 # {{ pillar['salt_managed_message'] }}
-# included by default minion configuration file
-
-id: bevymaster
-master: localhost
-
+# created from template bevy_master/files/01_from_bootstrap.conf.jinja
+{% set bevy_root = salt['config.get']('bevy_root', '') %}
+id: {{ salt['pillar.get']('node_name', 'name_not_set_correctly') }}
+{% if salt['pillar.get']('node_name', '') == 'bevymaster' %}master: localhost {% else %}
+master: {{ salt['pillar.get']('bevymaster_address') }}
+{% endif %}
 grains:
   datacenter: bevy
   bevy: {{ salt['config.get']('bevy') }}
@@ -21,26 +25,29 @@ log_file: /var/log/salt/minion2
 run_second_minion: {{ salt['config.get']('run_second_minion') }}
 
 bevy: {{ salt['config.get']('bevy') }}
-bevymaster_name: {{ salt['config.get']('bevymaster_name') }}
+
+my_linux_user: {{ salt['config.get']('my_linux_user') }}
 
 worker_threads: 2
 
 mine_interval: 5   # this is a test system, so run the mine every five minutes
 
-# ...
+{% if bevy_root != '' %}
+#
 # for salt-call --local, we need to tell Salt minion where to find its files
-# /bevy_srv is expected to be connected by soft link or Vagrant file share
-#   something like: ln -s /projects/bevy_master/bevy_srv /bevy_srv
+#
 file_roots:    # use this directory rather than /srv/salt
   base:
-    - /bevy_srv/salt    # use directory from git repository first
-    - /srv/salt         # then use the non-git tracked tree
+    - {{ bevy_root }}/salt    # use local directory
+    - /srv/salt         # then use the normal place (if it exists)
 top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
+
 pillar_roots:  # use this directory rather than /srv/pillar
   base:
-    - /bevy_srv/pillar
+    - {{ bevy_root }}/pillar
     - /srv/pillar
 pillar_source_merging_strategy: recurse
+{% endif %}
 file_ignore_regex:
   - '/\.git($|/)'
-# ...
+#

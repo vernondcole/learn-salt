@@ -1,12 +1,6 @@
 ---
 # salt state file for all systems
 
-identify_self:
-  module.run:
-   - name: config.get
-   - kwargs:
-     key: id
-
 {% if salt['grains.get']('os') == 'Ubuntu' %}
 common_packages:
   pkg.installed:
