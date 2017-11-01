@@ -26,7 +26,7 @@ MY_LINUX_USER = login  # username used for login to VM
 HASHFILE_NAME = 'bevy_linux_password.hash'  # filename for your Linux password hash
 hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)  # where you store it ^ ^ ^
 # .
-PROVISION_FILE_NAME = '01_bootstrap_settings.sls.master'
+PROVISION_FILE_NAME = 'bevy_srv/pillar/01_bootstrap_settings.sls'
 # . ^ . ^ . end of customize things . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ .
 # . v . v . the program starts here . v . v . v . v . v . v . v . v . v .
 #
@@ -101,7 +101,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
   # . . . . . . .  Define the BEVYMASTER . . . . . . . . . . . . . . . .
   config.vm.define "bevymaster", autostart: false do |master_config|
-    if not File.exists?("01_bootstrap_settings.sls.master")
+    if not File.exists?(PROVISION_FILE_NAME)
       raise RuntimeError, "Sorry. You must run bootstrap_bevy_member_here.py before running this Vagrant up"
     end
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
@@ -109,11 +109,10 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"  # your host machine will be at NETWORK.2.1
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
 
-    if vagrant_command == "ssh"
-      master_config.ssh.username = MY_LINUX_USER  # if you type "vagrant ssh", use this username
-      master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
-      master_config.ssh.forward_agent = true
-    end
+    #if vagrant_command == "ssh"
+    #  master_config.ssh.username = MY_LINUX_USER  # if you type "vagrant ssh", use this username
+    #  master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
+    #end
 
     master_config.vm.provider "virtualbox" do |v|
         v.memory = 1024       # limit memory for the virtual box
@@ -135,11 +134,10 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     script += "chmod -R 775 /srv/salt\n"
     master_config.vm.provision "shell", inline: script
 
-    master_config.vm.provision "file", source: PROVISION_FILE_NAME, destination: "/srv/pillar/01_bootstrap_settings.sls"
-    master_config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/srv/salt/ssh_keys/" + MY_LINUX_USER + ".pub"
-
     master_config.vm.provision :salt do |salt|
-       salt.install_type = "git develop"  # TODO: use stable when OXYGEN is released
+       # # #  --- error in salt bootstrap when using git 11/1/17
+       # # #  salt.install_type = "git develop"  # TODO: use stable when OXYGEN is released
+       # # #  ---
        salt.verbose = true
        salt.colorize = true
        salt.bootstrap_options = "-P -M -L -c /tmp"  # install salt-cloud and salt-master
@@ -181,11 +179,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
          "cwd" => Dir.pwd,
          "doing_bootstrap" => true,  # flag for Salt state system
                    }
-       )
-          if vagrant_command == "up"
-            puts "using password hash=#{password_hash}"
-          end
-     end
+         )
+       end
   end
 
 

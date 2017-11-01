@@ -20,7 +20,7 @@ SALT_DOWNLOAD_SOURCE = " git"
 # the path to the user definition file will change if two minions are running, hence the {}
 FROM_BOOTSTRAP_FILE_NAME = '/etc/salt{}/minion.d/01_settings_from_bootstrap.conf'
 USER_SETTINGS_PILLAR_FILE = '/srv/pillar/01_bootstrap_settings.sls'
-PROVISION_FILE_NAME = '01_bootstrap_settings.sls.master'
+PROVISION_FILE_NAME = '01_bootstrap_settings.sls'
 
 USER_SSH_KEY_FILE_NAME = '/srv/salt/ssh_keys/{}.pub'
 
@@ -29,7 +29,8 @@ NETWORK = '172.17'  # first two bytes of Vagrant private network
 # the template for a bevy master fully qualified domain name. The bevy name will be supplied in {}
 BEVYMASTER_FQDN_PATTERN = 'bevymaster.{}.test'
 
-provision_file_path = '..' / Path(PROVISION_FILE_NAME)
+BEVY_SRV_PATH = Path('../bevy_srv')
+provision_file_path = BEVY_SRV_PATH / 'pillar' / Path(PROVISION_FILE_NAME)
 
 minimum_salt_version = MINIMUM_SALT_VERSION.split('.')
 minimum_salt_version[1] = int(minimum_salt_version[1])  # use numeric compare of month field
@@ -182,27 +183,25 @@ def request_bevy_username_and_password(master: bool):
     if master:
         pub = None  # object to contain the user's ssh public key
         okay = 'n'
-        user_home_pub = Path('/home') / user_name / '.ssh/authorized_keys'
-        user_key_file = Path(USER_SSH_KEY_FILE_NAME.format(user_name))
+        user_home_pub = Path.home() / '.ssh' / 'id_rsa.pub'
+        if master_host:
+            user_key_file = BEVY_SRV_PATH / 'salt' / 'ssh_keys' / (user_name + '.pub')
+        else:
+            user_key_file = Path(USER_SSH_KEY_FILE_NAME.format(user_name))
         try:  # named user's default location on this machine?
             print('trying file: "{}"'.format(user_home_pub))
             pub = user_home_pub.open()
         except (OSError):
-            try:  # Vagrant shared directory to user's home on host?
-                user_home_pub = Path('/my_home') / '.ssh/authorized_keys'
+            try:  # maybe it is already in the /srv tree?
+                user_home_pub = user_key_file
                 print('trying file: "{}"'.format(user_home_pub))
                 pub = user_home_pub.open()
             except (OSError):
-                try:  # maybe it is already in the /srv tree?
-                    user_home_pub = user_key_file
-                    print('trying file: "{}"'.format(user_home_pub))
-                    pub = user_home_pub.open()
-                except (OSError):
-                    print('No ssh public key found. You will have to supply it the hard way...')
+                print('No ssh public key found. You will have to supply it the hard way...')
         if pub:
             pub_key = pub.read()
             okay = input(
-                '{} exists, and contains:"{}"\n  Copy that to all minions? [y/N]:'.format(
+                '{} exists, and contains:"{}"\n  Use that on all minions? [y/N]:'.format(
                     user_home_pub, pub_key))
 
         while not affirmative(okay):
@@ -226,6 +225,7 @@ def request_bevy_username_and_password(master: bool):
             # 3.5 user_key_file.write_text(pub_key)
             with user_key_file.open('w') as f:  # 3.4
                 f.write(pub_key)  # 3.4
+                print('file {} written.'.format(str(user_key_file)))
     return bevy, user_name
 
 

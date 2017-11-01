@@ -102,4 +102,5 @@ ENV/
 
 # PyCharm, etc.
 .idea/
-01_bootstrap_settings.sls.master
+bevy_srv/salt/ssh_keys
+bevy_srv/pillar/01_*
