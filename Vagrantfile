@@ -26,6 +26,7 @@ MY_LINUX_USER = login  # username used for login to VM
 HASHFILE_NAME = 'bevy_linux_password.hash'  # filename for your Linux password hash
 hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)  # where you store it ^ ^ ^
 # .
+PROVISION_FILE_NAME = '01_bootstrap_settings.sls.master'
 # . ^ . ^ . end of customize things . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ .
 # . v . v . the program starts here . v . v . v . v . v . v . v . v . v .
 #
@@ -37,7 +38,7 @@ def get_good_ifc()   # try to find a working Ubuntu network adapter name
   addr_infos = Socket.getifaddrs
   addr_infos.each do |info|
     a = info.addr
-    if a and a.ip? and a.ipv4? and not a.ipv4_loopback? and not a.address.starts_with?(NETWORK)
+    if a and a.ip? and a.ipv4? and not a.ipv4_loopback? and not a.ip_address.start_with?(NETWORK)
       # this may be a good name.
       addy = a.ip_address.split('.')
       if BRIDGED_NETWORK_MASK.empty?
@@ -134,7 +135,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     script += "chmod -R 775 /srv/salt\n"
     master_config.vm.provision "shell", inline: script
 
-    master_config.vm.provision "file", source: '01_bootstrap_settings.sls.master', destination: "/srv/pillar/01_bootstrap_settings.sls"
+    master_config.vm.provision "file", source: PROVISION_FILE_NAME, destination: "/srv/pillar/01_bootstrap_settings.sls"
     master_config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "/srv/salt/ssh_keys/" + MY_LINUX_USER + ".pub"
 
     master_config.vm.provision :salt do |salt|

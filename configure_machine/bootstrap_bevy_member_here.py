@@ -20,11 +20,16 @@ SALT_DOWNLOAD_SOURCE = " git"
 # the path to the user definition file will change if two minions are running, hence the {}
 FROM_BOOTSTRAP_FILE_NAME = '/etc/salt{}/minion.d/01_settings_from_bootstrap.conf'
 USER_SETTINGS_PILLAR_FILE = '/srv/pillar/01_bootstrap_settings.sls'
+PROVISION_FILE_NAME = '01_bootstrap_settings.sls.master'
 
 USER_SSH_KEY_FILE_NAME = '/srv/salt/ssh_keys/{}.pub'
 
+NETWORK = '172.17'  # first two bytes of Vagrant private network
+
 # the template for a bevy master fully qualified domain name. The bevy name will be supplied in {}
 BEVYMASTER_FQDN_PATTERN = 'bevymaster.{}.test'
+
+provision_file_path = '..' / Path(PROVISION_FILE_NAME)
 
 minimum_salt_version = MINIMUM_SALT_VERSION.split('.')
 minimum_salt_version[1] = int(minimum_salt_version[1])  # use numeric compare of month field
@@ -55,8 +60,9 @@ def salt_state_apply(salt_state, **kwargs):
 
     cmdargs['pillar_data'] = 'pillar="{!r}"'.format(kwargs) if kwargs else ''
 
-    cmd = "salt-call --local state.apply {salt_state} --retcode-passthrough --state-output=mixed " \
-          "{file_root} {pillar_root} {config_dir} --log-file-level=info --log-level=critical " \
+    cmd = "salt-call --local state.apply {salt_state} --retcode-passthrough " \
+          "--state-output=mixed " \
+          "{file_root} {pillar_root} {config_dir} --log-level=info " \
           "{pillar_data} ".format(**cmdargs)
 
     print(cmd)
@@ -158,16 +164,15 @@ def request_bevy_username_and_password(master: bool):
 
         print('Please supply your desired user name to be used on all minions.')
         if master:
-            print(' Hint: "administrator" and "atomizer" will be automatically created, too.')
+            print(' Hint: "vagrant" will be automatically created, too.')
         print('(Hit <enter> to use "{}")'.format(default_user))
         user_name = input('User Name:') or default_user
         print()
 
-        #        if master:
         if pwd_hash.hashpath.exists() and loop is Ellipsis:
             print('(using the password hash from {}'.format(pwd_hash.hashpath))
         else:
-            pwd_hash.make_file()  # asks your user to type a password, then files the hash.
+            pwd_hash.make_file()  # asks your user to type a password, then stores the hash.
             pwd_hash.hashpath.chmod(0o666)
         loop = not affirmative(
             input('Use user name "{}" in bevy "{}"'
@@ -224,9 +229,11 @@ def request_bevy_username_and_password(master: bool):
     return bevy, user_name
 
 
-def write_user_pillar_file(my_linux_user, bslpaswd):
-    user_def_file_name = Path(USER_SETTINGS_PILLAR_FILE)
-
+def write_user_pillar_file(my_linux_user,
+                           bslpaswd,
+                           user_def_file_name=Path(USER_SETTINGS_PILLAR_FILE),
+                           bevy_master_ip='',
+                           network_mask=''):
     # python 3.4
     os.makedirs(str(user_def_file_name.parent), exist_ok=True)
     # python 3.5
@@ -242,6 +249,10 @@ def write_user_pillar_file(my_linux_user, bslpaswd):
         if bslpaswd:
             f.write('linux_password_hash: "{}"\n'.format(bslpaswd))
             f.write('force_linux_user_password: true\n')
+        if bevy_master_ip:
+            f.write("bevy_master_ip: {}\n".format(bevy_master_ip))
+        if network_mask:
+            f.write("network_mask: {}\n".format(network_mask))
     print('File "{}" written.'.format(user_def_file_name))
     print()
 
@@ -255,20 +266,27 @@ def get_salt_master_id():
     except subprocess.CalledProcessError:
         print("salt-call not answering ?!")
         master_id = "!!No answer from salt-call!!"
-    return master_id[0] if isinstance(master_id, list) else master_id
+    ans = master_id[0] if isinstance(master_id, list) else master_id
+    print('configured master now = "{}"'.format(master))
+    return ans
 
 
 def choose_master_address(host_name):
-    default = ''
-    choices = salt_call_json('network.ip_addrs')['local']
-    print('This machine has the following IP addresses:')
-    for addr in choices:
-        print(' -', addr)
-        if addr.startswith('10.'):
-            default = addr
+    if master:
+        default = ''
+        choices = salt_call_json('network.ip_addrs')['local']
+        print('This machine has the following IP addresses:')
+        for addr in choices:
+            print(' -', addr)
+            if addr.startswith(NETWORK):
+                default = addr
+    elif master_host:
+        default = NETWORK + '.2.2'
+    else:
+        default = ''
     try:
         ip_ = socket.getaddrinfo(host_name, 4506, type=socket.SOCK_STREAM)
-        print('Its hostname translates to {}'.format(ip_[0][4]))
+        print('Its name {} translates to {}'.format(host_name, ip_[0][4]))
         default = host_name  # if we arrive here, a DNS record was found
         for ip1 in ip_[1:]:
             print(' - {}'.format(ip1[4]))
@@ -280,27 +298,47 @@ def choose_master_address(host_name):
         try:  # look up the address we have, and see if it appears good
             ip_ = socket.getaddrinfo(choice, 4506, type=socket.SOCK_STREAM)
             print("Okay, the bevy master's address is {}.".format(ip_[0][4]))
-            return choice  # it looks good -- exit the loop
+            addy = ip_[0][4][0].split('.')
+            if addy[0] == "10":  # make a netmask for the 10 net
+                network_mask = "10.0.0.0/8"
+            else:  # make a generic netmask.  Will not be perfect, might work.
+                addy[2] = "0"
+                addy[3] = "0"
+                network_mask = ".".join(addy) + "/16"
+            return choice, network_mask  # it looks good -- exit the loop
         except (socket.error, IndexError):
             print('"{}" is not a valid IPv4 address.'.format(choice))
+
+
+def get_bslpass():
+    ''' retrieve stored bevy ssl password hash '''
+    # 3.5 bslpass = pwd_hash.hashpath.read_text().strip()
+    with pwd_hash.hashpath.open() as f:  # 3.4
+        bslpass = f.read().strip()  # 3.4
+    return bslpass
 
 
 if __name__ == '__main__':
 
     default_user = getpass.getuser()
-    if default_user != 'root':
-        print('You must run this command using "sudo".')
-        exit(126)
-    default_user = os.environ['SUDO_USER']
+    if default_user == 'root':
+        default_user = os.environ['SUDO_USER']
+    else:
+        print('To use Salt commands, you need to run this command using "sudo".')
+        if not affirmative(input('... Continue anyway? [y/N]:')):
+            exit(126)
 
     print('This program can create either a bevy salt-master (and cloud-master),')
-    print('or a simple workstation to join the bevy.')
+    print('or a simple workstation to join the bevy,')
+    print('or a Vagrant host to host the master')
     master = affirmative(input('Should this machine be the master? [y/N]:'))
+    if master:
+        master_host = False
+    else:
+        master_host = affirmative(input('Will the master be a VM guest of this machine? [y/N]:'))
 
     my_node = Path(os.path.dirname(os.path.abspath(__file__)))
-    print('my_node', repr(my_node))  ###
     bevy_root_node = (my_node / '../bevy_srv').resolve()  # this dir is the Salt file_roots dir
-    print('salt_root_node=', repr(bevy_root_node))  ###
 
     bevy_srv = Path('/bevy_srv')  # will be a link to our state files.
     # create a symlink from /bevy_srv to the bevy_srv directory in this repo.
@@ -317,7 +355,7 @@ if __name__ == '__main__':
         except FileExistsError:
             pass
 
-    bevy, user_name = request_bevy_username_and_password(master)
+    bevy, user_name = request_bevy_username_and_password(master or master_host)
 
     # check for use of virtualbox and Vagrant
     # test for Vagrant being already installed
@@ -328,7 +366,7 @@ if __name__ == '__main__':
     while ...:  # repeat until user says okay
         vbinst = False
         vagranthost = ''  # node ID of Vagrant host machine
-        isvagranthost = affirmative(input(
+        isvagranthost = master_host or affirmative(input(
             'Will this machine be a bevy host for Vagrant virtual machines? [y/N]:'))
         if isvagranthost:
             if master:
@@ -380,7 +418,10 @@ if __name__ == '__main__':
 
     if we_installed_it:
         run_second_minion = False
-        master_id = 'salt'
+        if master_host:
+            master_id = NETWORK + '.2.2'
+        else:
+            master_id = 'salt'
     else:
         master_id = get_salt_master_id()
         if master_id is None or master_id.startswith('!'):
@@ -397,12 +438,14 @@ if __name__ == '__main__':
     except (FileNotFoundError, PermissionError):
         pass
 
+    if master_host:  # create an environment for a VM master
+        master_address, network_mask = choose_master_address(bevymaster_name)
+        write_user_pillar_file(user_name, get_bslpass(), provision_file_path,
+                               master_address, network_mask)
+
     if master:
-        # 3.5 bslpass = pwd_hash.hashpath.read_text().strip()
-        with pwd_hash.hashpath.open() as f:  # 3.4
-            bslpass = f.read().strip()  # 3.4
-        write_user_pillar_file(user_name, bslpass)
-        master_address = choose_master_address(bevymaster_name)
+        write_user_pillar_file(user_name, get_bslpass())
+        master_address, network_mask = choose_master_address(bevymaster_name)
         print('\n\n. . . . . . . . . .\n')
         salt_state_apply('',  # blank name means: apply highstate
                          config_dir=str(my_node.resolve()),
@@ -413,21 +456,20 @@ if __name__ == '__main__':
                          run_second_minion=run_second_minion,
                          vbox_install=vbinst,
                          vagranthost=vagranthost,
+                         network_mask=network_mask,
                          runas=runas,
                          cwd=cwd,
                          doing_bootstrap=True,  # initialize environment
                          )
 
     else:  # not making a master, make a minion
-        with pwd_hash.hashpath.open() as f:
-            bslpass = f.read().strip()
+        write_user_pillar_file(user_name, get_bslpass())
 
-        write_user_pillar_file(user_name, bslpass)
-
-        if run_second_minion:
-            bevymaster_address = bevymaster_name
+        if master_host:
+            bevymaster_address = master_address
         else:
-            bevymaster_address = master_id
+            bevymaster_address = bevymaster_name
+
         while ...:  # loop until user says okay
             print('Trying {} for bevy master'.format(bevymaster_address))
             try:  # look up the address we have, and see if it appears good

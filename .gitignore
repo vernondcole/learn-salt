@@ -102,3 +102,4 @@ ENV/
 
 # PyCharm, etc.
 .idea/
+01_bootstrap_settings.sls.master

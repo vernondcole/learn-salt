@@ -143,6 +143,7 @@ sure_minion_config_file:
 /etc/salt/minion:
   file.managed:
     - contents: |
+        # {{ pillar['salt_created_message'] }}
         #
         # N.O.T.E. : SaltStack management occurs below this level.
         # The actual work is done in the minion.d directory below this.
@@ -155,7 +156,7 @@ sure_minion_config_file:
 /etc/salt{{ other_minion }}/minion:
   file.managed:
     - contents: |
-        # {{ pillar['salt_managed_message'] }}
+        # {{ pillar['salt_created_message'] }}
         #
         # This is an empty placeholder file.
         # The actual work is done in the minion.d directory below this.

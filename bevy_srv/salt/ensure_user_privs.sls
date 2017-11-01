@@ -23,7 +23,5 @@ ssh_public_key:
 /etc/sudoers:  # set the interactive linux user for passwordless sudo
   file.append:
     - text: |
-        administrator ALL=(ALL) NOPASSWD: ALL
-        atomizer ALL=(ALL) NOPASSWD: ALL
         {{ my_linux_user }} ALL=(ALL) NOPASSWD: ALL
 ...

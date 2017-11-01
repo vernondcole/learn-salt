@@ -2,9 +2,6 @@
 # this salt pillar file will define basic access codes for all bevy machines (including the master)
 ## This file managed by SaltStack. Any changes may be overwritten.
 
-# the bevy Salt provision will supply users "administrator", "atomizer", and the one defined here.
-
-
 # linux username to own files and run user jobs on server machines...
 my_linux_user: vernoncole
 #

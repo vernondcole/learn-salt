@@ -9,7 +9,7 @@
 
 staff:
   group:
-    - present
+  - present
     - require_in:
       - user: {{ my_user }}
 

@@ -296,7 +296,7 @@ Your local workstation must have a registered
     ```
 
 Be prepared to supply the username, password, and ssh public key you wish to have installed on the bevy master and on all of the bevy minions.
-This should be your dish user name.  Salt will also create the standard "administrator" and "atomizer" users on all minions.
+This should be your dish user name.  Salt will also create the standard "vagrant" user on all minions.
 
 If the script detects a minion connected to another Salt master 
 (not localhost) it will install a second minion to connect its local Salt master.
