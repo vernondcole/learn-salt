@@ -13,6 +13,16 @@ include:
 {% set my_username = salt['config.get']('my_linux_user') %}
 {% set other_minion = "2" if salt['config.get']('run_second_minion') else "" %}
 
+/etc/salt/minion.d/vagrant_sdb.conf
+  file.managed:
+    contents: |
+        {{ pillar.get['salt_managed_message'] }}
+        vagrant_sdb_data:
+          driver: sqlite3
+          database: /var/cache/salt/vagrant.sqlite
+          table: sdb
+          create_table: True
+
 {% if salt['grains.get']('os_family') == 'MacOS' %}
 make-dirs-visible:
   cmd.run:
