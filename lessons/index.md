@@ -3,7 +3,8 @@
 A short introduction to this project is located in
 the [README.md](../README.md) file for this repository.
 
-[Introductory slides](https://docs.google.com/presentation/d/1_qwQ6Xl29ODbKoPcWzEYdULp0m6hDZEz09DifZbG3u4/present#slide=id.p4)
+[Introductory slides (web version)](https://docs.google.com/presentation/d/1xHufFXGUKMWlj1rF10o6PKI0Vq7WkpCj0fgxWhqoEPk/present?usp=sharing)
+[(local version)](file:///projects/learn-salt/lessons/from%20bootstrap%20to%20Salt%20cloud2.pptx)
 
 [Linux for Windows Users](windows/Linux_for_Windows_users.md)
 
@@ -19,3 +20,4 @@ the [README.md](../README.md) file for this repository.
 
 [Basic Execution Commands](basics/execution.md) . . . `cd lessons/basics`
 
+[Cloud control cheat sheet](cheat_sheet.md)

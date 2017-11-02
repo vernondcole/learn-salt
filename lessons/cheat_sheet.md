@@ -12,7 +12,7 @@ Test all minions:
 `salt \* test.ping`
 
 Create and start a new minion:
-`salt-cloud -p <minion_id>`
+`salt-cloud -p <profile_name> <new_minion_id>`
 
 Destroy a minion:
 `salt-cloud --destroy <minion_id>`
