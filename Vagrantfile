@@ -101,8 +101,9 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
   # . . . . . . .  Define the BEVYMASTER . . . . . . . . . . . . . . . .
   config.vm.define "bevymaster", autostart: false do |master_config|
-    if not File.exists?(PROVISION_FILE_NAME)
-      raise RuntimeError, "Sorry. You must run bootstrap_bevy_member_here.py before running this Vagrant up"
+    if ARGV[0] == "up" and ARGV[1] == "bevymaster" and not File.exists?(PROVISION_FILE_NAME)
+      puts "Sorry. You must run bootstrap_bevy_member_here.py before running this Vagrant up"
+      exit
     end
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     master_config.vm.hostname = BEVYMASTER
