@@ -1,0 +1,6 @@
+Vagrant.configure(2) do |config|  # the literal "2" is required.
+  config.vm.define "lesson1" do |quail_config|
+    quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
+    quail_config.vm.hostname = "lesson1.test"
+  end
+end
