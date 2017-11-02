@@ -1,14 +1,14 @@
 # learn-salt
 
-#### (Using salt-cloud to learn SaltStack basics)
+### Using salt-cloud to learn SaltStack basics
 
-This project uses a salt-cloud network with Vagrant-powered VirtualBox virtual machines as a sandbox to experiment with and learn [Salt](https://saltstack.com/) and [salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud) by building and controlling a bevy of computers.
+This project uses a salt-cloud network with Vagrant controlled VirtualBox virtual machines as a sandbox to experiment with and learn [Salt](https://saltstack.com/) and [salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud) by building and controlling a bevy of computers.
 
 ### Installation
 
 Clone [1] [this git repository](https://github.com/vernondcole/learn-salt) onto your target environment --
 which should be the workstation where you plan to do the lessons. You will control your bevy
-from this place.
+from this place. Proceed with the instructions in [the installation lesson](lessons/installation/install.md).
 
 Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really have to put it there. All lessons should work if you put it somewhere else, like `/home/myusername/learn` or wherever. 
 Examples will be configured and tested to operate from any random directory you like.  
@@ -59,7 +59,16 @@ along with a big complex *Vagrantfile*,
 and a few other handy files.
 
 The [lessons](./lessons) directory contains 
-the [lesson index](lessons/index.md).
+the [lesson index](lessons/index.md). 
+
+Often, the lessons will have lab or example files
+associated with them. When studying each lesson, you should be running the examples using
+a terminal with your current default directory set for that lesson.
+For example, if you are running the [Basics of Vagrant](vagrant_basics/basics_of_vagrant.md)
+lesson, you should start by running: 
+
+`cd /projects/learn-salt/lessons/vagrant_basics`
+
 
 [comment]: # (The file index.md is the source for index.html)
 
@@ -99,88 +108,57 @@ Sample shell scripts are provided like
     # but you might learn better if you type them with your own fingers.
 ```
 
+### Vagrant VMs on your workstation
+
+A Vagrantfile is supplied here to create several virtual machines on your workstation.
+
+You can create a Salt cloud master ("bevymaster") as a virtual machine on your workstation.
+This can be very convenient, except for **one restriction** which occcurs if you have any 
+application servers (salt minions) running separately from your workstation. 
+Minions will be trying to connect to their master at a fixed address. 
+If your master should re-connect using a different IP address, they will be lost. 
+You will need to consistently use the same network connection for your host workstion,
+or use some sort of dynamic DNS arrangement.
+
+The Vagrantfile also defines two simple empty Ubuntu 16.04 VMs, named "quail1" and "quail16".
+  
+There is also an Ubuntu 14.04 VM (named "quail14") defined in the Vagrantfile. 
+
+Each of these has three virtual network ports:
+
+- One has a pre-defined IP address range used
+for a Vagrant host-only network adapter, 
+which used to connect a virtual directory, 
+as the address Vagrant uses to ssh connect to the machines,
+and for NAT networking from the VM to the world. 
+As supplied, these will be subnets of 172.17.17.0.
+
+- A second has a fixed hard-wired address for a
+[private network](https://www.vagrantup.com/docs/networking/private_network.html) 
+which can be used for intercommunication between the host and its virtual machines 
+(and the VMs to each other) but cannot be seen outside the host environment.
+These will be in the 172.17.2.0 network, with the host at 172.17.2.1.
+
+- The third is a [bridged network](https://www.vagrantup.com/docs/networking/public_network.html) 
+which makes the VM appear to be on the same LAN segment as its host. 
+The address for this adapter will be assiged by DHCP. You may need to modify the configuration
+parameter `network_mask` to help the scripts discover the actual address.
+This port can be seen by machines on your in-house network.  
+Be aware that, depending on router configuration settings, VMs on your machine may be
+unable to access brother VMs using their bridged ports.
+
+If you wish, you can add more local VMs by editing the Vagrantfile.
+
+
+
 v v v v v v v v v v Text below should be moved to individual class lessons v v v v
 
 Each machine is automatically connected to and accepted by your salt master.
 https://github.com/vernondcole/learn-salt
 
 
-### Decide where to install your bevy master.
 
 
-It is enterly possible to have a virtual machine (such a VM
-bevymaster) host yet more virtual machines. This might not be
-the best idea. ([Refer to xkcd](http://xkcd.com/1764).) You may
-elect to use your workstation as the bevymaster so that it can easily
-control virtual servers.
-https://github.com/vernondcole/learn-salt
-
-In more practical situation, an independant machine may be set up as the Salt master. 
-The bevy master machine (wherever located) will configure itself using "salt-call" commands.
-It can then spin up or connect the other computers needed for the dynamux environment as specified by your settings in the /etc/salt/ directory.
-
-**Note:** Running a Salt master directly on OS-x is not officially supported 
-(see [the docs](https://docs.saltstack.com/en/latest/topics/installation/osx.html).) 
-Some OS-x code has been put in the Salt state files, but it may not (yet) be working perfectly. 
-Running a salt master on a Linux __virtual__ machine hosted on a MacOS physical machine is fully supported.
-
-### Steps to install a bevy master as a VM on your machine.
-
-
-First, install git, if needed, and set your worstation
-up on the github server `http://p-bitbucket.imovetv.com`
-
-##### clone this repository to intended host machine
-
-```
-
-cd /projects  # go to your project directory, this is an example
-git clone ssh://git@p-bitbucket.imovetv.com/msl/bevy_master.git
-cd bevy_master
-```
-
-#### install Vagrant and Virtualbox (or VMware)
-
-To install both packages on Mac workstations, you may want to try 
-`sh mac_install_vagrant.sh` on the off-chance that I got it right.
-If you supply a correction, please consider a pull request.
-
-For Ubuntu:
-
-- Refer to https://www.virtualbox.org/wiki/Downloads .
-
-- https://www.vagrantup.com/downloads.html
-
-Add the plugin which keeps VBoxGuestEditions installed and up to date:
-
-`vagrant plugin install vagrant-vbguest`
-
-
-##### create a password hash
-
-The bevy master will replicate your username to each bevy minion. Your user will usually be set up for
-passwordless sudo and ssh public key login ... but situations may still crop up where you need a password.
-For those situations, the Salt scripts will also set a 
-[Linux password hash](https://crackstation.net/hashing-security.htm) on each system.
-
-As a source for the Salt Pillar value of your password hash, we will create a file in the ~/.ssh directory on
-your workstation. The value will then be passed to your bevy master during `vagrant up`. 
-
- 
-**Mac and Windows users NOTE:** You must install Python3  and passlib in order to run pwd_hash.py.
-
-```
-(bash)
-# Mac only #
-brew install python3
-pip3 install passlib
-``` 
-
-```
-(bash)
-# \(... assuming you are in the /projects/learn_salt directory or its equivalent on your system ...)
-./configure_machine/pwd_hash.py
-```
 
 ##### modify Vagrantfile to your exact wishes
 

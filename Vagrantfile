@@ -109,10 +109,10 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"  # your host machine will be at NETWORK.2.1
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
 
-    #if vagrant_command == "ssh"
-    #  master_config.ssh.username = MY_LINUX_USER  # if you type "vagrant ssh", use this username
-    #  master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
-    #end
+    if vagrant_command == "ssh"
+      master_config.ssh.username = MY_LINUX_USER  # if you type "vagrant ssh", use this username
+      master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
+    end
 
     master_config.vm.provider "virtualbox" do |v|
         v.memory = 1024       # limit memory for the virtual box

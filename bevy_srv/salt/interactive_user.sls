@@ -6,12 +6,9 @@
 {% set make_gid = salt['config.get']('my_linux_gid', -2) | int %}
 {% set my_user = pillar['my_linux_user'] %}
 
-
 staff:
   group:
   - present
-    - require_in:
-      - user: {{ my_user }}
 
 {{ my_user }}:
   group:

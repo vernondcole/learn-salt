@@ -11,11 +11,11 @@ the [README.md](../README.md) file for this repository.
 
 [Basics of GIT](git/how_to_git_stuff.md)
 
-[Basics of Vagrant](vagrant_basics/basics_of_vagrant.md)
+[Basics of Vagrant](vagrant_basics/vagrant_basics.md) . . . Examples at `cd lessons/vagrant_basics`
 
-[Basics of Salt (local)](basics/salt-call.md)
+[Basics of Salt (local)](basics/salt-call.md) . . . Examples at `cd lessons/basics`
 
-[Connecting to a Master](basics/master.md)
+[Connecting to a Master](basics/master.md)  . . . `cd lessons/basics`
 
-[Basic Execution Commands](basics/execution.md)
+[Basic Execution Commands](basics/execution.md) . . . `cd lessons/basics`
 
