@@ -14,7 +14,7 @@ import pwd_hash  # from the current working directory
 MINIMUM_SALT_VERSION = "2017.7.0-758"  # ... as a string... the month will be integerized below
 SALT_BOOTSTRAP_URL = "http://bootstrap.saltstack.com/develop/bootstrap-salt.sh"
 # TODO: use release version - "http://bootstrap.saltstack.com/stable/bootstrap-salt.sh"
-SALT_DOWNLOAD_SOURCE = " git"
+SALT_DOWNLOAD_SOURCE = " git develop"
 # TODO: use release version when Salt "Oxygen" version is released
 
 # the path to the user definition file will change if two minions are running, hence the {}
@@ -97,8 +97,8 @@ def salt_minion_version():
         out = out.decode()
         version = out.split(" ")[1].split('.')
         version[1] = int(version[1])
-    except subprocess.CalledProcessError:
-        print("salt-minion not installed")
+    except (IndexError, subprocess.CalledProcessError):
+        print("salt-minion not installed or no output")
         version = ["", 0, '']
     return version
 
@@ -123,7 +123,7 @@ def salt_install(master=True):
     else:
         if platform.system() != 'Linux':
             print('Sorry! Cannot automatically install Salt on your'
-                  '"{}" system)'.format(platform.system))
+                  '"{}" system)'.format(platform.system()))
             print('Please install Salt version {}'.format(MINIMUM_SALT_VERSION))
             print('or later, according to the instructions in the README text,')
             print('and then re-run this script.')
@@ -355,8 +355,8 @@ if __name__ == '__main__':
                 bevy_srv.unlink()
         try:
             bevy_srv.symlink_to(bevy_root_node)
-        except FileExistsError:
-            pass
+        except (FileExistsError, OSError):
+            print('NOTE: unable to create symlink to {}'.format(str(bevy_root_node)))
 
     bevy, user_name = request_bevy_username_and_password(master or master_host)
 
