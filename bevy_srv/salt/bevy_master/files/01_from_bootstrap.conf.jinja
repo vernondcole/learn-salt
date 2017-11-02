@@ -4,9 +4,9 @@
 # {{ pillar['salt_managed_message'] }}
 # created from template bevy_master/files/01_from_bootstrap.conf.jinja
 {% set bevy_root = salt['config.get']('bevy_root', '') %}
-id: {{ salt['pillar.get']('node_name', 'name_not_set_correctly') }}
-{% if salt['pillar.get']('node_name', '') == 'bevymaster' %}master: localhost {% else %}
-master: {{ salt['pillar.get']('bevymaster_address') }}
+id: {{ salt['config.get']('node_name', pillar['id']) }}
+{% if salt['config.get']('node_name', '') == 'bevymaster' %}master: localhost {% else %}
+master: {{ salt['config.get']('bevymaster_address', pillar['master']) }}
 {% endif %}
 grains:
   datacenter: bevy
