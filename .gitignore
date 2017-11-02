@@ -102,5 +102,9 @@ ENV/
 
 # PyCharm, etc.
 .idea/
+
+# project
+.vagrant
 bevy_srv/salt/ssh_keys
 bevy_srv/pillar/01_*
+configure_machine/grains
