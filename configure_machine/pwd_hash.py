@@ -4,18 +4,21 @@ try:
     sha = ph.sha512_crypt
     import random
 except ImportError:
-    sha = None
-    import crypt  # can use built-in crypt on Linux
+    sha = None  # flag that passlib is not present
+    import crypt  # will use built-in crypt (works okay on Linux)
 
 import getpass
 from pathlib import Path
 
-HASHFILE_NAME = 'bevy_linux_password.hash'
-hashpath = Path.home() / '.ssh' / HASHFILE_NAME
-
+HASHFILE_NAME = 'bevy_linux_password.hash'  # Salt scripts will expect this name
+try:
+    hashdir = Path.home() / '.ssh'
+    hashpath = hashdir  / HASHFILE_NAME  # only works on Python 3.5+
+except AttributeError:  # older Python3
+    hashdir = Path('/home/') / getpass.getuser() / '.ssh'
+    hashpath = hashdir / HASHFILE_NAME
 
 def make_file():
-    # TODO: add the capability to set Salt sdb://salt-cloud-keystore/password
     dashline = 78 * '-'
     print(dashline)
     print()
@@ -31,19 +34,21 @@ def make_file():
             print("Passwords didn't match")
             continue
         else:
-            if sha is None:
+            if sha is None:  # no passlib module, use crypt
                 pwhash = crypt.crypt(pw1)
-            else:
+            else:  # use passlib to do the same thing
                 pwhash = sha.hash(pw1, salt=hex(random.getrandbits(64))[2:], rounds=5000) # 5000 is magic, do not change
             print('the hash is...')
             print(pwhash)
         if 0 < len(pwhash) < 32:
-            print('Note: the crypt module is fully implemented only on Linux Python3.')
+            print('Sorry: the crypt module is fully implemented only on Linux Python3.')
             print('  Your hash is too small to be SHA-2, meaning it will not work for a SaltStack user definition.')
-            print('  You need to "pip3 install passlib"')
-        if (input("Use this password hash? (y/n)[y]:") or 'y').lower().startswith('y'):
+            print('  You need to "pip3 install passlib" and rerun this program')
+        if (input("Use this password hash? [Y/n]:") or 'y').lower().startswith('y'):
             break
 
+    import os
+    os.makedirs(str(hashdir), exist_ok=True)
     with hashpath.open('w') as pf:
         pf.write(pwhash + '\n')
     print('File {} written.'.format(hashpath))

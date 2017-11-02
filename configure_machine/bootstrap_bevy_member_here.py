@@ -183,7 +183,10 @@ def request_bevy_username_and_password(master: bool):
     if master:
         pub = None  # object to contain the user's ssh public key
         okay = 'n'
-        user_home_pub = Path.home() / '.ssh' / 'id_rsa.pub'
+        try:
+            user_home_pub = Path.home() / '.ssh' / 'id_rsa.pub'  # only works on Python 3.5+
+        except AttributeError:  # older Python3
+            user_home_pub = Path('/home/') / getpass.getuser() / '.ssh' / 'id_rsa.pub'
         if master_host:
             user_key_file = BEVY_SRV_PATH / 'salt' / 'ssh_keys' / (user_name + '.pub')
         else:
