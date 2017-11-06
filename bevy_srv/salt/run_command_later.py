@@ -43,8 +43,7 @@ for command in commands:
         print('{} running command-> {}'.format(__file__, command))
     sys.stdout.flush()
     try:
-        sp = subprocess.check_call(command, shell=True, stdout=sys.stdout, stderr=subprocess.STDOUT)
-        retcd = sp.returncode
+        retcd = subprocess.check_call(command, shell=True, stdout=sys.stdout, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         print(e)
         retcd = 127

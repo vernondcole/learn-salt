@@ -23,10 +23,10 @@ make-dirs-visible:
         chflags nohidden /tmp
 {% endif %}
 
-/etc/salt/minion.d/vagrant_sdb.conf
+/etc/salt/minion.d/vagrant_sdb.conf:
   file.managed:
-    contents: |
-        {{ pillar.get['salt_managed_message'] }}
+    - contents: |
+        {{ pillar['salt_managed_message'] }}
         vagrant_sdb_data:
           driver: sqlite3
           database: /var/cache/salt/vagrant.sqlite
