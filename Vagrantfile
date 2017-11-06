@@ -137,11 +137,12 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
     master_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       # # #  salt.install_type = "git develop"  # TODO: use stable when OXYGEN is released
+       salt.install_type = "git vagrant_cloud_minor_revisions"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = true
        salt.colorize = true
-       salt.bootstrap_options = "-P -M -L -c /tmp"  # install salt-cloud and salt-master
+       salt.bootstrap_options = "-P -M -L -c /tmp -g https://github.com/vernondcole/salt"
+       # TODO: salt.bootstrap_options = ''-P -M -L -c /tmp'  # install salt-cloud and salt-master
        salt.masterless = true  # the provisioning script for the master is masterless
        salt.run_highstate = true
        salt.minion_config = "configure_machine/minion"

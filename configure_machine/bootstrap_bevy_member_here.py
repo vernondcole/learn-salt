@@ -11,10 +11,10 @@ from urllib.request import urlopen
 
 import pwd_hash  # from the current working directory
 
-MINIMUM_SALT_VERSION = "2017.7.0-758"  # ... as a string... the month will be integerized below
+MINIMUM_SALT_VERSION = "2017.7.0-764"  # ... as a string... the month will be integerized below
 SALT_BOOTSTRAP_URL = "http://bootstrap.saltstack.com/develop/bootstrap-salt.sh"
 # TODO: use release version - "http://bootstrap.saltstack.com/stable/bootstrap-salt.sh"
-SALT_DOWNLOAD_SOURCE = " git develop"
+SALT_DOWNLOAD_SOURCE = " -g https://github.com/vernondcole/salt git vagrant_cloud_minor_revisions"
 # TODO: use release version when Salt "Oxygen" version is released
 
 # the path to the user definition file will change if two minions are running, hence the {}
