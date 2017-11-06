@@ -95,11 +95,11 @@ def salt_minion_version():
     try:
         out = subprocess.check_output("salt-call --version", shell=True)
         out = out.decode()
-        version = out.split(" ")[1].split('.')
+        version = out.split(' ')[1].split('.')
         version[1] = int(version[1])
     except (IndexError, subprocess.CalledProcessError):
         print("salt-minion not installed or no output")
-        version = ["", 0, '']
+        version = ['', 0, '']
     return version
 
 
@@ -127,7 +127,7 @@ def salt_install(master=True):
             print('Please install Salt version {}'.format(MINIMUM_SALT_VERSION))
             print('or later, according to the instructions in the README text,')
             print('and then re-run this script.')
-            exit(78)
+            return 0  # exit(78)
         _salt_install_script = "/tmp/bootstrap-salt.sh"
         print("Downloading Salt Bootstrap to %s" % _salt_install_script)
         with open(_salt_install_script, "w+") as f:
