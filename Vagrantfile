@@ -5,7 +5,8 @@
 # I invested one entire day in learning Ruby,
 # so if this is not particularly good Ruby code, I'm sorry.
 # -- vernondcole 2017 .  .  .  .
-require 'etc'
+require "etc"
+require "yaml"
 login = Etc.getlogin    # get your own user information to use in the VM
 #
 # . v . v . enter your customized values below . v . v . v . v . v . v .
@@ -16,18 +17,29 @@ NETWORK = "172.17"  # the first two bytes of your host-only network IP ("192.168
 # ^ ^ your VM host will be NETWORK.2.1, the others as set below.
 # ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
 DOMAIN = BEVY + ".test"  # .test is an ICANN reserved private top-level domain
-# .
+#
 INTERFACE_GUESS = ''  # enter the Windows description for your IP interface if needed
 BRIDGED_NETWORK_MASK = '' # (if blank will try automatic) often "192.168.0.0/16"
 # .
 BEVYMASTER = "bevymaster." + DOMAIN  # the name for your bevy master
 # .
-MY_LINUX_USER = login  # username used for login to VM
+my_linux_user = login  # username used for login to VM
 HASHFILE_NAME = 'bevy_linux_password.hash'  # filename for your Linux password hash
 hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)  # where you store it ^ ^ ^
 # .
-PROVISION_FILE_NAME = 'bevy_srv/pillar/01_bootstrap_settings.sls'
+ANTECEDENT_FILE_NAME = 'bevy_srv/pillar/01_bootstrap_settings.sls'
 # . ^ . ^ . end of customize things . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ .
+# . . . try to get previously stored settings values to replace above . . .
+if File.exists?(ANTECEDENT_FILE_NAME)
+  settings = YAML.load_file(ANTECEDENT_FILE_NAME)
+  my_linux_user = settings['my_linux_user']
+else
+  settings = nil
+  if ARGV[0] == "up"
+    puts "Unable to read settings file #{ANTECEDENT_FILE_NAME}. Using defaults."
+    end
+end
+puts settings.inspect ### TODO: remove this debug line
 # . v . v . the program starts here . v . v . v . v . v . v . v . v . v .
 #
 vagrant_command = ARGV[0]
@@ -101,17 +113,13 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
   # . . . . . . .  Define the BEVYMASTER . . . . . . . . . . . . . . . .
   config.vm.define "bevymaster", autostart: false do |master_config|
-    if ARGV[0] == "up" and ARGV[1] == "bevymaster" and not File.exists?(PROVISION_FILE_NAME)
-      puts "Sorry. You must run bootstrap_bevy_member_here.py before running this Vagrant up"
-      exit
-    end
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     master_config.vm.hostname = BEVYMASTER
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"  # your host machine will be at NETWORK.2.1
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
 
     if vagrant_command == "ssh"
-      master_config.ssh.username = MY_LINUX_USER  # if you type "vagrant ssh", use this username
+      master_config.ssh.username = my_linux_user  # if you type "vagrant ssh", use this username
       master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
     end
 
@@ -137,11 +145,11 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
     master_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "git vagrant_cloud_minor_revisions"  # TODO: use "stable" when OXYGEN is released
+       salt.install_type = "git b7c0182d93a1092b7369eedfbcf5bc2512c12f1b"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = true
        salt.colorize = true
-       salt.bootstrap_options = "-P -M -L -c /tmp -g https://github.com/vernondcole/salt"
+       salt.bootstrap_options = "-P -M -L -D -g https://github.com/vernondcole/salt"
        # TODO: salt.bootstrap_options = ''-P -M -L -c /tmp'  # install salt-cloud and salt-master
        salt.masterless = true  # the provisioning script for the master is masterless
        salt.run_highstate = true
@@ -157,7 +165,10 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        else
          puts "NOTE: file #{hash_path} not found. No linux password will be supplied."
        end
-       if info  # info is Null on Windows boxes
+       if settings
+         uid = settings['my_linux_uid']
+         gid = settings['my_linux_gid']
+       elsif info  # info is Null on Windows boxes
          uid = info.uid
          gid = info.gid
        else
@@ -165,7 +176,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
          gid = ''
        end
        salt.pillar({ # configure a new interactive user on the new VM
-         "my_linux_user" => MY_LINUX_USER,
+         "my_linux_user" => my_linux_user,
          "my_linux_uid" => uid,
          "my_linux_gid" => gid,
          "bevy_root" => "/vagrant/bevy_srv",
