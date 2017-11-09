@@ -127,7 +127,7 @@ def salt_install(master=True):
             print('Please install Salt version {}'.format(MINIMUM_SALT_VERSION))
             print('or later, according to the instructions in the README text,')
             print('and then re-run this script.')
-            return 0  # exit(78)
+            return NotImplemented
         _salt_install_script = "/tmp/bootstrap-salt.sh"
         print("Downloading Salt Bootstrap to %s" % _salt_install_script)
         with open(_salt_install_script, "w+") as f:
@@ -324,12 +324,18 @@ def get_bslpass():
 if __name__ == '__main__':
 
     default_user = getpass.getuser()
-    if default_user == 'root':
-        default_user = os.environ['SUDO_USER']
+    if platform.system() == 'Windows':
+        if subprocess.call('net session', shell=True) != 0:
+            print('You may need to run this script as an Administrator.')
+            if not affirmative(input('... try it as a normal user? [y/N]:')):
+                exit(126)
     else:
-        print('To use Salt commands, you need to run this command using "sudo".')
-        if not affirmative(input('... Continue anyway? [y/N]:')):
-            exit(126)
+        if default_user == 'root':
+            default_user = os.environ['SUDO_USER']
+        else:
+            print('To use Salt commands, you need to run this command using "sudo".')
+            if not affirmative(input('... Continue anyway? [y/N]:')):
+                exit(126)
 
     print('This program can create either a bevy salt-master (and cloud-master),')
     print('or a simple workstation to join the bevy,')
