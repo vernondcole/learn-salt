@@ -45,10 +45,11 @@ supply_memtest_bin:
   file.copy:
     - source: /usr/lib/syslinux/modules/bios/ldlinux.c32
 
-/etc/dnsmasq.conf:
+/etc/dnsmasq.d/dnsmasq_pxe.conf:
   file.managed:
-    - source: salt://{{ slspath }}/files/dnsmasq.conf
+    - source: salt://{{ slspath }}/files/dnsmasq_pxe.conf
     - template: jinja
+    - makedirs: true
 
 /etc/default/dnsmasq:
   file.append:
@@ -60,6 +61,7 @@ dnsmasq_service:
     - enable: true
     - watch:
       - file: /etc/default/dnsmasq
-      - file: /etc/dnsmasq.conf
+      - file: /etc/dnsmasq.d/dnsmaq_pxe.conf
+      - file: /etc/dnsmasq
       - pkg: dnsmasq
 ...

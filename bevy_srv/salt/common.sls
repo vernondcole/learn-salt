@@ -1,19 +1,34 @@
 ---
 # salt state file for all systems
 
-{% if salt['grains.get']('os') == 'Ubuntu' %}
-common_packages:
+{% if grains['os_family'] != 'Windows' %}
+
+{% if grains['mem_total'] < 2000 %}
+swapspace:
+  pkg.installed:
+    - refresh: true
+    - cache_valid_time: 600
+    - order: 1
+{% endif %}
+
+{% if salt['grains.get']('os_falmily') == 'Debian' %}
   pkg.installed:
     - pkgs:
       - git
       - htop
-      - jq
       - mtr
       - nano
+      - tree
+{% endif %}
+
+{% if salt['grains.get']('os') == 'Ubuntu' %}
+common_packages:
+  pkg.installed:
+    - pkgs:
+      - jq
       - python-software-properties
       - silversearcher-ag
       - strace
-      - tree
       - vim-tiny
       - virt-what
       {% if grains['osrelease'] < '16.04' %}
@@ -24,5 +39,6 @@ common_packages:
       {% if grains['locale_info']['defaultlanguage'] != 'en_US' %}
       - 'language-pack-en'
       {% endif %}
+{% endif %}
 {% endif %}
 ...
