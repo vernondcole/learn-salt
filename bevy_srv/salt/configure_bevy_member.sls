@@ -12,6 +12,7 @@ include:
 #
 {% set my_username = salt['config.get']('my_linux_user') %}
 {% set other_minion = "2" if salt['config.get']('run_second_minion') else "" %}
+{% set message = pillar['salt_managed_message'] %}
 
 {% if salt['grains.get']('os_family') == 'MacOS' %}
 make-dirs-visible:
@@ -26,7 +27,7 @@ make-dirs-visible:
 /etc/salt/minion.d/vagrant_sdb.conf:
   file.managed:
     - contents: |
-        {{ pillar['salt_managed_message'] }}
+        {{ message }}
         vagrant_sdb_data:
           driver: sqlite3
           database: /var/cache/salt/vagrant.sqlite

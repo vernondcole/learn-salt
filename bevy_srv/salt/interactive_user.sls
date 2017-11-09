@@ -27,6 +27,7 @@ staff:
       - www-data
       - staff
       - dialout
+      - wireshark
     - password: "{{ salt['pillar.get']('linux_password_hash') }}"
     - enforce_password: {{ salt['config.get']('force_linux_user_password', false) }}
     {% if make_uid > 0 %}- uid: {{ make_uid }} {% endif %}
