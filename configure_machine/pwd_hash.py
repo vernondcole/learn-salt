@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 try:
-    import passlib.hash as ph  # must use passlib module on Mac OS-x systems.
+    import passlib.hash as ph  # must use passlib module on Mac OS-xkcd.py systems.
     sha = ph.sha512_crypt
     import random
 except ImportError:

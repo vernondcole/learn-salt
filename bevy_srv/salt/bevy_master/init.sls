@@ -151,7 +151,7 @@ salt_cloud_profiles_d:
 
 {% if salt['grains.get']('os_family') == 'MacOS' %}
 {% set salt_master_service_name = 'com.saltstack.salt.master' %}
-# salt-master is a user agent on OS-x -- not controlled by SaltStack service.* commands
+# salt-master is a user agent on OS-xkcd.py -- not controlled by SaltStack service.* commands
 
 # !!! N O T E: salt master is not supported on a Mac, but is documented to work
 

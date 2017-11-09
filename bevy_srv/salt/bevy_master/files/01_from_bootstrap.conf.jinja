@@ -1,12 +1,15 @@
-{#- this is the jinja template used to create
+{#- this is the jinja template used to create the configuration file
      /etc/salt/minion.d/01_from_bootstrap.conf
      -#}
 # {{ pillar['salt_managed_message'] }}
 # created from template bevy_master/files/01_from_bootstrap.conf.jinja
-{% set bevy_root = salt['config.get']('bevy_root', '') %}
-id: {{ salt['config.get']('node_name', pillar['id']) }}
+
+# these settings are specific to the running Salt master or stand-alone minion
+
+{% set bevy_root = salt['config.get']('bevy_root', '/vagrant/bevy_srv') %}
+id: {{ salt['config.get']('node_name', salt['config.get']('id')) }}
 {% if salt['config.get']('node_name', '') == 'bevymaster' %}master: localhost {% else %}
-master: {{ salt['config.get']('bevymaster_address', pillar['master']) }}
+master: {{ salt['config.get']('bevymaster_address', salt['config.get']('master')) }}
 {% endif %}
 grains:
   datacenter: bevy

@@ -19,7 +19,7 @@ NETWORK = "172.17"  # the first two bytes of your host-only network IP ("192.168
 DOMAIN = BEVY + ".test"  # .test is an ICANN reserved private top-level domain
 #
 INTERFACE_GUESS = ''  # enter the Windows description for your IP interface if needed
-BRIDGED_NETWORK_MASK = '' # (if blank will try automatic) often "192.168.0.0/16"
+BRIDGED_NETWORK_MASK = '192.168.88.0/24' # (if blank will try automatic) often "192.168.0.0/16"
 # .
 BEVYMASTER = "bevymaster." + DOMAIN  # the name for your bevy master
 # .
@@ -149,7 +149,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        # # #  ---
        salt.verbose = true
        salt.colorize = true
-       salt.bootstrap_options = "-P -M -L -D -g https://github.com/vernondcole/salt"
+       salt.bootstrap_options = "-P -M -L -g https://github.com/vernondcole/salt.git"
        # TODO: salt.bootstrap_options = ''-P -M -L -c /tmp'  # install salt-cloud and salt-master
        salt.masterless = true  # the provisioning script for the master is masterless
        salt.run_highstate = true
@@ -182,7 +182,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
          "bevy_root" => "/vagrant/bevy_srv",
          "bevy" => BEVY,
          "node_name" => "bevymaster",
-         "bevymaster_address" => 'localhost',
+         "bevymaster_address" => NETWORK + '.2.2',
          "run_second_minion" => false,
          "linux_password_hash" => password_hash,
          "force_linux_user_password" => true,
@@ -236,5 +236,40 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.cpus = 1
 		v.linked_clone = true
 	end
+  end
+
+
+# . . . . . . .  Define Quail42 as the answer to everything. . . . . . . . . . . . . .
+# . this machine has Salt installed but no states run or defined.
+# . Its master is "bevymaster".
+  config.vm.define "quail42", autostart: false do |quail_config|
+    quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
+    quail_config.vm.hostname = "quail42." + DOMAIN
+    quail_config.vm.network "private_network", ip: NETWORK + ".2.5"  # your host machine will be at NETWORK.2.1
+    quail_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
+
+    quail_config.vm.provider "virtualbox" do |v|
+        v.memory = 4000       # limit memory for the virtual box
+        v.cpus = 2
+        v.linked_clone = true # make a soft copy of the base Vagrant box
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.96/27"]  # do not use 10.0 network for NAT
+    end
+
+    quail_config.vm.provider "vmware" do |v|
+        v.memory = 4000       # limit memory for the vmware box, too
+        v.cpus = 2
+        v.linked_clone = true
+    end
+
+    quail_config.vm.provision :salt do |salt|
+       # # #  --- error in salt bootstrap when using git 11/1/17
+       salt.install_type = "-f git b7c0182d93a1092b7369eedfbcf5bc2512c12f1b"  # TODO: use "stable" when OXYGEN is released
+       # # #  ---
+       salt.verbose = false
+       salt.colorize = true
+       salt.bootstrap_options = "-A " + NETWORK + ".2.2 -i quail42 -F -P -g https://github.com/vernondcole/salt.git"
+       # TODO: salt.bootstrap_options = '-A ' + NETWORK +'.2.2 -i quail42 -P -c /tmp'  # install salt-cloud and salt-master
+       salt.masterless = true  # the provisioning script for the master is masterless
+    end
   end
 end

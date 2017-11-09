@@ -15,11 +15,10 @@
 base:
   '*':
     - common  # all systems share these
+    - my_user_settings  # found in /srv/pillar
 
   'quail*':
     - bevy_settings
-    - my_user_settings  # found in /srv/pillar
 
   bevymaster:
     - bevy_settings
-    - my_user_settings
