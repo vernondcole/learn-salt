@@ -61,7 +61,6 @@ dnsmasq_service:
     - enable: true
     - watch:
       - file: /etc/default/dnsmasq
-      - file: /etc/dnsmasq.d/dnsmaq_pxe.conf
-      - file: /etc/dnsmasq
+      - file: /etc/dnsmasq.d/dnsmasq_pxe.conf
       - pkg: dnsmasq
 ...

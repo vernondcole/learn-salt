@@ -22,3 +22,6 @@ base:
 
   bevymaster:
     - bevy_settings
+
+  pizero:
+    - bevy_settings
