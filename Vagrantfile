@@ -7,6 +7,7 @@
 # -- vernondcole 2017 .  .  .  .
 require "etc"
 require "yaml"
+require "ipaddr"
 login = Etc.getlogin    # get your own user information to use in the VM
 #
 # . v . v . enter your customized values below . v . v . v . v . v . v .
@@ -39,7 +40,7 @@ else
     puts "Unable to read settings file #{ANTECEDENT_FILE_NAME}. Using defaults."
     end
 end
-puts settings.inspect ### TODO: remove this debug line
+# puts settings.inspect ### TODO: remove this debug line
 # . v . v . the program starts here . v . v . v . v . v . v . v . v . v .
 #
 vagrant_command = ARGV[0]
@@ -61,12 +62,18 @@ def get_good_ifc()   # try to find a working Ubuntu network adapter name
           addy[3] = "0"
           network_mask = addy.join(".") + "/16"
         end
+        puts "Making a generic network mask: #{network_mask} for #{info.name}"
+        return info.name, network_mask
       else
-        network_mask = BRIDGED_NETWORK_MASK
+        nmsk = IPAddr.new(BRIDGED_NETWORK_MASK)
+        if nmsk.include?(a.ip_address)
+          puts "Found interface= #{info.name} using #{a.ip_address} #{network_mask}"
+          return info.name, BRIDGED_NETWORK_MASK
+        end
       end
-      return info.name, network_mask
-     end
+    end
   end
+  puts "Unable to find a network interface in #{BRIDGED_NETWORK_MASK}. Using default."
   return "eth0", BRIDGED_NETWORK_MASK   # nothing found. fall back to default
 end
 
@@ -263,11 +270,11 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
     quail_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "-f git b7c0182d93a1092b7369eedfbcf5bc2512c12f1b"  # TODO: use "stable" when OXYGEN is released
+       salt.install_type = "-f git" # b7c0182d93a1092b7369eedfbcf5bc2512c12f1b"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = false
        salt.colorize = true
-       salt.bootstrap_options = "-A " + NETWORK + ".2.2 -i quail42 -F -P -g https://github.com/vernondcole/salt.git"
+       salt.bootstrap_options = "-A " + NETWORK + ".2.2 -i quail42 -F -P " # -g https://github.com/vernondcole/salt.git"
        # TODO: salt.bootstrap_options = '-A ' + NETWORK +'.2.2 -i quail42 -P -c /tmp'  # install salt-cloud and salt-master
        salt.masterless = true  # the provisioning script for the master is masterless
     end
