@@ -35,13 +35,13 @@ supply_memtest_bin:
 
         label memtest86
           menu label Memtest86+
-          kernel /memtest/memtest86+
+          kernel /memtest86+
 
 /srv/tftpboot/pxelinux.0:
   file.copy:
     - source: /usr/lib/PXELINUX/pxelinux.0
 
-/srv/tftpboot/lslinux.c32:
+/srv/tftpboot/ldlinux.c32:
   file.copy:
     - source: /usr/lib/syslinux/modules/bios/ldlinux.c32
 
