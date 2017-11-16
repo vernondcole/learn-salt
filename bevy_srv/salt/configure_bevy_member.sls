@@ -24,7 +24,7 @@ make-dirs-visible:
         chflags nohidden /tmp
 {% endif %}
 
-/etc/salt/minion.d/vagrant_sdb.conf:
+/etc/salt{{ other_minion }}/minion.d/vagrant_sdb.conf:
   file.managed:
     - contents: |
         {{ message }}
@@ -201,7 +201,7 @@ add_salt{{ other_minion }}-call_command:
       - '# v v v v v v  added by Salt  v v v v v v'
       - "alias salt{{ other_minion }}='sudo salt-call --config-dir=/etc/salt{{ other_minion }} \"$@\"'"
       - 'printf ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .\\n"'
-      - 'printf " * This computer is running a bevy master and a second Salt minion.\\n"'
+      - 'printf " * This computer is running a second Salt minion.\\n"'
       - 'printf "\\n"'
       - 'printf " * To use the system Salt master, use the \\\"sudo salt-call\\\" command as usual.\\n"'
       - 'printf "\\n"'
