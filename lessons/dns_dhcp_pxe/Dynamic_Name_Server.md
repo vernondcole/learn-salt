@@ -6,18 +6,8 @@ try:
 
 [Oracle](https://docs.oracle.com/cd/E37670_01/E41137/html/ol-dnsmasq-conf.html)
 
-PXE boot ...
 
-[Dragon](https://blogging.dragon.org.uk/howto-setup-a-pxe-server-with-dnsmasq/)
 
-This one shares with an existing DHCP server. 
-[Manski](https://manski.net/2016/09/pxe-server-on-existing-network-dhcp-proxy-on-ubuntu/)
-
-About UEFI clients ...
-
-[serverfault](https://serverfault.com/questions/829068/trouble-with-dnsmasq-dhcp-proxy-pxe-for-uefi-clients)
-
-[orumin gist](https://gist.github.com/orumin/b38f5aed762f0bedff68)
 
 #####Settings to use my own local nameserver on my Mac...
 

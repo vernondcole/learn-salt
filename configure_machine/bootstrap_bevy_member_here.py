@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# encoding: utf-8
+# encoding: utf-8-
 # vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
 """
 A utility program to install a SaltStack minion,
