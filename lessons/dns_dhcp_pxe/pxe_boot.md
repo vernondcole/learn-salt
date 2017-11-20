@@ -1,10 +1,5 @@
 ## This is a stub entry.
 
-try: 
-
-[dnsmasq man page](http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html#lbAB)
-
-[Oracle](https://docs.oracle.com/cd/E37670_01/E41137/html/ol-dnsmasq-conf.html)
 
 PXE boot ...
 
@@ -15,10 +10,13 @@ This one shares with an existing DHCP server.
 
 About UEFI clients ...
 
+[The Urban Penguin](https://www.theurbanpenguin.com/pxe-install-ubuntu-16-04/) has an excellent lesson.
+
 [serverfault](https://serverfault.com/questions/829068/trouble-with-dnsmasq-dhcp-proxy-pxe-for-uefi-clients)
 
 [orumin gist](https://gist.github.com/orumin/b38f5aed762f0bedff68)
 
+[UBUNTU wike with UEFI](https://wiki.ubuntu.com/UEFI/PXE-netboot-install)
 
 [serverfault](https://serverfault.com/questions/829068/trouble-with-dnsmasq-dhcp-proxy-pxe-for-uefi-clients)
 
