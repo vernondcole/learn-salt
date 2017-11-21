@@ -25,3 +25,7 @@ base:
 
   pizero:
     - bevy_settings
+
+  'bevy:*':
+    - match: grain
+    - bevy_settings

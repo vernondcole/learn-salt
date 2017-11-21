@@ -1,12 +1,8 @@
 ---
-# salt state file for making a PXE boot server
+# salt state file for loading Ubuntu via PXE boot server
 
-pxe_packages:
-  pkg.installed:
-    - names:
-      - dnsmasq
-      - pxelinux
-      - syslinux-common
+include:
+  - pxe
 
 tftp_dir:
   file.directory:

@@ -11,16 +11,20 @@ mine_functions:
 wol_test_machine_ip: 192.168.88.8  # the ip address of the minion machine
 wol_test_mac: '00-1a-4b-7c-2a-b2'  # ethernet address of minion machine
 wol_test_sender: pizero  # node name of WoL transmitter
-pxe_network: '192.168.88.0/24'
-bevymaster_bridged_ip: 192.168.88.4
-bevymaster_hostonly_ip: 172.17.2.2
+dhcp_range: '192.168.88.0'
+bevymaster_external_ip: 192.168.88.4  # main IP address of bevy master
+bevymaster_vagrant_ip: 172.17.2.2  # vagrant host-only IP address of master
 bevy_host_id: 'vc-ddell'
 bevy_dir: '/projects/learn-salt'
 vagrant_bridge_target_network: '192.168.88.0/24'
 #
 
+# download source of base operating system to be booted by PXE.
+pxe_os_download_url: http://archive.ubuntu.com/ubuntu/dists/xenial/main/installer-amd64/current/images/netboot/netboot.tar.gz
+
+
 salt-api:  {# the api server is located using the "master" grain #}
-  port: 8000   # TODO: consider using port 4507
+  port: 4507  # other examples use port 8000
   eauth: pam
   username: vagrant
   password: vagrant
