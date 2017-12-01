@@ -8,22 +8,24 @@
 require "etc"
 require "yaml"
 require "ipaddr"
-login = Etc.getlogin    # get your own user information to use in the VM
 #
 # . v . v . enter your customized values below . v . v . v . v . v . v .
 # .
-VAGRANT_HOST_NAME = Socket.gethostname  #
-BEVY = "bevy1"  # change this to avoid domain name conflicts
+BEVY = "bevy01"  # change this to avoid domain name and MAC address conflicts
 NETWORK = "172.17"  # the first two bytes of your host-only network IP ("192.168")
 # ^ ^ your VM host will be NETWORK.2.1, the others as set below.
 # ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
 DOMAIN = BEVY + ".test"  # .test is an ICANN reserved private top-level domain
+bevy_mac = (BEVY.to_i(36) % 0x1000000).to_s(16)  # a MAC address based on hash of BEVY
+# in Python that would be: bevy_mac = format(int(BEVY, base=36) % 0x1000000, 'x')
 #
 INTERFACE_GUESS = ''  # enter the Windows description for your IP interface if needed
 BRIDGED_NETWORK_MASK = '192.168.88.0/24' # (if blank will try automatic) often "192.168.0.0/16"
 # .
 BEVYMASTER = "bevymaster." + DOMAIN  # the name for your bevy master
 # .
+VAGRANT_HOST_NAME = Socket.gethostname
+login = Etc.getlogin    # get your own user information to use in the VM
 my_linux_user = login  # username used for login to VM
 HASHFILE_NAME = 'bevy_linux_password.hash'  # filename for your Linux password hash
 hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)  # where you store it ^ ^ ^
@@ -40,7 +42,6 @@ else
     puts "Unable to read settings file #{ANTECEDENT_FILE_NAME}. Using defaults."
     end
 end
-# puts settings.inspect ### TODO: remove this debug line
 # . v . v . the program starts here . v . v . v . v . v . v . v . v . v .
 #
 vagrant_command = ARGV[0]
@@ -67,7 +68,7 @@ def get_good_ifc()   # try to find a working Ubuntu network adapter name
       else
         nmsk = IPAddr.new(BRIDGED_NETWORK_MASK)
         if nmsk.include?(a.ip_address)
-          puts "Found interface= #{info.name} using #{a.ip_address} #{network_mask}"
+          puts "Found interface= #{info.name} using #{a.ip_address} in #{BRIDGED_NETWORK_MASK}"
           return info.name, BRIDGED_NETWORK_MASK
         end
       end
@@ -89,10 +90,9 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   #    finally, try the entry keyed in above -- for Windows or something else
   ifc_name, network_mask = get_good_ifc()
   interface_guesses = [ifc_name, 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
-  config.vm.network "public_network", bridge: interface_guesses
-  if ARGV[0] == "up"
+  if ARGV[0] == "up" or ARGV[0] == "reload"
     puts "Running on host #{VAGRANT_HOST_NAME}"
-    puts "Trying bridge network using interfaces: #{interface_guesses}"
+    puts "Will try bridge network using interfaces: #{interface_guesses}"
   end
   config.vm.provision "shell", inline: "ip address", run: "always"  # what did we get?
 
@@ -102,7 +102,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail1." + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.8"  # needed so saltify_profiles.conf can find this unit
-    # quail_config.vm.synced_folder ".", "/vagrant", disabled: true
+    quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|  # only for VirtualBox boxes
         v.memory = 1024       # limit memory for the virtual box
@@ -123,6 +123,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     master_config.vm.hostname = BEVYMASTER
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"  # your host machine will be at NETWORK.2.1
+    master_config.vm.network "public_network", bridge: interface_guesses, mac: "be0000" + bevy_mac
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
 
     if vagrant_command == "ssh"
@@ -209,7 +210,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail16." + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.3"  # needed so saltify_profiles.conf can find this unit
-    # quail_config.vm.synced_folder ".", "/vagrant", disabled: true
+    quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|
         v.memory = 1024       # limit memory for the virtual box
@@ -230,7 +231,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.box = "boxesio/trusty64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail14." + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.4"  # needed so saltify_profiles.conf can find this unit
-    # quail_config.vm.synced_folder ".", "/vagrant", disabled: true
+    quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|
         v.memory = 1024       # limit memory for the virtual box
@@ -253,7 +254,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail42." + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.5"  # your host machine will be at NETWORK.2.1
-    quail_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
+    quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|
         v.memory = 4000       # limit memory for the virtual box
@@ -275,8 +276,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        salt.verbose = false
        salt.colorize = true
        salt.bootstrap_options = "-A " + NETWORK + ".2.2 -i quail42 -F -P " # -g https://github.com/vernondcole/salt.git"
-       # TODO: salt.bootstrap_options = '-A ' + NETWORK +'.2.2 -i quail42 -P -c /tmp'  # install salt-cloud and salt-master
-       salt.masterless = true  # the provisioning script for the master is masterless
+       # TODO: salt.bootstrap_options = '-A ' + NETWORK +'.2.2 -i quail42 -P -c /tmp'  # expect Master at x.x.2.2
+       salt.masterless = true  # the provisioning script is masterless
     end
   end
 end

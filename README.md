@@ -214,7 +214,7 @@ Using [salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud/index.html)
 you will create, manage, and destroy virtual computers.
 You will also integrate and control physical machines using the 
 [Saltify](https://docs.saltstack.com/en/latest/topics/cloud/saltify.html) driver
-Name your bevy: {'bevy1'}: bevy2  # type the same bevy number you selected above
+Name your bevy: {'bevy01'}: bevy2  # type the same bevy number you selected above
 
 User Name: elmerfudd  # type the user name you use on your workstation
 ```

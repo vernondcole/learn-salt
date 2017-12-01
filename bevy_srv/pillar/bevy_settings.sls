@@ -10,18 +10,42 @@ mine_functions:
 #change to agree with your actual saltify test hardware machine
 wol_test_machine_ip: 192.168.88.8  # the ip address of the minion machine
 wol_test_mac: '00-1a-4b-7c-2a-b2'  # ethernet address of minion machine
-wol_test_sender: pizero  # node name of WoL transmitter
-dhcp_range: '192.168.88.0'
-bevymaster_external_ip: 192.168.88.4  # main IP address of bevy master
+wol_test_sender_id: bevymaster  # Salt node id of WoL transmitter
+
+{% set bevymaster_ip = '192.168.88.2' %}  # main IP address of bevy master
+bevymaster_external_ip: {{ bevymaster_ip }}
 bevymaster_vagrant_ip: 172.17.2.2  # vagrant host-only IP address of master
-bevy_host_id: 'vc-ddell'
-bevy_dir: '/projects/learn-salt'
+
+bevy_host_id: 'vc-ddell'  # Salt node id of Vagrant host machine
+bevy_dir: '/projects/learn-salt'  # path to learn-salt directory tree
 vagrant_bridge_target_network: '192.168.88.0/24'
 #
 
+dhcp_pxe_range: '192.168.88.0'  # network for dnsmasq PXE server replies
 # download source of base operating system to be booted by PXE.
-pxe_os_download_url: http://archive.ubuntu.com/ubuntu/dists/xenial/main/installer-amd64/current/images/netboot/netboot.tar.gz
+pxe_netboot_subdir: '16.04'  # name for tftp server subdirectory
+pxe_netboot_download_url: http://archive.ubuntu.com/ubuntu/dists/xenial/main/installer-amd64/current/images
 
+# This is a list of dicts of machines to be PXE booted.
+#  each should have a "tag" matching the Netboot Tags below.
+pxe_netboot_configs:
+  - mac: '00-1a-4b-7c-2a-b2'
+    subdir: '16.04/'  # include a trailing "/"
+    tag: install
+    kernel: ubuntu-installer/amd64/linux
+    append: 'vga=788 initrd=ubuntu-installer/amd64/initrd.gz auto-install/enable=true preseed/url=tftp://{{ bevymaster_ip }}/preseed.files/example.preseed'
+#  - mac: '01-02-03-04-05-06'
+#    kernel: ubuntu_image
+#
+# Netboot Tags...
+#  This is a list of dnsmasq configuration commands.
+#  Each entry is a pxe-service line to match one or more of the configs above.
+#  The parameters are: tag, client system type, menu text, file to boot.
+#  Client system type is one of: x86PC, IA32_EFI, X86-64_EFI, or others
+# see http://www.thekelleys.org.uk/dnsmasq/docs/dnsmasq-man.html
+pxe_netboot_tags:
+  -  pxe-service=tag:install,x86PC,"Network install 16.04","16.04/pxelinux"
+  -  pxe-service=tag:!known,x86PC,"Memory test for unknown machines","/pxelinux"
 
 salt-api:  {# the api server is located using the "master" grain #}
   port: 4507  # other examples use port 8000

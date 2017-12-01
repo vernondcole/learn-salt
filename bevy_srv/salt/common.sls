@@ -11,7 +11,8 @@ swapspace:
     - order: 1
 {% endif %}
 
-{% if salt['grains.get']('os_falmily') == 'Debian' %}
+{% if grains['os_family'] == 'Debian' %}
+debian_packages:
   pkg.installed:
     - pkgs:
       - git
@@ -22,7 +23,7 @@ swapspace:
 {% endif %}
 
 {% if salt['grains.get']('os') == 'Ubuntu' %}
-common_packages:
+ubuntu_packages:
   pkg.installed:
     - pkgs:
       - jq

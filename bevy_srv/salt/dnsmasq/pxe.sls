@@ -38,12 +38,16 @@ supply_memtest_bin:
           kernel /memtest86+
 
 /srv/tftpboot/pxelinux.0:
-  file.copy:
-    - source: /usr/lib/PXELINUX/pxelinux.0
+  file.managed:
+     - source:
+       - /srv/tftpboot/{{ pillar['pxe_netboot_subdir'] }}/pxelinux.0
+       - /usr/lib/PXELINUX/pxelinux.0
 
 /srv/tftpboot/ldlinux.c32:
-  file.copy:
-    - source: /usr/lib/syslinux/modules/bios/ldlinux.c32
+  file.managed:
+     - source:
+       - /srv/tftpboot/{{ pillar['pxe_netboot_subdir'] }}/ldlinux.c32
+       - /usr/lib/syslinux/modules/bios/ldlinux.c32
 
 /etc/dnsmasq.d/dnsmasq_pxe.conf:
   file.managed:

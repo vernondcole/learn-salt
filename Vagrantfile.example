@@ -12,7 +12,7 @@ login = Etc.getlogin    # get your own user information to use in the VM
 # . v . v . enter your customized values below . v . v . v . v . v . v .
 # .
 VAGRANT_HOST_NAME = Socket.gethostname  #
-BEVY = "bevy1"  # change this to avoid domain name conflicts
+BEVY = "bevy01"  # change this to avoid domain name conflicts
 NETWORK = "172.17"  # the first two bytes of your host-only network IP ("192.168")
 # ^ ^ your VM host will be NETWORK.2.1, the others as set below.
 # ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.

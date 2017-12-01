@@ -2,61 +2,36 @@
 # salt state file for loading Ubuntu via PXE boot server
 
 include:
-  - pxe
+  - .pxe
 
-tftp_dir:
-  file.directory:
-    - name: /srv/tftpboot
+ubuntu_tarball:
+  archive.extracted:
+    - name: /srv/tftpboot/{{ pillar['pxe_netboot_subdir'] }}
+    - source: {{ pillar['pxe_netboot_download_url'] }}/netboot/netboot.tar.gz
+    - source_hash: {{ pillar['pxe_netboot_download_url'] }}/SHA1SUMS
     - user: {{ salt['config.get']('my_linux_user') }}
     - group: staff
-    - dir_mode: 775
-    - file_mode: 644
-    - makedirs: true
 
-supply_memtest_bin:
+/srv/tftpboot/preseed.files/example.preseed:
   file.managed:
-    - name: /srv/tftpboot/memtest86+  # NOTE: no ".bin"
-    - source:
-      - /boot/memtest86+.bin
-      - salt://{{ slspath }}/files/memtest86+.bin
-    - use: {file: tftp_dir}
+    - source: salt://dnsmasq/files/example.preseed
+    - makedirs: true
+    - user: {{ salt['config.get']('my_linux_user') }}
+    - group: staff
 
-/srv/tftpboot/pxelinux.cfg/default:
+{% for config in salt['pillar.get']('pxe_netboot_configs') %}
+/srv/tftpboot/{{ config['subdir'] }}pxelinux.cfg/01-{{ config['mac'] }}:
   file.managed:
     - makedirs: true
     - contents: |
-        default memtest86
-        prompt 1
-        timeout 15
+        default autoboot
+        prompt 0
 
-        label memtest86
-          menu label Memtest86+
-          kernel /memtest86+
+        LABEL autoboot
+        KERNEL {{ config['kernel'] }}
+        APPEND {{ config['append'] }}
 
-/srv/tftpboot/pxelinux.0:
-  file.copy:
-    - source: /usr/lib/PXELINUX/pxelinux.0
-
-/srv/tftpboot/ldlinux.c32:
-  file.copy:
-    - source: /usr/lib/syslinux/modules/bios/ldlinux.c32
-
-/etc/dnsmasq.d/dnsmasq_pxe.conf:
-  file.managed:
-    - source: salt://{{ slspath }}/files/dnsmasq_pxe.conf
-    - template: jinja
-    - makedirs: true
-
-/etc/default/dnsmasq:
-  file.append:
-    - text: "DNSMASQ_EXCEPT=lo  ## Added by Salt"
-
-dnsmasq_service:
-  service.running:
-    - name: dnsmasq
-    - enable: true
-    - watch:
-      - file: /etc/default/dnsmasq
-      - file: /etc/dnsmasq.d/dnsmasq_pxe.conf
-      - pkg: dnsmasq
+    - user: {{ salt['config.get']('my_linux_user') }}
+    - group: staff
+{% endfor %}
 ...

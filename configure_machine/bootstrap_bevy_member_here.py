@@ -161,7 +161,7 @@ def request_bevy_username_and_password(master: bool):
     loop = Ellipsis  # Python trivia: Ellipsis evaluates as True
     while loop:
         print()
-        bevy = input("Name your bevy: {'bevy1'}:") or 'bevy1'
+        bevy = input("Name your bevy: {'bevy01'}:") or 'bevy01'
         print()
 
         print('Please supply your desired user name to be used on all minions.')

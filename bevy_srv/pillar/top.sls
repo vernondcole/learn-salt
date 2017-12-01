@@ -14,7 +14,7 @@
 #
 base:
   '*':
-    - common  # all systems share these
+    - core_settings  # all systems share these
     - my_user_settings  # found in /srv/pillar
 
   'quail*':
