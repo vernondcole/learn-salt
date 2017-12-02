@@ -12,8 +12,10 @@ d-i debian-installer/locale string en_US
 
 # Keyboard selection.
 # Disable automatic (interactive) keymap detection.
+d-i console-keymaps-at/keymap select American English
+d-i debian-installer/keymap string us
 d-i console-setup/ask_detect boolean false
-d-i keyboard-configuration/xkb-keymap select us
+#d-i keyboard-configuration/xkb-keymap select us
 # To select a variant of the selected layout:
 # d-i keyboard-configuration/xkb-keymap select us(dvorak)
 # d-i keyboard-configuration/toggle select No toggling
@@ -26,7 +28,7 @@ d-i keyboard-configuration/xkb-keymap select us
 
 # netcfg will choose an interface that has link if possible. This makes it
 # skip displaying a list if there is more than one interface.
-d-i netcfg/choose_interface select auto
+# !! d-i netcfg/choose_interface select auto !! # bug in preseed here !!
 
 # To pick a particular interface instead:
 #d-i netcfg/choose_interface select eth1
@@ -70,7 +72,7 @@ d-i netcfg/link_wait_timeout string 10
 # values set here. However, setting the values still prevents the questions
 # from being shown, even if values come from dhcp.
 d-i netcfg/get_hostname string preseeded
-d-i netcfg/get_domain string bevy01.test
+#d-i netcfg/get_domain string bevy01.test
 
 # If you want to force a hostname, regardless of what either the DHCP
 # server returns or what the reverse DNS entry for the IP is, uncomment
@@ -184,7 +186,7 @@ d-i clock-setup/ntp boolean true
 # - regular: use the usual partition types for your architecture
 # - lvm:     use LVM to partition the disk
 # - crypto:  use LVM within an encrypted partition
-#d-i partman-auto/method string regular
+d-i partman-auto/method string regular
 
 # If one of the disks that are going to be automatically partitioned
 # contains an old LVM configuration, the user will normally receive a
@@ -206,7 +208,7 @@ d-i clock-setup/ntp boolean true
 # - atomic: all files in one partition
 # - home:   separate /home partition
 # - multi:  separate /home, /var, and /tmp partitions
-#d-i partman-auto/choose_recipe select atomic
+d-i partman-auto/choose_recipe select atomic
 
 # Or provide a recipe of your own...
 # If you have a way to get a recipe file into the d-i environment, you can
@@ -245,10 +247,10 @@ d-i clock-setup/ntp boolean true
 
 # This makes partman automatically partition without confirmation, provided
 # that you told it what to do using one of the methods above.
-#d-i partman-partitioning/confirm_write_new_label boolean true
-#d-i partman/choose_partition select finish
-#d-i partman/confirm boolean true
-#d-i partman/confirm_nooverwrite boolean true
+d-i partman-partitioning/confirm_write_new_label boolean true
+d-i partman/choose_partition select finish
+d-i partman/confirm boolean true
+d-i partman/confirm_nooverwrite boolean true
 
 ## Partitioning using RAID
 # The method should be set to "raid".
@@ -359,13 +361,13 @@ d-i apt-setup/backports boolean true
 #tasksel tasksel/first multiselect ubuntu-desktop
 #tasksel tasksel/first multiselect lamp-server, print-server
 #tasksel tasksel/first multiselect kubuntu-desktop
-tasksel tasksel/first multiselect openssh-server
+tasksel tasksel/first multiselect ssh-server
 
 # Individual additional packages to install
-#d-i pkgsel/include string openssh-server build-essential
+d-i pkgsel/include string openssh-server build-essential
 # Whether to upgrade packages after debootstrap.
 # Allowed values: none, safe-upgrade, full-upgrade
-#d-i pkgsel/upgrade select none
+d-i pkgsel/upgrade select safe-upgrade
 
 # Language pack selection
 #d-i pkgsel/language-packs multiselect de, en, zh
@@ -401,13 +403,13 @@ d-i grub-installer/only_debian boolean true
 
 # This one makes grub-installer install to the MBR if it also finds some other
 # OS, which is less safe as it might not be able to boot that other OS.
-#d-i grub-installer/with_other_os boolean true
+d-i grub-installer/with_other_os boolean true
 
 # Due notably to potential USB sticks, the location of the MBR can not be
 # determined safely in general, so this needs to be specified:
 #d-i grub-installer/bootdev  string /dev/sda
 # To install to the first device (assuming it is not a USB stick):
-#d-i grub-installer/bootdev  string default
+d-i grub-installer/bootdev  string default
 
 # Alternatively, if you want to install to a location other than the mbr,
 # uncomment and edit these lines:
@@ -432,10 +434,10 @@ d-i grub-installer/only_debian boolean true
 # During installations from serial console, the regular virtual consoles
 # (VT1-VT6) are normally disabled in /etc/inittab. Uncomment the next
 # line to prevent this.
-d-i finish-install/keep-consoles boolean true
+#d-i finish-install/keep-consoles boolean true
 
 # Avoid that last message about the install being complete.
-#d-i finish-install/reboot_in_progress note
+d-i finish-install/reboot_in_progress note
 
 # This will prevent the installer from ejecting the CD during the reboot,
 # which is useful in some situations.
@@ -443,7 +445,7 @@ d-i cdrom-detect/eject boolean false
 
 # This is how to make the installer shutdown when finished, but not
 # reboot into the installed system.
-#d-i debian-installer/exit/halt boolean true
+d-i debian-installer/exit/halt boolean true
 # This will power off the machine instead of just halting it.
 #d-i debian-installer/exit/poweroff boolean true
 

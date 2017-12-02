@@ -28,26 +28,29 @@ supply_memtest_bin:
 /srv/tftpboot/pxelinux.cfg/default:
   file.managed:
     - makedirs: true
-    - contents: |
-        default memtest86
-        prompt 1
-        timeout 15
-
-        label memtest86
-          menu label Memtest86+
-          kernel /memtest86+
+    - replace: false
+    - source: salt://{ slspath }}/files/default.cfg
 
 /srv/tftpboot/pxelinux.0:
   file.managed:
      - source:
        - /srv/tftpboot/{{ pillar['pxe_netboot_subdir'] }}/pxelinux.0
        - /usr/lib/PXELINUX/pxelinux.0
+       - salt://{{ slspath }}/files/pxelinux.0
 
 /srv/tftpboot/ldlinux.c32:
   file.managed:
      - source:
        - /srv/tftpboot/{{ pillar['pxe_netboot_subdir'] }}/ldlinux.c32
        - /usr/lib/syslinux/modules/bios/ldlinux.c32
+       - salt://{{ slspath }}/files/ldlinux.c32
+
+/srv/tftpboot/menu.c32:
+  file.managed:
+     - source:
+       - /srv/tftpboot/{{ pillar['pxe_netboot_subdir'] }}/menu.c32
+       - /usr/lib/syslinux/modules/bios/menu.c32
+       - salt://{{ slspath }}/files/menu.c32
 
 /etc/dnsmasq.d/dnsmasq_pxe.conf:
   file.managed:

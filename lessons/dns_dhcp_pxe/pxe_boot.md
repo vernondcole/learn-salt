@@ -181,3 +181,6 @@ About preseed files...
 
 [Ubuntu help for installation](https://help.ubuntu.com/lts/installation-guide/armhf/apbs02.html) preseeding page
 
+["Hands-off" Debian](http://hands.com/d-i/) from the package author (with debugging hints).
+
+
