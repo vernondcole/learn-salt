@@ -15,5 +15,5 @@ connect_to_bevy:
 #    - name: x_hw
 #    - profile: hw_demo
   cmd.run:
-    - name: salt-cloud -p hw_demo x_hw
+    - name: salt-cloud -p hw_demo x_hw --log-level=info
 ...

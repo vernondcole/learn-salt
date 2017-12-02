@@ -12,8 +12,8 @@ import time
 
 pillar = NotImplemented  # this file must be processed by Jinja before being run.
 HOST_NAME = 'pxe_file_clearing_daemon'
-PORT_NUMBER = 4545 # {{ pillar['pxe_clearing_port'] }}
-WAIT_TIME = 120 # {{ pillar['pxe_clearing_daemon_life_minutes'] }} * 60  # seconds
+PORT_NUMBER =  {{ pillar['pxe_clearing_port'] }}
+WAIT_TIME =  {{ pillar['pxe_clearing_daemon_life_minutes'] }} * 60  # seconds
 
 BOOT_FROM_DISK_CONFIG_TEXT = '''
 default bootfirst
