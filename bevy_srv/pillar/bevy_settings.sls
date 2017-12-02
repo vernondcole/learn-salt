@@ -28,6 +28,10 @@ dhcp_pxe_range: {{ pxe_network_cidr.split('/')[0] }}  # network for dnsmasq PXE 
 {% set pxe_server_ip = salt['network.ip_addrs'](cidr=pxe_network_cidr)[0] %}
 pxe_server_ip: {{ pxe_server_ip }}
 
+# the pxe boot server needs a Python program to run to keep auto installed machines from looping
+pxe_clearing_daemon_life_minutes: 30
+pxe_clearing_port: 4545  # TCP port to sent html control to pxe_clearing_daemon
+
 # download source of base operating system to be booted by PXE.
 pxe_netboot_subdir: '{{ ubuntu_version }}'  # name for tftp server subdirectory
 pxe_netboot_download_url: http://archive.ubuntu.com/ubuntu/dists/{{ ubuntu_version }}/main/installer-amd64/current/images
@@ -40,7 +44,7 @@ pxe_netboot_configs:
     subdir: '{{ ubuntu_version }}/'  # include a trailing "/"
     tag: install
     kernel: ubuntu-installer/amd64/linux
-    append: 'vga=788 initrd=ubuntu-installer/amd64/initrd.gz auto-install/enable=true preseed/url=tftp://{{ pxe_server_ip }}/preseed.files/hands_off.preseed'
+    append: 'vga=788 initrd=ubuntu-installer/amd64/initrd.gz auto-install/enable=true preseed/url=tftp://{{ pxe_server_ip }}/preseed.files/'
 #  - mac: '01-02-03-04-05-06'
 #    kernel: ubuntu_image
 #

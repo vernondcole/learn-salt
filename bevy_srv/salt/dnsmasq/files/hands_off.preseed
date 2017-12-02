@@ -71,13 +71,13 @@ d-i netcfg/link_wait_timeout string 10
 # Any hostname and domain names assigned from dhcp take precedence over
 # values set here. However, setting the values still prevents the questions
 # from being shown, even if values come from dhcp.
-d-i netcfg/get_hostname string preseeded
+d-i netcfg/get_hostname string {{ config_mac }}
 #d-i netcfg/get_domain string bevy01.test
 
 # If you want to force a hostname, regardless of what either the DHCP
 # server returns or what the reverse DNS entry for the IP is, uncomment
 # and adjust the following line.
-#d-i netcfg/hostname string testunit.bevy01.test
+#d-i netcfg/hostname string {{ config_mac }}
 
 # Disable that annoying WEP key dialog.
 d-i netcfg/wireless_wep string
@@ -445,9 +445,9 @@ d-i cdrom-detect/eject boolean false
 
 # This is how to make the installer shutdown when finished, but not
 # reboot into the installed system.
-d-i debian-installer/exit/halt boolean true
+#d-i debian-installer/exit/halt boolean true
 # This will power off the machine instead of just halting it.
-#d-i debian-installer/exit/poweroff boolean true
+d-i debian-installer/exit/poweroff boolean true
 
 ### Preseeding other packages
 # Depending on what software you choose to install, or if things go wrong
@@ -482,4 +482,4 @@ d-i debian-installer/exit/halt boolean true
 # packages and run commands in the target system.
 #d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
 
-
+d-i preseed/late_command string wget -q -O - http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/clear?{{ config_mac }}

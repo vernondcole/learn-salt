@@ -20,14 +20,6 @@ ubuntu_tarball:
     - user: {{ salt['config.get']('my_linux_user') }}
     - group: staff
 
-/srv/tftpboot/preseed.files/hands_off.preseed:
-  file.managed:
-    - source: salt://{{ slspath }}/files/hands_off.preseed
-    - template: jinja
-    - makedirs: true
-    - user: {{ salt['config.get']('my_linux_user') }}
-    - group: staff
-
 pxelinux_add_{{ pillar['pxe_netboot_subdir'] }}_option:
   file.append:
     - name: /srv/tftpboot/pxelinux.cfg/default
@@ -49,7 +41,37 @@ pxelinux_add_{{ pillar['pxe_netboot_subdir'] }}_option:
     - user: {{ salt['config.get']('my_linux_user') }}
     - group: staff
 
+create_the_file_clearing_daemon:
+  file.managed:
+    - name: /srv/tftpboot/preseed.files/file_clearing_daemon.py
+    - source: salt://{{ slspath }}/files/file_clearing_daemon.jinja.py
+    - template: jinja
+    - mode: 775
+    - show_changes: false
+run_the_file_clearing_daemon:
+  cmd.run:
+    - bg: true  # do not wait for completion of this command
+    - require:
+      - file: create_the_file_clearing_daemon
+    - shell: /bin/bash
+    - name: /srv/tftpboot/preseed.files/file_clearing_daemon.py
+let_the_file_clearing_daemon_get_started:
+  http.wait_for_successful_query:
+    - name: http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/ping
+    - status: 200
+    - request_interval: 2
+    - wait_for: 20
+
 {% for config in salt['pillar.get']('pxe_netboot_configs') %}
+/srv/tftpboot/preseed.files/{{ config['mac'] }}:
+  file.managed:
+    - source: salt://{{ slspath }}/files/hands_off.preseed
+    - template: jinja
+    - config_mac: {{ config['mac'] }}
+    - makedirs: true
+    - user: {{ salt['config.get']('my_linux_user') }}
+    - group: staff
+
 /srv/tftpboot/{{ config['subdir'] }}pxelinux.cfg/01-{{ config['mac'] }}:
   file.managed:
     - makedirs: true
@@ -59,7 +81,7 @@ pxelinux_add_{{ pillar['pxe_netboot_subdir'] }}_option:
         LABEL autobootnow
         KERNEL {{ config['kernel'] }}
         IPAPPEND 2  # work around bug
-        APPEND {{ config['append'] }} netcfg/choose_interface=auto
+        APPEND {{ config['append'] }}{{ config['mac'] }} priority=critical netcfg/choose_interface=auto hostname={{ config['mac'] }}
     - user: {{ salt['config.get']('my_linux_user') }}
     - group: staff
 
@@ -74,5 +96,11 @@ pxelinux_add_{{ pillar['pxe_netboot_subdir'] }}_option:
         CONFIG {{ config['subdir'] }}/pxelinux.cfg/01-{{ config['mac'] }}
     - user: {{ salt['config.get']('my_linux_user') }}
     - group: staff
+
+record_the_file_clearing_data:
+  http.query:
+    - name: http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/store?{{ config['mac'] }}?/srv/tftpboot/{{ config['subdir'] }}pxelinux.cfg/01-{{ config['mac'] }}
+    - status: 201
 {% endfor %}
+
 ...

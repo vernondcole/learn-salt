@@ -29,7 +29,8 @@ supply_memtest_bin:
   file.managed:
     - makedirs: true
     - replace: false
-    - source: salt://{ slspath }}/files/default.cfg
+    - source: salt://{{ slspath }}/files/default.cfg
+    - template: jinja
 
 /srv/tftpboot/pxelinux.0:
   file.managed:
