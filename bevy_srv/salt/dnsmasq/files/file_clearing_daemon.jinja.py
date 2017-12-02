@@ -8,11 +8,12 @@ from __future__ import print_function
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import threading
 from pathlib import Path
+import time
 
 pillar = NotImplemented  # this file must be processed by Jinja before being run.
 HOST_NAME = 'pxe_file_clearing_daemon'
-PORT_NUMBER = {{ pillar['pxe_clearing_port'] }}
-WAIT_TIME = {{ pillar['pxe_clearing_daemon_life_minutes'] }} * 60  # seconds
+PORT_NUMBER = 4545 # {{ pillar['pxe_clearing_port'] }}
+WAIT_TIME = 120 # {{ pillar['pxe_clearing_daemon_life_minutes'] }} * 60  # seconds
 
 BOOT_FROM_DISK_CONFIG_TEXT = '''
 default bootfirst
@@ -20,6 +21,15 @@ label bootfirst
   say Now booting from disk
   localboot 0
 '''
+
+class StoppableHTTPServer(HTTPServer):
+    def run(self):
+        try:
+            self.serve_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.server_close()
 
 # HTTPRequestHandler class
 class File_Clearing_RequestHandler(BaseHTTPRequestHandler):
@@ -33,7 +43,6 @@ class File_Clearing_RequestHandler(BaseHTTPRequestHandler):
             self.send_response_only(200, 'pong')
         else:
             args = self.path.strip().split('?')
-            print(repr(args))  ###
             if len(args) < 2 or (args[0] == '/store' and len(args) < 3):
                 self.send_error(400, 'Data too short',
                                 'Not enough information in query "{}"'.format(self.path))
@@ -45,8 +54,8 @@ class File_Clearing_RequestHandler(BaseHTTPRequestHandler):
                 self.send_response(201)  # resource created
             elif args[0] == '/clear':
                 key = args[1]
-                config_file = Path(job_list[key])
                 try:
+                    config_file = Path(job_list[key])
                     with config_file.open('w') as out:
                         out.write(BOOT_FROM_DISK_CONFIG_TEXT)
                         self.send_response(200)
@@ -57,6 +66,8 @@ class File_Clearing_RequestHandler(BaseHTTPRequestHandler):
                 except OSError as e:
                     print('Error writing file {} --> {}'.format(config_file, e))
                     self.send_error(400, 'OSError', e)
+                except KeyError:
+                    self.send_error(400, 'IndexError', 'Key {} is unknown.'.format(key))
             else:
                 self.send_error(400, 'Bad query', 'Query neither "/store?" nor "/clear?"')
 
@@ -70,13 +81,16 @@ class File_Clearing_RequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(bytes(message, "utf8"))
 
         if work_is_done:
-            self.server.shutdown()
+            time.sleep(5)
+            self.server._BaseServer__shutdown_request = True
         return
 
 
 def timed_shutdown(httpserver):
     print('Timer expired, shutting down.')
     httpserver.shutdown()
+    time.sleep(10)
+
 
 
 def run(port_number=PORT_NUMBER):
@@ -84,7 +98,7 @@ def run(port_number=PORT_NUMBER):
 
     try:
         server_address = ('0.0.0.0', port_number)
-        httpd = HTTPServer(server_address, File_Clearing_RequestHandler)
+        httpd = StoppableHTTPServer(server_address, File_Clearing_RequestHandler)
     except OSError as e:
         if e.errno == 98:
             print('Port {} already in use.'.format(port_number))
@@ -93,15 +107,15 @@ def run(port_number=PORT_NUMBER):
             raise
     if httpd:
         httpd.job_list = {}
-        httpd.game_over = threading.Timer(WAIT_TIME, timed_shutdown, (httpd,))
-        httpd.game_over.start()
+        game_over = threading.Timer(WAIT_TIME, timed_shutdown, (httpd,))
+        game_over.start()
         print('running server...')
-        try:
-            httpd.serve_forever()  # until the time expires
-        except KeyboardInterrupt:
-            print('Received KeyboardInterrupt')
-        httpd.server_close()
+        server = threading.Thread(None, httpd.run)
+        server.start()
+
+        server.join()
         print("Server Stopped - %s:%s" % (HOST_NAME, port_number))
+        game_over.cancel()
     else:
         print('Could not create a server.')
         exit(1)
