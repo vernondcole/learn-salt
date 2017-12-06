@@ -1,5 +1,5 @@
-# minimal "top.sls" file to create a new SaltStack master
-#
+# {{ pillar['salt_created_message'] }}
+# {# also the top for the initial creation of the bevy master #}
 base:
   '*':
     - common

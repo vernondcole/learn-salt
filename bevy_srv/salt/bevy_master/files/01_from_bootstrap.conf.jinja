@@ -1,5 +1,5 @@
 {#- this is the jinja template used to create the configuration file
-     /etc/salt/minion.d/01_from_bootstrap.conf
+     /etc/salt/minion.d/01_from_bootstrap.conf and .../master.d/...
      -#}
 # {{ pillar['salt_managed_message'] }}
 # created from template bevy_master/files/01_from_bootstrap.conf.jinja
@@ -8,7 +8,8 @@
 
 {% set bevy_root = salt['config.get']('bevy_root', '/vagrant/bevy_srv') %}
 id: {{ salt['config.get']('node_name', salt['config.get']('id')) }}
-{% if salt['config.get']('node_name', '') == 'bevymaster' %}master: localhost {% else %}
+{% set is_master = salt['config.get']('node_name', '') == 'bevymaster' %}
+{% if is_master %}master: localhost {% else %}
 master: {{ salt['config.get']('bevymaster_address', salt['config.get']('master')) }}
 {% endif %}
 grains:
@@ -18,26 +19,26 @@ grains:
   groups:
     - dynamux
 
-{% if salt['config.get']('run_second_minion') -%}
+{% if not is_master and salt['config.get']('run_second_minion') -%}
 pidfile: /var/run/salt-minion2.pid
 pki_dir: /etc/salt/pki/minion2
 sock_dir: /var/run/salt-minion2
 log_file: /var/log/salt/minion2
 {% endif -%}
 
-run_second_minion: {{ salt['config.get']('run_second_minion') }}
+run_second_minion: {{ not is_master and salt['config.get']('run_second_minion') }}
 
 bevy: {{ salt['config.get']('bevy') }}
 
 my_linux_user: {{ salt['config.get']('my_linux_user') }}
 
-worker_threads: 2
+worker_threads: 2  {# sufficient for test systems #}
 
 mine_interval: 5   # this is a test system, so run the mine every five minutes
 
 {% if bevy_root != '' %}
 #
-# for salt-call --local, we need to tell Salt minion where to find its files
+# for salt-call --local, and master we need to tell Salt where to find its files
 #
 file_roots:    # use this directory rather than /srv/salt
   base:

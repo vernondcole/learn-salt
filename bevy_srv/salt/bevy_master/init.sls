@@ -67,7 +67,7 @@ salt-cloud:
 salt-master-config:
   file.managed:
     - name: /etc/salt/master.d/01_master_from_bootstrap.conf
-    - source: salt://bevy_master/files/master.conf
+    - source: salt://bevy_master/files/01_from_bootstrap.conf.jinja
     - template: jinja
     - makedirs: true
 
@@ -107,6 +107,15 @@ salt-master-config:
     - mode: 664
     - source: salt://bevy_master/files/README.notice.jinja
     - template: jinja
+
+/srv/salt/top.sls:
+  file.managed:  # make the initial copy of top.sls
+    - user: {{ my_username }}
+    - group: staff
+    - makedirs: true
+    - mode: 664
+    - source: salt://bevy_master/salt/top.sls
+    - replace: false
 
 /etc/salt/cloud.conf.d/01_cloud_from_bootstrap.conf:
   file.managed:
