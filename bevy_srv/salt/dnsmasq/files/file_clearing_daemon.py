@@ -129,7 +129,7 @@ class FileClearingRequestHandler(BaseHTTPRequestHandler):
                         try:
                             if config_file.exists():
                                 with config_file.open() as test:
-                                    if test.readline() != salt_managed_message:
+                                    if test.readline().strip() != salt_managed_message:
                                         print(DAEMON_NAME, '-->', 'File "{}" does not start with {}'.format(config_file, salt_managed_message))
                                         continue
                                 with config_file.open('w') as out:  # re-open for writing
@@ -149,12 +149,16 @@ class FileClearingRequestHandler(BaseHTTPRequestHandler):
                             print(DAEMON_NAME, '-->', 'Running command: "{}"'.format(next_command))
                             try:
                                 # # # Run the command as a shell script
-                                subprocess.check_call(next_command, shell=True, universal_newlines=True)
+                                proc = subprocess.Popen(next_command, shell=True, universal_newlines=True)
+                                return_code = proc.wait(5)
+                                print(DAEMON_NAME, '-->', 'Command returned with {}'.format(return_code))
                                 # # #
-                            except subprocess.CalledProcessError as err:
-                                error_text = 'Called process returned error code {}'.format(err.result)
+                            except subprocess.TimeoutExpired:
+                                print(DAEMON_NAME, '-->', 'Command is still running -- moving on...')
+                            except (subprocess.SubprocessError, OSError) as err:
+                                error_text = 'Calling process caused error code {}'.format(err.returncode)
                                 print(DAEMON_NAME, '-->', error_text)
-                                self.send_error(500, 'Called process error.', error_text)
+                                self.send_error(500, 'Error spawning process.', error_text)
                                 break
                         self.send_response(202)
                 except (KeyError, IndexError):

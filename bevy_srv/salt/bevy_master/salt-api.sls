@@ -19,10 +19,11 @@ cherrypy:
 
 tls.create_self_signed_cert:
   module.run:
-    - kwargs:
-      - O: {{ salt['pillar.get']('salt-api:tls_organization') }}
-      - L: {{ salt['pillar.get']('salt-api:tls_location') }}
-      - emailAddress: {{ salt['pillar.get']('salt-api:tls_emailAddress') }}
+    - kwargs: {
+      O: {{ salt['pillar.get']('salt-api:tls_organization') }}
+      L: {{ salt['pillar.get']('salt-api:tls_location') }}
+      emailAddress: {{ salt['pillar.get']('salt-api:tls_emailAddress') }}
+      }
 
 /etc/salt/master.d/api.conf:
   file.managed:

@@ -1,4 +1,10 @@
 #### Contents of the preconfiguration file (for xenial)
+# ... this version set for a semi-automatic installation
+# ... the operatior must select keyboard, network interface
+# ... and disk partition (so we don't kill wrong thing)
+# ... but other selections are pre-configured.
+# ...  -- VDC
+# ...
 ### Localization
 # Preseeding only locale sets language, country and locale.
 d-i debian-installer/locale string en_US
@@ -17,6 +23,8 @@ d-i keyboard-configuration/xkb-keymap select us
 # To select a variant of the selected layout:
 # d-i keyboard-configuration/xkb-keymap select us(dvorak)
 # d-i keyboard-configuration/toggle select No toggling
+
+
 
 ### Network configuration
 # Disable network configuration entirely. This is useful for cdrom

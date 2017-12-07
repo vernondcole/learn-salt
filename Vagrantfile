@@ -89,7 +89,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   # For the bridged network interface, try to detect name, then guess MacOS names, too
   #    finally, try the entry keyed in above -- for Windows or something else
   ifc_name, network_mask = get_good_ifc()
-  interface_guesses = [ifc_name, 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
+  interface_guesses = [ifc_name] #, 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
   if ARGV[0] == "up" or ARGV[0] == "reload"
     puts "Running on host #{VAGRANT_HOST_NAME}"
     puts "Will try bridge network using interfaces: #{interface_guesses}"
