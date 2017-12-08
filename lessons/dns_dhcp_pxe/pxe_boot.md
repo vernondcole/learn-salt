@@ -3,6 +3,24 @@
 PXE is an acronym for [Preboot Execution Environment](https://en.wikipedia.org/wiki/Preboot_Execution_Environment),
 a facility for controlling the bootstrapping of a machine using the network.
 
+##### What this lesson covers
+
+Using a test client workstation and a private network router, running bevy_master on a Vagrant VM,
+- remote start a powered-down client computer
+- automatically load an operating system image onto it
+- keep it from looping the install process
+- run a command to automatically join it to the bevy
+
+When your network and configuration files are completely set up, 
+you will be able to bring up a new bevy master, load a new target OS, and connect your
+client hardware machine, in three lines:
+
+```bash
+vagrant up bevymaster
+vagrant ssh bevymaster
+sudo salt-call state.apply bevy_master.test.full_rebuild_saltify_machine
+```
+
 #### The Boot Server and Process
 
 Our setup here will use [dnsmasq](http://thekelleys.org.uk/dnsmasq/doc.html),
