@@ -108,4 +108,4 @@ ENV/
 bevy_srv/salt/ssh_keys
 bevy_srv/pillar/01_*
 configure_machine/grains
-bevy_srv/pki_cache
+bevy_srv/salt/pki_cache

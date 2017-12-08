@@ -12,20 +12,21 @@ bevy_master_grain:
     - name: roles
     - value:
       - bevy_master
+update_the_grains:
   module.run:
-    saltutil.sync_grains
+    - name: saltutil.sync_grains
 
 include:
   - sdb
   - ./populate_bootstrap_settings
   - configure_bevy_member  {# master is a member, too #}
 
-{% if salt['file.directory_exists']('/vagrant/bevy_srv/pki_cache') %}
+{% if salt['file.directory_exists']('/vagrant/bevy_srv/salt/pki_cache') %}
 restore_keys_from_cache:
   file.recurse:
-    - source: /vagrant/bevy_srv/pki_cache
+    - source: salt://pki_cache
     - clean: false
-    - name: /etc/salt/pki
+    - name: /etc/salt
 {% else %}  {# must make new keys #}
 generate-own-key:
   cmd.run:  # generates a minion key, if it does not already exist

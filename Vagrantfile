@@ -153,7 +153,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
     master_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "git b7c0182d93a1092b7369eedfbcf5bc2512c12f1b"  # TODO: use "stable" when OXYGEN is released
+       salt.install_type = "git 9865a31e62dcf6b7d6184777483685e4f054168b"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = true
        salt.colorize = true

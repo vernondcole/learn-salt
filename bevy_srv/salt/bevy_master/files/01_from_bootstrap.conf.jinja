@@ -8,9 +8,12 @@
 
 {% set bevy_root = salt['config.get']('bevy_root', '/vagrant/bevy_srv') %}
 id: {{ salt['config.get']('node_name', salt['config.get']('id')) }}
-{% set is_master = salt['config.get']('node_name', '') == 'bevymaster' %}
-{% if is_master %}master: localhost {% else %}
-master: {{ salt['config.get']('bevymaster_address', salt['config.get']('master')) }}
+{% set is_master = salt['config.get']('id', '') == 'bevymaster' %}
+{% if is_master %}master: localhost
+{% elif salt['grains.get']('virtual', '') == 'physical' -%}
+master: {{ salt['config.get']('bevymaster_external_ip', salt['config.get']('master')) }}
+{% else -%}
+master: {{ salt['config.get']('bevymaster_vagrant_ip', salt['config.get']('master')) }}
 {% endif %}
 grains:
   datacenter: bevy
@@ -19,14 +22,15 @@ grains:
   groups:
     - dynamux
 
-{% if not is_master and salt['config.get']('run_second_minion') -%}
+{% if not is_master -%}
+  {% if salt['config.get']('run_second_minion', false) -%}
 pidfile: /var/run/salt-minion2.pid
 pki_dir: /etc/salt/pki/minion2
 sock_dir: /var/run/salt-minion2
 log_file: /var/log/salt/minion2
+  {% endif %}
+run_second_minion: {{ salt['config.get']('run_second_minion') }}
 {% endif -%}
-
-run_second_minion: {{ not is_master and salt['config.get']('run_second_minion') }}
 
 bevy: {{ salt['config.get']('bevy') }}
 
