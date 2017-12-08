@@ -123,6 +123,7 @@ class FileClearingRequestHandler(BaseHTTPRequestHandler):
                     stored_qs = job_list.get(key, '')  # retrieve stored query string (if any)
                     combined_qs = (stored_qs + '&' if stored_qs else '') + args[1]
                     data = urllib.parse.parse_qs(combined_qs)
+                    # do 'pxe_config_file' commands to change our BOOT configuration
                     config_files = data.get('pxe_config_file', [])
                     for config_file in config_files:
                         config_file = Path(config_file)

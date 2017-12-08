@@ -1,4 +1,4 @@
-## How to prepare a PXE boot server.
+## How to Prepare and Run a PXE boot server.
 
 PXE is an acronym for [Preboot Execution Environment](https://en.wikipedia.org/wiki/Preboot_Execution_Environment),
 a facility for controlling the bootstrapping of a machine using the network.
@@ -133,20 +133,99 @@ and find a 17.10 release in [http://archive.ubuntu.com/ubuntu/dists/artful/main/
 Edit your the URL for the netboot file in your `pillar/bevy_settings.sls` file setting `pxe_netboot_download_url`.
 The initial unpacking of the tarball will be in your pxe server's /opt directory tree.
 
-#### Installation and use
+#### Installation and use of the PXE host
 
 Setup pillar/bevy_settings.sls as documented above.
 
 ```(bash)
 # on the intended PXE host computer
-sudo salt-call state.apply dnsmasq.pxe_ubuntu_image
+sudo salt-call state.apply dnsmasq.pxe_auto_install
 ```
 
-You can see the progress of your tftp server by
+This will define your tftp server and load all of the files it needs,
+including the netboot installation kit from the Ubuntu repository.
 
-`sudo tail -f /var/log/syslog`
+It will also create the individual configuration files for each machine
+defined in your bevy_settings pillar file. To queue your machines for automatic
+installation again, re-apply the `dnsmasq.pxe_auto_install` state.
 
+Review what is going on using `tree /srv/tftpboot`
 
+You can see the operation of your tftp server by
+`sudo tail -f /var/log/syslog`.
+
+You start the installation process by turning the client computer on.
+You can run a sample script using WoL to kick things off:
+`sudo salt-call state.apply bevy_master.test.full_rebuild_saltify_machine`
+
+##### DO NOT PANIC
+
+When the auto install process completes correctly, your target machine may show
+nothing but a black screen. It will not respond to the keyboard. 
+This is the expected behavior. 
+
+Just hit `<ctrl><alt><F1>` and you will get a login prompt. 
+You can also use `<F2>` through `<F6>` to get additional terminals. 
+`<ctrl><alt><F7>` is a log of your post-bootstrap operation.
+
+##### The PXE_Clearing_Daeman
+
+If the files on the tftp server were left unchanged, your client machine would
+be stuck in a loop, rebooting and reloading the OS forever. In order to break
+the loop, we need a little help.
+
+When you run the `dnsmasq.pxe_auto_install` script, it creates and runs a lightweight
+HTTP server on TCP port 4545. You can re-run the script at 
+`/srv/tftpboot/preseed/file_clearing_daemon.py`.
+It asks Salt for the pillar information from bevy_settings.sls for its control.
+It will accept HTML requests and execute them as Linux commands, giving you 
+(and everyone else)
+complete power to start jobs on the PXE server machine. 
+
+Because it is a glaring security hole we don't  want to leave it running. It will time
+out on its own, but shuts down quickly when it thinks its work is done. The pxe_auto_install 
+state sends it a 'store' request for each machine. When it has received an 'execute'
+request from each one, it turns itself off. You can also turn it off with a 'shutdown' request.
+
+The query option `pxe_config_file` must contain the name of your boot configuration file.
+The daemon will replace the contents of that file with a script (stored within its own
+Python code) to tell your target computer to boot from its first hard drive henceforth.
+
+The query option `next_command` will execute the text from that command (as ROOT) on the
+tftp server computer. The idea is to run a command to provision the new system.
+The example script runs a `salt-cloud` command to force a Salt minion onto it, and
+connect it to the bevy_master.
+
+`pxe_config_file` and `next_command` options can be send with the `execute` query, or
+stored by the `store` query. `store`d commands will be run when the `execute` query runs.
+ 
+
+#### Controlling what happens during and after OS installation on each machine.
+
+The control is tucked into a small place in `pillar/bevy_settings.sls`.
+
+```
+# This is a list of dicts of machines to be PXE booted.
+#  each should have a "tag" matching the Netboot Tags below.
+#  Salt state file dnsmasq/pxe_auto_install.sls will create a PXE configuretion setting file for each entry in this list.
+pxe_netboot_configs:
+  - mac: '00-1a-4b-7c-2a-b2'  {# Note the "-" -- this line starts a list #}
+    subdir: '{{ default_ubuntu_version }}/'  # include a trailing "/"
+    tag: install
+    kernel: ubuntu-installer/amd64/linux
+    append: 'vga=788 initrd=ubuntu-installer/amd64/initrd.gz auto-install/enable=true preseed/url=tftp://{{ pxe_server_ip }}/preseed.files/'
+    next_command: 'sleep 60;salt-cloud -p hw_demo x_hw'  {# pxe_clearing_deamon will send this command when install completes #}
+```
+Lets discuss what each line does...
+- mac: The only way the PXE server can tell machines apart is by their MAC address.
+It must serve as the key for everything else.
+- subdir: Each installation kit found is in a different subdirectory of the tftp server.
+- tag:  Tells dnsmasq which boot control your machine should use. Defaults to running a memory test.
+- kernel:  Identifies what file on the tftp server to boot.
+- append:  The last part of the boot command line. This is where we can tell the new kernel
+what we want it to do, including where to find its auto-install commands.
+- next_command: The command line for pxe_clearing_daemon to execute on the server at the end of the client's installation
+process, just before the client reboots (hopefully into its new operating system).
 
 #### For more information...
 
