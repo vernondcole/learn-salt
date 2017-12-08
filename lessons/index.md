@@ -20,4 +20,8 @@ the [README.md](../README.md) file for this repository.
 
 [Basic Execution Commands](basics/execution.md) . . . `cd lessons/basics`
 
+[DHCP and DNS](dns_dhcp_pxe/Dynamic_Name_Server.md) with dnsmasq.
+
+[Running a PXE Boot Server](dns_dhcp_pxe/pxe_boot.md) to automatically install Ubuntu. 
+
 [Cloud control cheat sheet](cheat_sheet.md)

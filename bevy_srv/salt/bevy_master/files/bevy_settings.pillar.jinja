@@ -44,12 +44,12 @@ pxe_netboot_download_url: http://archive.ubuntu.com/ubuntu/dists/{{ default_ubun
 #  each should have a "tag" matching the Netboot Tags below.
 #  Salt state file dnsmasq/pxe_auto_install.sls will create a PXE configuretion setting file for each entry in this list.
 pxe_netboot_configs:
-  - mac: '00-1a-4b-7c-2a-b2'  {# Note the "-" -- this line starts a list #}
+  - mac: '00-1a-4b-7c-2a-b2'  #
     subdir: '{{ default_ubuntu_version }}/'  # include a trailing "/"
     tag: install
     kernel: ubuntu-installer/amd64/linux
     append: 'vga=788 initrd=ubuntu-installer/amd64/initrd.gz auto-install/enable=true preseed/url=tftp://{{ pxe_server_ip }}/preseed.files/'
-    next_command: 'sleep 60;salt-cloud -p hw_demo x_hw'  {# pxe_clearing_deamon will send this command when install completes #}
+    next_command: 'salt-cloud -p hw_demo x_hw --timeout=1200'  {# pxe_clearing_deamon will send this command when install completes #}
 # - mac: '01-02-03-04-05-06'
 #   tag: something_else
 #

@@ -1,4 +1,10 @@
 #### Contents of the preconfiguration file (for xenial)
+# ... this version is set up for completely hands-free
+# ... installation. It will wipe out the first hard drive
+# ... with no warning, replacing the OS there with Ubuntu
+# ... as defined in this file.
+# ... -- VDC
+#
 ### Localization
 # Preseeding only locale sets language, country and locale.
 d-i debian-installer/locale string en_US
@@ -482,5 +488,4 @@ d-i cdrom-detect/eject boolean false
 # packages and run commands in the target system.
 #d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
 
-d-i preseed/late_command string in-target wget -q -O - http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/clear?{{ config_mac }}
-
+d-i preseed/late_command string in-target wget -q -O - http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/execute?mac_addr={{ config_mac }}

@@ -89,7 +89,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   # For the bridged network interface, try to detect name, then guess MacOS names, too
   #    finally, try the entry keyed in above -- for Windows or something else
   ifc_name, network_mask = get_good_ifc()
-  interface_guesses = [ifc_name, 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
+  interface_guesses = [ifc_name] #, 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
   if ARGV[0] == "up" or ARGV[0] == "reload"
     puts "Running on host #{VAGRANT_HOST_NAME}"
     puts "Will try bridge network using interfaces: #{interface_guesses}"
@@ -153,7 +153,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
     master_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "git b7c0182d93a1092b7369eedfbcf5bc2512c12f1b"  # TODO: use "stable" when OXYGEN is released
+       salt.install_type = "git 9865a31e62dcf6b7d6184777483685e4f054168b"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = true
        salt.colorize = true

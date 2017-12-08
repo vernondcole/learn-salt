@@ -12,6 +12,7 @@ bevy_master_grain:
     - name: roles
     - value:
       - bevy_master
+update_the_grains:
   module.run:
     - name: saltutil.sync_grains
 
@@ -20,6 +21,13 @@ include:
   - ./populate_bootstrap_settings
   - configure_bevy_member  {# master is a member, too #}
 
+{% if salt['file.directory_exists']('/vagrant/bevy_srv/salt/pki_cache') %}
+restore_keys_from_cache:
+  file.recurse:
+    - source: salt://pki_cache
+    - clean: false
+    - name: /etc/salt
+{% else %}  {# must make new keys #}
 generate-own-key:
   cmd.run:  # generates a minion key, if it does not already exist
     - name: salt-key --gen-keys=minion --auto-create --gen-keys-dir=/etc/salt/pki/minion{{ other_minion }}
@@ -48,6 +56,7 @@ clean_up_own_pki:
       - test -e /etc/salt/pki/master/minions/bevymaster
     - require:
       - accept-own-key
+{% endif %}
 
 pip2-installed:
   pkg.latest:
@@ -67,7 +76,7 @@ salt-cloud:
 salt-master-config:
   file.managed:
     - name: /etc/salt/master.d/01_master_from_bootstrap.conf
-    - source: salt://bevy_master/files/master.conf
+    - source: salt://bevy_master/files/01_from_bootstrap.conf.jinja
     - template: jinja
     - makedirs: true
 
@@ -107,6 +116,16 @@ salt-master-config:
     - mode: 664
     - source: salt://bevy_master/files/README.notice.jinja
     - template: jinja
+
+/srv/salt/top.sls:
+  file.managed:  # make the initial copy of top.sls
+    - user: {{ my_username }}
+    - group: staff
+    - makedirs: true
+    - mode: 664
+    - source: salt://bevy_master/files/top.sls.jinja
+    - template: jinja
+    - replace: false
 
 /etc/salt/cloud.conf.d/01_cloud_from_bootstrap.conf:
   file.managed:
