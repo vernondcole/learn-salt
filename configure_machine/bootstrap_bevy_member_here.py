@@ -8,6 +8,7 @@ and optionally, a master and cloud controller.
 import subprocess, os, getpass, json, socket, platform
 from pathlib import Path
 from urllib.request import urlopen
+import yaml
 
 import pwd_hash  # from the current working directory
 
@@ -31,10 +32,26 @@ NETWORK = '172.17'  # first two bytes of Vagrant private network
 BEVYMASTER_FQDN_PATTERN = 'bevymaster.{}.test'
 
 BEVY_SRV_PATH = Path('../bevy_srv')
-provision_file_path = BEVY_SRV_PATH / 'pillar' / Path(PROVISION_FILE_NAME)
 
 minimum_salt_version = MINIMUM_SALT_VERSION.split('.')
 minimum_salt_version[1] = int(minimum_salt_version[1])  # use numeric compare of month field
+
+provision_file_path = BEVY_SRV_PATH / 'pillar' / Path(PROVISION_FILE_NAME)
+
+# def retrieve_provision_file():
+#     global provision_file_path
+#
+#     prov_file = None
+#     try:
+#         prov_file = Path('/srv') / 'pillar' / PROVISION_FILE_NAME
+#     except OSError:
+#         pass
+#     try:
+#         prov_file = provision_file_path.open()
+#     except OSError:
+#         pass
+#     if provision_file_path.is_file():
+#         prov_file_name = provision_file_path
 
 
 def salt_state_apply(salt_state, **kwargs):
