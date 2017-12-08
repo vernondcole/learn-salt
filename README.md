@@ -4,6 +4,8 @@
 
 This project uses a salt-cloud network with Vagrant controlled VirtualBox virtual machines as a sandbox to experiment with and learn [Salt](https://saltstack.com/) and [salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud) by building and controlling a bevy of computers.
 
+Go to [the Lesson index](lessons/index.md).
+
 ### Installation
 
 Clone [1] [this git repository](https://github.com/vernondcole/learn-salt) onto your target environment --
@@ -149,28 +151,28 @@ unable to access brother VMs using their bridged ports.
 
 If you wish, you can add more local VMs by editing the Vagrantfile.
 
+### A Private Test Network
+
+Some of the more advanced lessons (such as DHCP and PXE) cannot be run on a corporate or
+school network without messing up many things. Don't do that. 
+\[Trust me -- I once killed the then-experimental
+Internet in all of Utah and Colorado with a router misconfiguration.\] 
+
+If you are working from a home office, you will be okay testing on your home router -- 
+but not while your spouse is streaming a movie. 
+Otherwise, you will want a router of your very own to mess up. 
+
+Consider ordering one soon. I use a RouterBoard / Mikrotik "hAP lite" which I highly recommend.
+I found mine on Amazon for less than $30 USD. Buy some CAT-5 cables, too.
+
+For test computers, I use an old HP laptop that once ran Windows Vista, and a Raspberry Pi. 
+Also running on the same net, I have two development Ubuntu laptops, a Windows 10 laptop, 
+an old MacBook, and my Android phone. Those make a good test bed.
+
 
 
 v v v v v v v v v v Text below should be moved to individual class lessons v v v v
 
-Each machine is automatically connected to and accepted by your salt master.
-https://github.com/vernondcole/learn-salt
-
-
-
-
-
-##### modify Vagrantfile to your exact wishes
-
-Use the editor of your choice to customize the nascant virtual machine as desired.
-
-`nano Vagrantfile`
-
-##### Start your bevy master VM and connect a terminal session to it. 
-
-`vagrant up` or `vagrant up --provider vmware_fusion`
-
-`vagrant ssh`
 
 ##### Start a bevy minion VM, control it, and connect a terminal session to it. 
 
