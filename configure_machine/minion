@@ -1,8 +1,8 @@
 # stub minion configuration file for stand-alone bevy master bootstrapping.
 #
+# also used as the default to start building a virgin configuration record
+#
 master: localhost
-
-id: bevymaster
 
 file_client: local  # run as masterless
 
