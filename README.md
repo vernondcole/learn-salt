@@ -78,7 +78,7 @@ The [bevy_srv](./bevy_srv) directory contains a complete SaltStack
 directory tree used for building the examples and lessons here.
 
 The [configure_machine](./configure_machine) directory contains 
-scripts usesd to configure your bevy_master machine, your workstation
+scripts used to configure your bevy_master machine, your workstation
 (as a minion), and perhaps other bevy member computers as needed.
 
 ### How to read the text and lessons.

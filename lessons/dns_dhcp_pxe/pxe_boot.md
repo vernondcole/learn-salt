@@ -20,7 +20,13 @@ vagrant up bevymaster
 vagrant ssh bevymaster
 sudo salt-call state.apply bevy_master.test.full_rebuild_saltify_machine
 ```
+##### Caution: only one...
+There can only be one server for extended DHCP requests on any network segment.
 
+If someone else (your IT department) is running a PXE server, 
+they will not appreciate competition. 
+Also do not compete with yourself -- like running both a hardware and virtual PXE machine. 
+ 
 #### The Boot Server and Process
 
 Our setup here will use [dnsmasq](http://thekelleys.org.uk/dnsmasq/doc.html),
