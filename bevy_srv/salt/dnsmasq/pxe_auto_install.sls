@@ -42,6 +42,10 @@ pxelinux_add_{{ pillar['pxe_netboot_subdir'] }}_option:
     #- user: {{ salt['config.get']('my_linux_user') }}
     #- group: staff
 
+
+check_python3:
+  - pkg.install:
+    - python3
 create_the_file_clearing_daemon:
   file.managed:
     - name: /srv/tftpboot/preseed.files/file_clearing_daemon.py
@@ -60,7 +64,6 @@ let_the_file_clearing_daemon_get_started:
     - name: http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/ping
     - status: 200
     - kwargs: {request_interval: 5.0}
-    - kwarg: {request_interval: 5.0}
     - wait_for: 300
 
 {% for config in salt['pillar.get']('pxe_netboot_configs') %}
@@ -107,7 +110,7 @@ record_the_file_clearing_data:
   # send an http "/store" query to the file_clearing_daemon telling it what it should do when the time comes.
   # after the client finishes its installation step, it will send a "/execute" query to the daemon.
   http.query:
-    - name: http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/store?mac_addr={{ config['mac'] }}&pxe_config_file=/srv/tftpboot/{{ config['subdir'] }}pxelinux.cfg/01-{{ config['mac'] }}&next_command={{ config['next_command'] | urlencode }}
+    - name: http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/store?mac_addr={{ config['mac'] }}  #  &pxe_config_file=/srv/tftpboot/{{ config['subdir'] }}pxelinux.cfg/01-{{ config['mac'] }}&next_command={{ config['next_command'] | urlencode }}
     - status: 201
   {% endif %}  {# config['tag'] == 'install' #}
 {% endfor %}

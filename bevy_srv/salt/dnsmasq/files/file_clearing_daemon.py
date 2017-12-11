@@ -165,10 +165,13 @@ class FileClearingRequestHandler(BaseHTTPRequestHandler):
                 except (KeyError, IndexError):
                     pass
                 if key:
-                    job_list.pop(key)
-                    if len(job_list) == 0:
-                        print(DAEMON_NAME, '-->', 'All candidates cleared, will exit.')
-                        work_is_done = True
+                    try:
+                        job_list.pop(key)
+                        if len(job_list) == 0:
+                            print(DAEMON_NAME, '-->', 'All candidates cleared, will exit.')
+                            work_is_done = True
+                    except KeyError:
+                        pass
             else:
                 self.send_error(400, 'Bad query', 'Query neither "/store?" nor "/execute?"')
 
