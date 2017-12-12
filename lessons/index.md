@@ -1,32 +1,46 @@
 # Learn Salt - lesson index
 
 A short introduction to this project is located in
-the [README.md](../README.md) file for this repository.
+the [README.md](../README.md) file in this repository.
 
-[Introductory slides (web version)](https://docs.google.com/presentation/d/1xHufFXGUKMWlj1rF10o6PKI0Vq7WkpCj0fgxWhqoEPk/present?usp=sharing)
+[Introductory slides](https://docs.google.com/presentation/d/1xHufFXGUKMWlj1rF10o6PKI0Vq7WkpCj0fgxWhqoEPk/present?usp=sharing)
 
-[(local version)](file:///projects/learn-salt/lessons/from%20bootstrap%20to%20Salt%20cloud2.pptx)
+[Installation of Prerequisites](installation/install.md)
+
+[Cloud control cheat sheet](cheat_sheet.md).
+
+### Beginner stuff ... networks, source code control, and basic command line operation.
 
 [Linux for Windows Users](windows/Linux_for_Windows_users.md)
 
-[Installation of Prerequsites](installation/install.md)
-
 [Basics of GIT](git/how_to_git_stuff.md)
+
+### Using a Guest Network on my Workstation
+
+[Using Salt on one machine (salt-call)](basics/salt-call.md) . . . Examples at `cd lessons/basics`
 
 [Basics of Vagrant](vagrant_basics/vagrant_basics.md) . . . Examples at `cd lessons/vagrant_basics`
 
-[Basics of Salt (local)](basics/salt-call.md) . . . Examples at `cd lessons/basics`
+[Connecting to a Salt Master](basics/master.md)  . . . `cd lessons/basics`
 
-[Connecting to a Master](basics/master.md)  . . . `cd lessons/basics`
+[Sending Salt Commands to Other Machines](basics/execution.md) . . . `cd lessons/basics`
 
-[Basic Execution Commands](basics/execution.md) . . . `cd lessons/basics`
+Provisioning Software Enviranments [Using Salt States](basics/states.md)
 
-[Private Network Setup](networks/private_test_network.md)
-
-[DHCP and DNS](dns_dhcp_pxe/Dynamic_Name_Server.md) with dnsmasq.
+### Using Cloud Resources (Manually)
 
 [Dedicating a Bevy Master server](networks/real_bevy_master.md).
 
-[Running a PXE Boot Server](dns_dhcp_pxe/pxe_boot.md) to automatically install Ubuntu. 
+### Using Virtual Machines Automatically (Salt Cloud)
 
-[Cloud control cheat sheet](cheat_sheet.md).
+ToDo: Lessons must be created here...
+
+### Creating and Using a Test Laboratory Network
+
+[Private Network Setup](networks/private_test_network.md)
+
+[One Machine with Two Masters](networks/dual_masters.md)
+
+[DHCP and DNS](dns_dhcp_pxe/Dynamic_Name_Server.md) with dnsmasq.
+
+[Running a PXE Boot Server](dns_dhcp_pxe/pxe_boot.md) to automatically install Ubuntu. 
