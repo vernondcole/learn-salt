@@ -8,7 +8,7 @@
 
 {% set bevy_root = salt['config.get']('bevy_root', '/projects/learn-salt/bevy_srv') %}
 id: {{ salt['config.get']('node_name', salt['config.get']('id')) }}
-{% set is_master = salt['config.get']('id', '') == 'bevymaster' %}
+{% set is_master = salt['config.get']('id', '').startswith('bevymaster') %}
 {% if is_master %}master: localhost
 {% elif salt['grains.get']('virtual', '') == 'physical' -%}
 master: {{ salt['config.get']('bevymaster_external_ip', salt['config.get']('master')) }}
@@ -29,8 +29,8 @@ pki_dir: /etc/salt/pki/minion2
 sock_dir: /var/run/salt-minion2
 log_file: /var/log/salt/minion2
   {% endif %}
-run_second_minion: {{ salt['config.get']('run_second_minion') }}
 {% endif -%}
+run_second_minion: {{ salt['config.get']('run_second_minion') }}
 
 bevy: {{ salt['config.get']('bevy') }}
 

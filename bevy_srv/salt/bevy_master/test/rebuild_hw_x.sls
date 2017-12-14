@@ -9,5 +9,5 @@ include:
 start_hw:
   module.run:  # wake the machine to start the install process
     - name: network.wol
-    - mac: {{ pillar['wol_test_mac'] }}
+      mac: {{ pillar['wol_test_mac'] }}
 ...

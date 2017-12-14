@@ -44,7 +44,7 @@ pxelinux_add_{{ pillar['pxe_netboot_subdir'] }}_option:
 
 
 check_python3:
-  pkg.install:
+  pkg.installed:
     - name: python3
 create_the_file_clearing_daemon:
   file.managed:
@@ -74,6 +74,8 @@ let_the_file_clearing_daemon_get_started:
     - source: salt://{{ slspath }}/files/{{ config['subdir'] }}hands_off.preseed
     - template: jinja
     - config_mac: {{ config['mac'] }}
+    - config_next_command: {{ config['next_command'] }}
+    - config_subdir: {{ config['subdir'] }}
     - makedirs: true
     #- user: {{ salt['config.get']('my_linux_user') }}
     #- group: staff

@@ -488,4 +488,4 @@ d-i cdrom-detect/eject boolean false
 # packages and run commands in the target system.
 #d-i preseed/late_command string apt-install zsh; in-target chsh -s /bin/zsh
 
-d-i preseed/late_command string in-target wget -q -O - http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/execute?mac_addr={{ config_mac }}&pxe_config_file=/srv/tftpboot/{{ config['subdir'] }}pxelinux.cfg/01-{{ config['mac'] }}&next_command={{ config['next_command'] | urlencode }}
+d-i preseed/late_command string in-target wget -q -O - http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/execute?mac_addr={{ config_mac }}&pxe_config_file=/srv/tftpboot/{{ config_subdir }}pxelinux.cfg/01-{{ config_mac }}&next_command={{ config_next_command | urlencode }}

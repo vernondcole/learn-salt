@@ -11,7 +11,11 @@ include:
 # ANOTHER NOTE: edit the vbox_settings.sls pillar definition when the version of VirtualBox changes
 #
 {% set my_username = salt['config.get']('my_linux_user') %}
-{% set other_minion = "2" if salt['config.get']('run_second_minion') else "" %}
+{% if salt['config.get']('run_second_minion', false) %}
+  {% set other_minion = "2" %}
+{% else %}
+  {% set other_minion = "" %}
+{% endif %}
 {% set message = pillar['salt_managed_message'] %}
 
 {% if salt['grains.get']('os_family') == 'MacOS' %}
@@ -153,7 +157,7 @@ sure_minion_config_file:
 /etc/salt/minion:
   file.managed:
     - contents: |
-        # {{ pillar['salt_created_message'] }}
+        # {{ message }}
         #
         # N.O.T.E. : SaltStack management occurs below this level.
         # The actual work is done in the minion.d directory below this.
@@ -166,7 +170,7 @@ sure_minion_config_file:
 /etc/salt{{ other_minion }}/minion:
   file.managed:
     - contents: |
-        # {{ pillar['salt_created_message'] }}
+        # {{ message }}
         #
         # This is an empty placeholder file.
         # The actual work is done in the minion.d directory below this.
