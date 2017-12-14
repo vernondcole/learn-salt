@@ -44,8 +44,8 @@ pxelinux_add_{{ pillar['pxe_netboot_subdir'] }}_option:
 
 
 check_python3:
-  - pkg.install:
-    - python3
+  pkg.install:
+    - name: python3
 create_the_file_clearing_daemon:
   file.managed:
     - name: /srv/tftpboot/preseed.files/file_clearing_daemon.py
