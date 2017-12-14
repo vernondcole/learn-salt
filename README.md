@@ -10,7 +10,7 @@ Go to [the Lesson index](lessons/index.md).
 
 Clone [1] [this git repository](https://github.com/vernondcole/learn-salt) onto your target environment --
 which should be the workstation where you plan to do the lessons. You will control your bevy
-from this place. Proceed with the instructions in [the installation lesson](lessons/installation/install.md).
+from this place.
 
 Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really have to put it there. All lessons should work if you put it somewhere else, like `/home/myusername/learn` or wherever. 
 Examples will be configured and tested to operate from any random directory you like.  
@@ -26,6 +26,8 @@ git checkout my_edits
 If you need to return to the original text, you can use `git`
 to restore it.
 `git checkout master`
+
+Proceed with the instructions in [the installation lesson](lessons/installation/install.md).
 
 [1]: see [how to git stuff](lessons/git/how_to_git_stuff.md) if you don't understand what "clone" means.
 
@@ -112,10 +114,11 @@ Sample shell scripts are provided like
 
 ### Vagrant VMs on your workstation
 
-A Vagrantfile is supplied here to create several virtual machines on your workstation.
+A Vagrantfile is supplied here to create several virtual machines on your workstation. 
+(Some lessons may also have a Vagrantfile for that lesson.)
 
 You can create a Salt cloud master ("bevymaster") as a virtual machine on your workstation.
-This can be very convenient, except for **one restriction** which occcurs if you have any 
+This can be very convenient, except for **one restriction** which occurs if you have any 
 application servers (salt minions) running separately from your workstation. 
 Minions will be trying to connect to their master at a fixed address. 
 If your master should re-connect using a different IP address, they will be lost. 
@@ -125,6 +128,8 @@ or use some sort of dynamic DNS arrangement.
 The Vagrantfile also defines two simple empty Ubuntu 16.04 VMs, named "quail1" and "quail16".
   
 There is also an Ubuntu 14.04 VM (named "quail14") defined in the Vagrantfile. 
+
+Finally, there is a VM named "quail42" for quick-and-dirty operation which will be configured as a Salt minion.
 
 Each of these has three virtual network ports:
 
