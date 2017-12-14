@@ -189,16 +189,17 @@ edit_salt-minion{{ other_minion }}_service:
     - require_in:
       - service: start-salt{{ other_minion }}-minion
 
-service.systemctl_reload:
-  module.run:
+systemctl_reload_{{ other_minion }}:
+  service.running:
+    - name: salt_minion{{ other_minion }}
     - require:
       - file: edit_salt-minion{{ other_minion }}_service
 
-add_salt{{ other_minion }}-call_command:
+add_salt{{ other_minion }}_call_command:
   file.append:
     - name: /etc/bash.bashrc
     - text:
-      - '# v v v v v v  added by Salt  v v v v v v'
+      - '# v v v v v v  added by Salt  v v v v v v ( -- Do not edit or remove this line -- )'
       - "alias salt{{ other_minion }}='sudo salt-call --config-dir=/etc/salt{{ other_minion }} \"$@\"'"
       - 'printf ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .\\n"'
       - 'printf " * This computer is running a second Salt minion.\\n"'
@@ -211,8 +212,10 @@ add_salt{{ other_minion }}-call_command:
       - 'printf " * To control the second minion,  use (for example):\\n"'
       - 'printf "     sudo systemctl status salt{{ other_minion }}-minion\\n"'
       - 'printf "\\n"'
-      - 'printf " * Normal \\\"sudo salt xxx\\\" commands are for the Bevy Master.\\n"'
+      - 'printf " * Normal \\\"sudo salt xxx\\\" commands are for the original Salt Master.\\n"'
       - 'printf ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .\\n"'
+      - '# ^ ^ ^ ^ ^ ^  added by Salt  ^ ^ ^ ^ ^ ^ ( -- Do not edit or remove this line -- )'
+
 
 /etc/profile:
   file.append:

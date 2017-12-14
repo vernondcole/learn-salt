@@ -6,7 +6,7 @@
 
 # these settings are specific to the running Salt master or stand-alone minion
 
-{% set bevy_root = salt['config.get']('bevy_root', '/vagrant/bevy_srv') %}
+{% set bevy_root = salt['config.get']('bevy_root', '/projects/learn-salt/bevy_srv') %}
 id: {{ salt['config.get']('node_name', salt['config.get']('id')) }}
 {% set is_master = salt['config.get']('id', '') == 'bevymaster' %}
 {% if is_master %}master: localhost
@@ -46,13 +46,17 @@ mine_interval: 5   # this is a test system, so run the mine every five minutes
 #
 file_roots:    # use this directory rather than /srv/salt
   base:
-    - {{ bevy_root }}/salt    # use local directory
-    - /srv/salt         # then use the normal place (if it exists)
+    - /srv/salt         # first, use the normal place (if it exists)
+    - /projects/local_salt/salt
+    - {{ bevy_root }}/salt
+    - /vagrant/bevy_srv/salt
 top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
 
 pillar_roots:  # use this directory rather than /srv/pillar
   base:
+    - /vagrant/bevy_srv/pillar
     - {{ bevy_root }}/pillar
+    - /projects/local_salt/pillar
     - /srv/pillar
 pillar_source_merging_strategy: recurse
 {% endif %}

@@ -63,7 +63,7 @@ let_the_file_clearing_daemon_get_started:
   http.wait_for_successful_query:
     - name: http://{{ pillar['pxe_server_ip'] }}:{{ pillar['pxe_clearing_port'] }}/ping
     - status: 200
-    - kwargs: {request_interval: 5.0}
+    - request_interval: 5.0
     - wait_for: 300
 
 {% for config in salt['pillar.get']('pxe_netboot_configs') %}
