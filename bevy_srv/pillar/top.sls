@@ -20,7 +20,7 @@ base:
   'quail*':
     - bevy_settings
 
-  bevymaster:
+  bevymaster*:
     - bevy_settings
 
   pizero:
