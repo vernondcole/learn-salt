@@ -16,13 +16,11 @@ NETWORK = "172.17"  # the first two bytes of your host-only network IP ("192.168
 # ^ ^ your VM host will be NETWORK.2.1, the others as set below.
 # ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
 DOMAIN = BEVY + ".test"  # .test is an ICANN reserved private top-level domain
-bevy_mac = (BEVY.to_i(36) % 0x1000000).to_s(16)  # a MAC address based on hash of BEVY
-# in Python that would be: bevy_mac = format(int(BEVY, base=36) % 0x1000000, 'x')
 #
-INTERFACE_GUESS = ''  # enter the Windows description for your IP interface if needed
-BRIDGED_NETWORK_MASK = '192.168.88.0/24' # (if blank will try automatic) often "192.168.0.0/16"
+INTERFACE_GUESS = 'Realtek PCIe GBE Family Controller #2'  # enter the Windows description for your IP interface if needed
+BRIDGED_NETWORK_MASK = '192.168.88.0/24' # (automatic tried if this and INTERFACE_GUESS both blank.)
 # .
-BEVYMASTER = "bevymaster." + DOMAIN  # the name for your bevy master
+BEVYMASTER = "bevymaster." + DOMAIN  # the fqdn name for your bevy master
 # .
 VAGRANT_HOST_NAME = Socket.gethostname
 login = Etc.getlogin    # get your own user information to use in the VM
@@ -46,37 +44,13 @@ end
 #
 vagrant_command = ARGV[0]
 
-# we must supply a list of names to avoid Vagrant asking for interactive input
-# Ubuntu uses weird network adapter names, so we need to scan for them.
-def get_good_ifc()   # try to find a working Ubuntu network adapter name
-  addr_infos = Socket.getifaddrs
-  addr_infos.each do |info|
-    a = info.addr
-    if a and a.ip? and a.ipv4? and not a.ipv4_loopback? and not a.ip_address.start_with?(NETWORK)
-      # this may be a good name.
-      addy = a.ip_address.split('.')
-      if BRIDGED_NETWORK_MASK.empty?
-        if addy[0] == "10"  # make a netmask for the 10 net
-          network_mask = "10.0.0.0/8"
-        else  # make a generic netmask.  Will not be perfect, might work.
-          addy[2] = "0"
-          addy[3] = "0"
-          network_mask = addy.join(".") + "/16"
-        end
-        puts "Making a generic network mask: #{network_mask} for #{info.name}"
-        return info.name, network_mask
-      else
-        nmsk = IPAddr.new(BRIDGED_NETWORK_MASK)
-        if nmsk.include?(a.ip_address)
-          puts "Found interface= #{info.name} using #{a.ip_address} in #{BRIDGED_NETWORK_MASK}"
-          return info.name, BRIDGED_NETWORK_MASK
-        end
-      end
-    end
-  end
-  puts "Unable to find a network interface in #{BRIDGED_NETWORK_MASK}. Using default."
-  return "eth0", BRIDGED_NETWORK_MASK   # nothing found. fall back to default
-end
+# Our VM will need a consistent mac address to get a reliable DHCP address reservation,
+# but we cannot use a fixed value if more than one bevy is used on a single network segment.
+# Let's use a hash of the value of the "BEVY" string to eliminate collisions.
+# We will generate the three low-order bytes for a MAC address as a hexadecimal string,
+# then concatenate them with acceptable high-order bytes (perhaps 'BE0000') below.
+# In Python we would use: bevy_mac = format(int(BEVY, base=36) % 0x1000000, 'x')
+bevy_mac = (BEVY.to_i(36) % 0x1000000).to_s(16)  # a string based on a hash of BEVY.
 
 Vagrant.configure(2) do |config|  # the literal "2" is required.
   info = Etc.getpwnam(login)
@@ -86,10 +60,14 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on your network.
   #
-  # For the bridged network interface, try to detect name, then guess MacOS names, too
-  #    finally, try the entry keyed in above -- for Windows or something else
-  ifc_name, network_mask = get_good_ifc()
-  interface_guesses = [ifc_name] #, 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
+  # For the bridged network interface, use the entry keyed in above -- especially for Windows,
+  # but if it is blank,  try to detect name, then guess MacOS names, too
+  if INTERFACE_GUESS.empty?
+    ifc_name, network_mask = get_good_ifc()
+    interface_guesses = [ifc_name, 'en0: Ethernet', 'en1: Wi-Fi (AirPort)']
+  else
+    interface_guesses = [INTERFACE_GUESS]
+  end
   if ARGV[0] == "up" or ARGV[0] == "reload"
     puts "Running on host #{VAGRANT_HOST_NAME}"
     puts "Will try bridge network using interfaces: #{interface_guesses}"
@@ -128,7 +106,13 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
     if vagrant_command == "ssh"
       master_config.ssh.username = my_linux_user  # if you type "vagrant ssh", use this username
-      master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
+      if info.nil?
+          home_dir = Dir.home
+      else
+          home_dir = info.dir
+      end
+      master_config.ssh.private_key_path = home_dir + "/.ssh/id_rsa"
+      puts "trying private key in=#{master_config.ssh.private_key_path}"
     end
 
     master_config.vm.provider "virtualbox" do |v|
@@ -247,9 +231,9 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   end
 
 
-# . . . . . . .  Define Quail42 as the answer to everything. . . . . . . . . . . . . .
-# . this machine has Salt installed but no states run or defined.
-# . Its master is "bevymaster".
+  # . . . . . . .  Define Quail42 as the answer to everything. . . . . . . . . . . . . .
+  # . this machine has Salt installed but no states run or defined.
+  # . Its master is "bevymaster".
   config.vm.define "quail42", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail42." + DOMAIN
@@ -257,14 +241,14 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|
-        v.memory = 4000       # limit memory for the virtual box
+        v.memory = 4000       # size memory for the virtual box
         v.cpus = 2
         v.linked_clone = true # make a soft copy of the base Vagrant box
         v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.96/27"]  # do not use 10.0 network for NAT
     end
 
     quail_config.vm.provider "vmware" do |v|
-        v.memory = 4000       # limit memory for the vmware box, too
+        v.memory = 4000       # size memory for the vmware box, too
         v.cpus = 2
         v.linked_clone = true
     end
@@ -280,4 +264,38 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        salt.masterless = true  # the provisioning script is masterless
     end
   end
+end
+
+# v v v v v subroutines v v v v v v v v v v v v v v v v v v v v v v v v v v v v
+
+# we must supply a list of names to avoid Vagrant asking for interactive input
+# Ubuntu uses weird network adapter names, so we need to scan for them.
+def get_good_ifc()   # try to find a working Ubuntu network adapter name
+  addr_infos = Socket.getifaddrs
+  addr_infos.each do |info|
+    a = info.addr
+    if a and a.ip? and a.ipv4? and not a.ipv4_loopback? and not a.ip_address.start_with?(NETWORK)
+      # this may be a good name.
+      addy = a.ip_address.split('.')
+      if BRIDGED_NETWORK_MASK.empty?
+        if addy[0] == "10"  # make a netmask for the 10 net
+          network_mask = "10.0.0.0/8"
+        else  # make a generic netmask.  Will not be perfect, might work.
+          addy[2] = "0"
+          addy[3] = "0"
+          network_mask = addy.join(".") + "/16"
+        end
+        puts "Making a generic network mask: #{network_mask} for #{info.name}"
+        return info.name, network_mask
+      else
+        nmsk = IPAddr.new(BRIDGED_NETWORK_MASK)
+        if nmsk.include?(a.ip_address)
+          puts "Found interface= #{info.name} using #{a.ip_address} in #{BRIDGED_NETWORK_MASK}"
+          return info.name, BRIDGED_NETWORK_MASK
+        end
+      end
+    end
+  end
+  puts "Unable to find a network interface in #{BRIDGED_NETWORK_MASK}. Using default."
+  return "eth0", BRIDGED_NETWORK_MASK   # nothing found. fall back to default
 end
