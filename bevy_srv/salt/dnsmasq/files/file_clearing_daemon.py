@@ -92,7 +92,7 @@ class FileClearingRequestHandler(BaseHTTPRequestHandler):
 
     # noinspection PyPep8Naming
     def do_GET(self):
-        print(DAEMON_NAME, '-->', 'got request "{}"'.format(self.path))
+        print(DAEMON_NAME, '-->', 'got request "{}"'.format(self.path), flush=True)
         work_is_done = False
         job_list = self.server.job_list
 
@@ -131,15 +131,15 @@ class FileClearingRequestHandler(BaseHTTPRequestHandler):
                             if config_file.exists():
                                 with config_file.open() as test:
                                     if test.readline().strip() != salt_managed_message:
-                                        print(DAEMON_NAME, '-->', 'File "{}" does not start with {}'.format(config_file, salt_managed_message))
+                                        print(DAEMON_NAME, '-->', 'File "{}" does not start with {}'.format(config_file, salt_managed_message), flush=True)
                                         continue
                                 with config_file.open('w') as out:  # re-open for writing
                                     out.write(BOOT_FROM_DISK_CONFIG_TEXT)
-                                    print(DAEMON_NAME, '-->', 'Replaced file "{}"'.format(config_file))
+                                    print(DAEMON_NAME, '-->', 'Replaced file "{}"'.format(config_file), flush=True)
                             else:
-                                print(DAEMON_NAME, '-->', 'File "{}" does not exist.'.format(config_file))
+                                print(DAEMON_NAME, '-->', 'File "{}" does not exist.'.format(config_file), flush=True)
                         except OSError as err:
-                            print(DAEMON_NAME, '-->', 'Error writing file {} --> {}'.format(config_file, err))
+                            print(DAEMON_NAME, '-->', 'Error writing file {} --> {}'.format(config_file, err), flush=True)
                             self.send_error(400, 'OSError', err)
 
                     next_commands = data['next_command']
@@ -147,18 +147,18 @@ class FileClearingRequestHandler(BaseHTTPRequestHandler):
                         self.send_response(200)
                     else:
                         for next_command in next_commands:
-                            print(DAEMON_NAME, '-->', 'Running command: "{}"'.format(next_command))
+                            print(DAEMON_NAME, '-->', 'Running command: "{}"'.format(next_command), flush=True)
                             try:
                                 # # # Run the command as a shell script
                                 proc = subprocess.Popen(next_command, shell=True, universal_newlines=True)
                                 return_code = proc.wait(5)
-                                print(DAEMON_NAME, '-->', 'Command returned with {}'.format(return_code))
+                                print(DAEMON_NAME, '-->', 'Command returned with {}'.format(return_code), flush=True)
                                 # # #
                             except subprocess.TimeoutExpired:
-                                print(DAEMON_NAME, '-->', 'Command is still running -- moving on...')
+                                print(DAEMON_NAME, '-->', 'Command is still running -- moving on...', flush=True)
                             except (subprocess.SubprocessError, OSError) as err:
                                 error_text = 'Calling process caused error code {}'.format(err.returncode)
-                                print(DAEMON_NAME, '-->', error_text)
+                                print(DAEMON_NAME, '-->', error_text, flush=True)
                                 self.send_error(500, 'Error spawning process.', error_text)
                                 break
                         self.send_response(202)
@@ -168,12 +168,12 @@ class FileClearingRequestHandler(BaseHTTPRequestHandler):
                     try:
                         job_list.pop(key)
                         if len(job_list) == 0:
-                            print(DAEMON_NAME, '-->', 'All candidates cleared, will exit.')
+                            print(DAEMON_NAME, '-->', 'All candidates cleared, will exit.', flush=True)
                             work_is_done = True
                     except KeyError:
                         pass
             else:
-                self.send_error(400, 'Bad query', 'Query neither "/store?" nor "/execute?"')
+                self.send_error(400, 'Bad query', 'Query neither "/store?" nor "/execute?"', flush=True)
 
         # Send headers
         self.send_header('Content-type', 'text/html')
@@ -191,7 +191,7 @@ class FileClearingRequestHandler(BaseHTTPRequestHandler):
 
 
 def timed_shutdown(http_server):
-    print(DAEMON_NAME, '-->', 'Timer expired, requesting shut down.')
+    print(DAEMON_NAME, '-->', 'Timer expired, requesting shut down.', flush=True)
     http_server.shutdown()
     time.sleep(5)
 
