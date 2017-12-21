@@ -46,8 +46,7 @@ end
 #
 vagrant_command = ARGV[0]
 
-# we must supply a list of names to avoid Vagrant asking for interactive input
-# Ubuntu uses weird network adapter names, so we need to scan for them.
+# Ubuntu uses weird network adapter names, so we may need to scan for them.
 def get_good_ifc()   # try to find a working Ubuntu network adapter name
   addr_infos = Socket.getifaddrs
   addr_infos.each do |info|
@@ -78,22 +77,28 @@ def get_good_ifc()   # try to find a working Ubuntu network adapter name
   return "eth0", BRIDGED_NETWORK_MASK   # nothing found. fall back to default
 end
 
+# Bridged networks make the machine appear as another physical device on your network.
+# We must supply a list of names to avoid Vagrant asking for interactive input
+#
+network_mask = BRIDGED_NETWORK_MASK
+if (RUBY_PLATFORM=~/linux/)  # on Linux, scan for the device name
+  ifc_name, network_mask = get_good_ifc()
+  interface_guesses = [ifc_name]
+elseif (RUBY_PLATFORM=~/darwin/i)  # on Mac OS, guess two frequently used ports
+  interface_guesses = ['en0: Ethernet', 'en1: Wi-Fi (AirPort)']
+else  # on Windows -- you really have to type in a value, they are too weird.
+  interface_guesses = [INTERFACE_GUESS]
+end
+if ARGV[0] == "up" or ARGV[0] == "reload"
+puts "Running on host #{VAGRANT_HOST_NAME}"
+puts "Will try bridge network using interfaces: #{interface_guesses}"
+end
+
 Vagrant.configure(2) do |config|  # the literal "2" is required.
   info = Etc.getpwnam(login)
 
   config.ssh.forward_agent = true
 
-  # Create a public network, which generally matched to bridged network.
-  # Bridged networks make the machine appear as another physical device on your network.
-  #
-  # For the bridged network interface, try to detect name, then guess MacOS names, too
-  #    finally, try the entry keyed in above -- for Windows or something else
-  ifc_name, network_mask = get_good_ifc()
-  interface_guesses = [ifc_name] #, 'en0: Ethernet', 'en1: Wi-Fi (AirPort)', INTERFACE_GUESS]
-  if ARGV[0] == "up" or ARGV[0] == "reload"
-    puts "Running on host #{VAGRANT_HOST_NAME}"
-    puts "Will try bridge network using interfaces: #{interface_guesses}"
-  end
   config.vm.provision "shell", inline: "ip address", run: "always"  # what did we get?
 
 

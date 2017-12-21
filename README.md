@@ -156,6 +156,13 @@ unable to access brother VMs using their bridged ports.
 
 If you wish, you can add more local VMs by editing the Vagrantfile.
 
+Vagrant requires the name of the interface which will be used for a bridged network.
+Since a workstation usually has more than one interface (are you using WiFi or hard wire?)
+this can be trick to determine. Vagrant will ask the user for input.
+There is a messy bunch of Ruby code in the Vagrantfile to try getting the correct name.
+You may want to supply your network adapter name in the Vagrantfile, 
+especially if you are running Windows.
+
 ### A Private Test Network
 
 Some of the more advanced lessons (such as DHCP and PXE) cannot be run on a corporate or

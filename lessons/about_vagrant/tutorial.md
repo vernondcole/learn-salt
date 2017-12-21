@@ -134,3 +134,33 @@ defined as the `primary` and will react the same as the `lesson1` machine here.
 The others must be explicitly specified on the Vagrant command line. For example,
 to start the machine named "quail16", you type `vagrant up quail16`.
 
+### IP Networks in Vagrant
+
+Vagrant needs to use TCP/IP networking for the host to talk to its guests.
+The guest machine needs to be able to reach the Internet and corporate resources.
+Guest machines will want to talk to the host, and to other guests.
+Lastly, other machines on a corporate network will need access to the guest.
+Vagrant uses three different virtual network adapters to meet the different needs.
+
+The default adapter has a [NAT](https://en.wikipedia.org/wiki/Network_address_translation) setup,
+and uses the host's interface, and its address, to connect to Internet resources. 
+Because of NAT, guest packets appear to originate from the host.  
+This adapter is also used for ssh connections from the host when you use `vagrant ssh`.
+Vagrant uses a different small [private network](https://en.wikipedia.org/wiki/Private_network) for each guest.
+
+The second adapter is for what Vagrant calls a 'host only' network. 
+The host computer acts as a router for traffic among guest machines and itself.
+This network must have a unique (among your route) [private network](https://en.wikipedia.org/wiki/Private_network) number.
+
+The third adapter is for a [bridged network](https://en.wikipedia.org/wiki/Bridging_(networking)).
+Using a combination of smoke, mirrors, and magical incantations, this virtual interface
+makes the network think that your host's physical network adapter is suddenly two adapters.
+The virtual adapter has its own [MAC address](https://en.wikipedia.org/wiki/MAC_address)
+and, therefore, it gets a unique [IP address](https://en.wikipedia.org/wiki/IP_address).
+
+Due to a nefarious twist in the magic, it often happens that bridged packets cannot travel 
+between the physical adapter and its virtual adapters. 
+Therefore guest machines must use the 'host only' network to talk to the host and brother guests.
+
+
+do is to use `vboxmanage list bridgedifs` to list the possible bridge interface names

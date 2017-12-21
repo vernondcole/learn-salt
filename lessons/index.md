@@ -19,7 +19,7 @@ the [README.md](../README.md) file in this repository.
 
 [Using Salt on one machine (salt-call)](basics/salt-call.md) . . . Examples at `cd lessons/basics`
 
-[Basics of Vagrant](vagrant_basics/vagrant_basics.md) . . . Examples at `cd lessons/vagrant_basics`
+[Basics of Vagrant](about_vagrant/vagrant_basics.md) . . . Examples at `cd lessons/vagrant_basics`
 
 [Connecting to a Salt Master](basics/master.md)  . . . `cd lessons/basics`
 
