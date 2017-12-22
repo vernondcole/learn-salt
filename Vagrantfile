@@ -84,7 +84,7 @@ network_mask = BRIDGED_NETWORK_MASK
 if (RUBY_PLATFORM=~/linux/)  # on Linux, scan for the device name
   ifc_name, network_mask = get_good_ifc()
   interface_guesses = [ifc_name]
-elseif (RUBY_PLATFORM=~/darwin/i)  # on Mac OS, guess two frequently used ports
+elsif (RUBY_PLATFORM=~/darwin/i)  # on Mac OS, guess two frequently used ports
   interface_guesses = ['en0: Ethernet', 'en1: Wi-Fi (AirPort)']
 else  # on Windows -- you really have to type in a value, they are too weird.
   interface_guesses = [INTERFACE_GUESS]

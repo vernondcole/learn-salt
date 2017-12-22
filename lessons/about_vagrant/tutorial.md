@@ -160,7 +160,19 @@ and, therefore, it gets a unique [IP address](https://en.wikipedia.org/wiki/IP_a
 
 Due to a nefarious twist in the magic, it often happens that bridged packets cannot travel 
 between the physical adapter and its virtual adapters. 
-Therefore guest machines must use the 'host only' network to talk to the host and brother guests.
+Therefore you must use the 'host only' network to talk between the host and amoung guests.
 
+For some odd reason, VirtualBox uses the descriptive network name, 
+rather than the adapter name shown by `ifconfig` (`ipconfig` on Windows),
+to describe which network adapter should be used for the bridge interface.
+That name is not easy to determine.
 
-do is to use `vboxmanage list bridgedifs` to list the possible bridge interface names
+The [supplied Vagrantfile](../../Vagrantfile) contains a rather large section of code to try finding the 
+correct name for the bridge interface.
+On Linux, it will probe all of the interface addresses to find one within `BRIDGED_NETWORK_MASK`.
+On MacOS, it will try two frequently found Mac interfaces.
+On Windows -- you are out of luck.
+What you need to do is to use `vboxmanage list bridgedifs` to list the possible bridge interface names.
+Then copy the name you found into the constant `INTERFACE_GUESS` list.
+Entries in the `INTERFACE_GUESS` list will be used in leu of probing on all operating systems.
+
