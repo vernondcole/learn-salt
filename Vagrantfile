@@ -101,7 +101,13 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
   config.vm.provision "shell", inline: "ip address", run: "always"  # what did we get?
 
-
+  # Now ... just in case our user is running some flavor of VMWare, we will
+  # set up his VM, too. But first we need to discover his Host OS ...
+  if (/darwin/ =~ RUBY_PLATFORM) != nil
+    vmware = "vmware_fusion"
+  else
+    vmware = "vmware_workstation"
+  end
   # . . . . . . . . . . . . Define machine QUAIL1 . . . . . . . . . . . . . .
   config.vm.define "quail1", primary: true do |quail_config|  # this will be the default machine
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
@@ -115,10 +121,9 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.linked_clone = true # make a soft copy of the base Vagrant box
         v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.0/27"]  # do not use 10.0 network for NAT
 	end  #                                                     ^  ^/27 is the smallest network allowed.
-    quail_config.vm.provider "vmware" do |v|  # only for VMware boxes
-        v.memory = 1024       # limit memory for the vmware box, too
-        v.cpus = 1
-		v.linked_clone = true
+    quail_config.vm.provider vmware do |v|  # only for VMware boxes
+        v.vmx["memsize"] = "1024"
+        v.vmx["numvcpus"] = "1"
 	end
   end
 
@@ -126,14 +131,14 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   # . . . . . . .  Define the BEVYMASTER . . . . . . . . . . . . . . . .
   config.vm.define "bevymaster", autostart: false do |master_config|
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
-    master_config.vm.hostname = BEVYMASTER
+    master_config.vm.hostname = "bevymaster"
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"  # your host machine will be at NETWORK.2.1
     master_config.vm.network "public_network", bridge: interface_guesses, mac: "be0000" + bevy_mac
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
 
     if vagrant_command == "ssh"
       master_config.ssh.username = my_linux_user  # if you type "vagrant ssh", use this username
-      master_config.ssh.private_key_path = info.dir + "/.ssh/id_rsa"
+      master_config.ssh.private_key_path = Dir.home() + "/.ssh/id_rsa"
     end
 
     master_config.vm.provider "virtualbox" do |v|
@@ -143,10 +148,9 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.32/27"]  # do not use 10.0 network for NAT
     end
 
-    master_config.vm.provider "vmware" do |v|
-        v.memory = 1024       # limit memory for the vmware box, too
-        v.cpus = 1
-		v.linked_clone = true
+    master_config.vm.provider vmware do |v|
+        v.vmx["memsize"] = "1024"
+        v.vmx["numvcpus"] = "1"
 	end
 
     script = "mkdir -p /srv/pillar\n"  # put a skeleton /srv on the new master
@@ -223,10 +227,9 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.linked_clone = true # make a soft copy of the base Vagrant box
         v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.64/27"]  # do not use 10.0 network for NAT
 	end
-    quail_config.vm.provider "vmware" do |v|
-        v.memory = 1024       # limit memory for the vmware box, too
-        v.cpus = 1
-		v.linked_clone = true
+    quail_config.vm.provider vmware do |v|
+        v.vmx["memsize"] = "1024"
+        v.vmx["numvcpus"] = "1"
 	end
   end
 
@@ -244,10 +247,9 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.linked_clone = true # make a soft copy of the base Vagrant box
         v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.96/27"]  # do not use 10.0 network for NAT
 	end
-    quail_config.vm.provider "vmware" do |v|
-        v.memory = 1024       # limit memory for the vmware box, too
-        v.cpus = 1
-		v.linked_clone = true
+    quail_config.vm.provider vmware do |v|
+        v.vmx["memsize"] = "1024"
+        v.vmx["numvcpus"] = "1"
 	end
   end
 
@@ -262,18 +264,16 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|
+        v.name = BEVY + '_quail42'  # ! N.O.T.E.: name must be unique
         v.memory = 4000       # limit memory for the virtual box
         v.cpus = 2
         v.linked_clone = true # make a soft copy of the base Vagrant box
         v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.96/27"]  # do not use 10.0 network for NAT
     end
-
-    quail_config.vm.provider "vmware" do |v|
-        v.memory = 4000       # limit memory for the vmware box, too
-        v.cpus = 2
-        v.linked_clone = true
+    quail_config.vm.provider vmware do |v|
+        v.vmx["memsize"] = "5000"
+        v.vmx["numvcpus"] = "2"
     end
-
     quail_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
        salt.install_type = "-f git" # b7c0182d93a1092b7369eedfbcf5bc2512c12f1b"  # TODO: use "stable" when OXYGEN is released
@@ -281,7 +281,6 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        salt.verbose = false
        salt.colorize = true
        salt.bootstrap_options = "-A " + NETWORK + ".2.2 -i quail42 -F -P " # -g https://github.com/vernondcole/salt.git"
-       # TODO: salt.bootstrap_options = '-A ' + NETWORK +'.2.2 -i quail42 -P -c /tmp'  # expect Master at x.x.2.2
        salt.masterless = true  # the provisioning script is masterless
     end
   end
