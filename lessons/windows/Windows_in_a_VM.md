@@ -15,7 +15,7 @@ vagrant up
 If you see Windows starting in the GUI's `Preview` window,
 but don't see a Windows GUI window on your screen, 
 then click on the green right-arrow (➡) icon. You should be
-rewarded with a Windows desktop as a window on your display.
+rewarded with a new Windows desktop in a window on your display.
 
 ##### Loading Salt using your virtual Windows desktop.
 
@@ -31,13 +31,13 @@ You can use the GUI desktop on your Windows VM to install Salt on it.
 - in `Minion Name` enter your desired Salt Id. Perhaps `x-win10`.
 - click the `Install` button.
 
-Go back to the Bevy Master and accept your new minion.
+After the smoke clears, go back to the Bevy Master and accept your new minion.
 
 `sudo salt-key -a <Salt ID>`
 
 For example: `sudo salt-key -a x-win10`
 
-Procede to send commands to your new Salt minion and its friends.
+Proceed to send commands to your new Salt minion and its friends.
 
 `sudo salt \* test.version`
 
