@@ -47,3 +47,21 @@ Proceed to send commands to your new Salt minion and its friends.
 
 Salt-cloud can also be used to load and start Windows machines.
 https://docs.saltstack.com/en/latest/topics/cloud/windows.html
+
+##### Running a Microsoft Compiler
+
+It is still possible to find a Microsoft C++ compiler which can be used for free. 
+If you are working on an open source project, you can run the Community Edition
+of Visual Studio. It is also possible to download only the tools you need to build
+a project using only command-line tools (like you want to do on a build server)
+if you look carefully near the bottom of the selections in 
+https://www.visualstudio.com/downloads
+to find `Build Tools for Visual Studio 2017`. 
+
+Instructions to use the command-line tools can be found in 
+https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line.
+
+
+
+
+ 
