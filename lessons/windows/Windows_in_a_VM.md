@@ -76,6 +76,12 @@ to find `Build Tools for Visual Studio 2017`.
 Instructions to use the command-line tools can be found in 
 https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line.
 
+##### or try a VirtualBox image with Visual Studio pre-installed.
+
+Not managed by Vagrant, but easy enough to use from the VirtualBox GUI
+(or from VMWare)
+https://developer.microsoft.com/en-us/windows/downloads/virtual-machines 
+features a time-limited copy of Windows 10 with Visual Studio 2017.
 
 
 
