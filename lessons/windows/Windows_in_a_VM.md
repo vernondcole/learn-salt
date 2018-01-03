@@ -83,6 +83,15 @@ Not managed by Vagrant, but easy enough to use from the VirtualBox GUI
 https://developer.microsoft.com/en-us/windows/downloads/virtual-machines 
 features a time-limited copy of Windows 10 with Visual Studio 2017.
 
+If you use this arrangement, you will not be able to use ssh connections
+(to github.com for example) because your VM will not be known (will not
+have a public key) on target servers. You will need to copy your
+private ssh key (`~/.ssh/id_rsa`) to 'C:\Users\User\.ssh`. 
 
+It may be most convenient to use the VirtualBox GUI to create a shared
+directory of your host's user home. You can find it on the VM's 'VBOXSVR'
+share as seen above. You can copy your private key, or git can clone
+a repo, from that share, 
+or you can open your project there with Visual Studio.
 
  
