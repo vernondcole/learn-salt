@@ -65,7 +65,7 @@ https://docs.saltstack.com/en/latest/topics/cloud/windows.html
 
 ##### Running a Microsoft Compiler
 
-It is still possible to find a Microsoft C++ compiler which can be used for free. 
+It is still possible to find a Microsoft C++ or C# compiler which can be used for free. 
 If you are working on an open source project, you can run the Community Edition
 of Visual Studio. It is also possible to download only the tools you need to build
 a project using only command-line tools (like you want to do on a build server)
@@ -94,4 +94,11 @@ share as seen above. You can copy your private key, or git can clone
 a repo, from that share, 
 or you can open your project there with Visual Studio.
 
- 
+##### or a VMware version
+
+If you are a VMWare user, you can also import a VM from
+[Microsoft](https://developer.microsoft.com/en-us/windows/downloads/virtual-machines).
+Use the pull-down menu on your VMWare Fusion window and select 
+`Virtual Machine --> Reinstall VMWare Tools` to enable shared directorits
+on your virtual Windows machine.
+
