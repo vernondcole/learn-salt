@@ -44,7 +44,8 @@ pxe_netboot_download_url: http://archive.ubuntu.com/ubuntu/dists/{{ default_ubun
 #  each should have a "tag" matching the Netboot Tags below.
 #  Salt state file dnsmasq/pxe_auto_install.sls will create a PXE configuretion setting file for each entry in this list.
 pxe_netboot_configs:
-  - mac: '00-1a-4b-7c-2a-b2'  {# Note the "-" -- this line starts a list #}
+  - mac: '00-1a-4b-7c-2a-b2'  {# Note the "-", it means this line starts a list #}
+    hostname: 'hplt.test'
     subdir: '{{ default_ubuntu_version }}/'  # include a trailing "/"
     tag: install
     kernel: ubuntu-installer/amd64/linux

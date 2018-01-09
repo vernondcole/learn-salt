@@ -77,13 +77,13 @@ d-i netcfg/link_wait_timeout string 10
 # Any hostname and domain names assigned from dhcp take precedence over
 # values set here. However, setting the values still prevents the questions
 # from being shown, even if values come from dhcp.
-d-i netcfg/get_hostname string {{ config_mac }}
+d-i netcfg/get_hostname string {{ config_hostname }}
 #d-i netcfg/get_domain string bevy01.test
 
 # If you want to force a hostname, regardless of what either the DHCP
 # server returns or what the reverse DNS entry for the IP is, uncomment
 # and adjust the following line.
-#d-i netcfg/hostname string {{ config_mac }}
+#d-i netcfg/hostname string {{ config_hostname }}
 
 # Disable that annoying WEP key dialog.
 d-i netcfg/wireless_wep string
