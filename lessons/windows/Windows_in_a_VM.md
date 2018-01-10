@@ -78,8 +78,7 @@ https://docs.microsoft.com/en-us/cpp/build/building-on-the-command-line.
 
 ##### or try a VirtualBox image with Visual Studio pre-installed.
 
-Not managed by Vagrant, but easy enough to use from the VirtualBox GUI
-(or from VMWare)
+Not managed by Vagrant, but easy enough to use from the VirtualBox GUI,
 https://developer.microsoft.com/en-us/windows/downloads/virtual-machines 
 features a time-limited copy of Windows 10 with Visual Studio 2017.
 

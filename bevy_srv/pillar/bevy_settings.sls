@@ -1,7 +1,7 @@
 ---
 # salt pillar file for common values for a bevy
 
-{% set bevymaster_ip = '192.168.88.2' %}  {# main IP address of bevy master #}
+{% set bevymaster_ip = salt['config.get']('bevymaster_address', '192.168.88.2') %}  {# main IP address of bevy master #}
 {% set pxe_network_cidr = '192.168.88.0/24' %}
 
 {# define module functions which will each minion will run periodically to send data to Salt Mine #}
