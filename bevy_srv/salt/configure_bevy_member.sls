@@ -253,8 +253,8 @@ restart-the-minion:
     - order: last
     - shell: /bin/bash
     {% if salt['grains.get']('os_family') == 'MacOS' %}
-    - name: '/tmp/run_command_later.py 5 "pkill -f salt-minion"'
+    - name: '/tmp/run_command_later.py 10 "pkill -f salt-minion"'
     {% else %}
-    - name: "/tmp/run_command_later.py 5 systemctl restart salt{{ other_minion }}-minion"
+    - name: "/tmp/run_command_later.py 10 systemctl restart salt{{ other_minion }}-minion"
     {% endif %}
 ...
