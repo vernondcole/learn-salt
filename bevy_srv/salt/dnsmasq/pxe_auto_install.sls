@@ -74,7 +74,7 @@ let_the_file_clearing_daemon_get_started:
     - source: salt://{{ slspath }}/files/{{ config['subdir'] }}hands_off.preseed
     - template: jinja
     - config_mac: {{ config['mac'] }}
-	- config_hostname: {{ config['hostname'] }}
+    - config_hostname: {{ config['hostname'] }}
     - config_next_command: {{ config['next_command'] }}
     - config_subdir: {{ config['subdir'] }}
     - makedirs: true

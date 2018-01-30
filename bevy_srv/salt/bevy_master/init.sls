@@ -58,8 +58,8 @@ clean_up_own_pki:
       - accept-own-key
 {% endif %}
 
-pip2-installed:
-  pkg.latest:
+pip2-installed:  # TODO: what about pip3?
+  pkg.installed:
     - name: python-pip
 
 salt-master:
