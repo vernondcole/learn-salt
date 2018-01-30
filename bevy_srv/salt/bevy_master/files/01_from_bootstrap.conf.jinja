@@ -10,6 +10,8 @@
 id: {{ salt['config.get']('node_name', salt['config.get']('id')) }}
 {% set is_master = salt['config.get']('id', '').startswith('bevymaster') %}
 {% if is_master %}master: localhost
+ipv6: true  # enable IPv6 dual-stack
+interface: '::'
 {% elif salt['grains.get']('virtual', '') == 'physical' -%}
 master: {{ salt['config.get']('bevymaster_external_ip', salt['config.get']('master')) }}
 {% else -%}
