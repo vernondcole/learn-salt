@@ -3,7 +3,7 @@
 #    https://docs.saltstack.com/en/latest/ref/netapi/all/salt.netapi.rest_cherrypy.html
 include:
   - bevy_master
-  - pepper
+  - .pepper
 
 salt-api:
   pkg.installed:
