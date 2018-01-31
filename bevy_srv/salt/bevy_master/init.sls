@@ -17,6 +17,7 @@ update_the_grains:
     - name: saltutil.sync_grains
 
 include:
+  - ensure_user_privs
   - sdb
   - ./populate_bootstrap_settings
   - configure_bevy_member  {# master is a member, too #}

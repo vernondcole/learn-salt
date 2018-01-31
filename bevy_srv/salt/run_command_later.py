@@ -37,17 +37,25 @@ commands = raw_command.split(';')
 print()
 print('v - v - v - v - v - v - v - v - v - v - v - v - v - v - v - v')
 print(time.asctime())
+retcd = 0  # default to success indication
 for command in commands:
     command = command.strip()
     if not command.startswith('echo'):
-        print('{} running command-> {}'.format(__file__, command))
+        print('{} is now running command-> "{}"'.format(__file__, command))
     sys.stdout.flush()
     try:
-        retcd = subprocess.check_call(command, shell=True, stdout=sys.stdout, stderr=subprocess.STDOUT)
+        # 3.5 sp = subprocess.run(command, shell=True, check=True, stdout=sys.stdout, stderr=subprocess.STDOUT)
+        # 3.5 retcd = sp.returncode
+        retcd = subprocess.call(command, shell=True, stdout=sys.stdout, stderr=subprocess.STDOUT) # 3.4
+        if retcd != 0:  #3.4
+            raise subprocess.CalledProcessError(  #3.4
+                'Command {} returned non-zero exit status {}'.format(command, retcd))  # 3.4
     except subprocess.CalledProcessError as e:
+        print('* * * ERROR running command . . .')
+        print('(try checking {} for details)'.format(CHEAP_LOG_FILE))
         print(e)
-        retcd = 127
-        break
+        retcd = e.returncode
+        break  # stop running other commands, if a list
 print('^ - ^ - ^ - ^ - ^ - ^ - ^ - ^ - ^ - ^ - ^ - ^ - ^ - ^ - ^ - ^')
 print(' $ ', end='')  # a phony prompt for the user
 sys.stdout.flush()
