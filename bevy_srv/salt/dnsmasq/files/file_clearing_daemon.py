@@ -34,7 +34,7 @@ try:
     wait_time = pillar['pxe_clearing_daemon_life_minutes'] * 60  # seconds
     salt_managed_message = pillar['salt_managed_message']
 except KeyError:
-    raise ReferenceError('Expected values not found in pillar. Are you including demo_bevy_settings.sls?')
+    raise ReferenceError('Expected values not found in pillar. Are you including manual_bevy_settings.sls?')
 
 BOOT_FROM_DISK_CONFIG_TEXT = '''
 # this file created by {}

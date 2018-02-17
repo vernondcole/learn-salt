@@ -4,7 +4,7 @@
 #
 {# this file should only be written during a bootsrapping run #}
 {% if salt['pillar.get']('doing_bootstrap', false) %}
-/srv/pillar/01_bootstrap_settings.sls:
+/srv/pillar/01_bevy_settings.sls:
   file.managed:
     - makedirs: true
     {# NOTE: cannot define user here, user has not yet been created #}

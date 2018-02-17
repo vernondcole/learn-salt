@@ -3,13 +3,12 @@
 #  supplied demo Vagrant-powered Bevy Master.0
 #
 Vagrant.configure(2) do |config|  # the literal "2" is required.
-    #config.vm.box = "Microsoft/EdgeOnWindows10"  # a time-limited
-    config.vm.box = "mwrock/Windows2016"
-    # config.vm.box_version = "1.0"
+    #config.vm.box = "Microsoft/EdgeOnWindows10"  # a time-limited demo
+    config.vm.box = "mwrock/Windows2016"  # Windows 2016 server
     #config.vm.hostname = "windowstest"  # use of this setting causes VM to reboot Windows.
 
     config.vm.provider "virtualbox" do |v|
-        v.name = 'wintest'  # ! N.O.T.E.: name must be unique
+        v.name = 'win16'  # ! N.O.T.E.: name must be unique
         v.gui = true  # turn on the graphic window
         v.linked_clone = true
         v.customize ["modifyvm", :id, "--vram", "18"]  # enough video memory for full screen
@@ -22,14 +21,13 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     config.vm.guest = :windows
 #    config.vm.communicator = "winrm"
 #    config.vm.boot_timeout = 600
-#    config.vm.graceful_halt_timeout = 600
-#    config.winrm.password = "Passw0rd!"
+    config.vm.graceful_halt_timeout = 600
+#    config.winrm.password = "Passw0rd!"  # for Windows 10
 #    config.winrm.username = "IEUser"
 
-#    config.vm.provision :salt do |salt|
-#        salt.minion_id = "x_wintest"
-#        salt.log_level = "info"
-#        salt.verbose = true
-#    end
-
+    config.vm.provision :salt do |salt|
+        salt.minion_id = "win16"
+        salt.log_level = "info"
+        salt.verbose = true
+    end
 end

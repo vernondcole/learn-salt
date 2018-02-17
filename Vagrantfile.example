@@ -27,7 +27,7 @@ my_linux_user = login  # username used for login to VM
 HASHFILE_NAME = 'bevy_linux_password.hash'  # filename for your Linux password hash
 hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)  # where you store it ^ ^ ^
 # .
-ANTECEDENT_FILE_NAME = 'bevy_srv/pillar/01_bootstrap_settings.sls'
+ANTECEDENT_FILE_NAME = 'bevy_srv/pillar/01_bevy_settings.sls'
 # . ^ . ^ . end of customize things . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ .
 # . . . try to get previously stored settings values to replace above . . .
 if File.exists?(ANTECEDENT_FILE_NAME)

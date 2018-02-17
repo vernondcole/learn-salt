@@ -2,7 +2,7 @@
 # salt pillar file for as-installed values for a bevy
 
 include:
-  - demo_bevy_settings
+  - manual_bevy_settings
 {% raw %}
 {% set bevymaster_ip = salt['config.get']('bevymaster_address', '192.168.88.2') %}  {# main IP address of bevy master #}
 {% set pxe_network_cidr = '192.168.88.0/24' %}

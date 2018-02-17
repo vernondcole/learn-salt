@@ -2,7 +2,13 @@
 
 This sub-directory provides for manually configuring a master server or a minion.
 
-### How to create a bevy master as a VM on your workstation.
+### How to create a bevy master on your workstation.
+
+If it is running Linux, you can run a Salt Master directly on your workstation.
+Windows users must run Salt Master on a virtual machine.
+MacOS users may attempt to run a Salt Master, but that configuration is not supported.
+Linux users will probably find it more convenient to run the master on a VM also.
+
 
 - Clone this repository onto your workstation.
 
@@ -10,7 +16,7 @@ This sub-directory provides for manually configuring a master server or a minion
   - The bevy name `BEVY = "mybevy"`
   - an unused private network prefix ``
 
-### How to create a bevy master on an independant computer.
+### How to create a bevy master on an independent computer.
 
 - Log in to your proposed Salt Master.
 This must be a Linux machine. Windows will not work. MacOS might work,
@@ -30,6 +36,7 @@ and [Ubuntu Server](https://www.ubuntu.com/server) are known to work.
     sudo apt install git  # if needed...
     cd /projects  # go to your project directory
     git clone --depth 1 https://github.com/vernondcole/learn-salt.git
+    pip install pyyaml ifaddr
     cd configure_machine
     sudo ./bootstrap_bevy_member_here.py
     ```

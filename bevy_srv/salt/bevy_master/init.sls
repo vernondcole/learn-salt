@@ -61,7 +61,9 @@ clean_up_own_pki:
 
 pip2-installed:  # TODO: what about pip3?
   pkg.installed:
-    - name: python-pip
+    - names:
+      - python-pip
+      - gitpython  # needed on Ubuntu 16.04 for SaltStack issue 35993
 
 salt-master:
   pkg.installed:

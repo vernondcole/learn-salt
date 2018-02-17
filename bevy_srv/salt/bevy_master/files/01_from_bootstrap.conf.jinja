@@ -63,4 +63,9 @@ pillar_source_merging_strategy: recurse
 {% endif %}
 file_ignore_regex:
   - '/\.git($|/)'
-#
+
+{% if grains[os'] == 'Ubuntu' and grains['osrelease'] == '16.04' %}
+# salt issue #35993 https://github.com/saltstack/salt/issues/35993
+# git cannot read an https: URL using pygit2 on Ubuntu 16.04
+winrepo_provider: gitpython
+{% endif %}

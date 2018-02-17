@@ -1,5 +1,9 @@
 ---
 # salt pillar file for common values for a bevy
+# This file originally supplied from
+
+include:  {# default to the settings stored by bootstrap_bevy_member_here.py #}
+  - 01_bevy_settings  {# defined by BEVY_SETTINGS_FILE_NAME #}
 
 {% set bevymaster_ip = salt['config.get']('bevymaster_address', '192.168.88.2') %}  {# main IP address of bevy master #}
 {% set pxe_network_cidr = '192.168.88.0/24' %}

@@ -1,6 +1,6 @@
 ---
 # salt state file for all systems
-
+{% set BEVY_SETTINGS_FILE_NAME = '' %}
 {% if grains['os_family'] != 'Windows' %}
 
 {% if grains['mem_total'] < 2000 %}
@@ -42,4 +42,5 @@ ubuntu_packages:
       {% endif %}
 {% endif %}
 {% endif %}
+
 ...

@@ -21,11 +21,11 @@ base:
     - my_user_settings  # found in /srv/pillar
 
   'quail*':
-    - demo_bevy_settings
+    - manual_bevy_settings
 
   bevymaster*:
-    - demo_bevy_settings
+    - manual_bevy_settings
 
   'bevy:*':
     - match: grain
-    - demo_bevy_settings
+    - manual_bevy_settings
