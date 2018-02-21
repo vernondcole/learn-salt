@@ -5,7 +5,7 @@
 include:  {# default to the settings stored by bootstrap_bevy_member_here.py #}
   - 01_bevy_settings  {# defined by BEVY_SETTINGS_FILE_NAME #}
 
-{% set bevymaster_ip = salt['config.get']('bevymaster_address', '192.168.88.2') %}  {# main IP address of bevy master #}
+{% set bevymaster_url = salt['config.get']('bevymaster_url', '192.168.88.2') %}  {# main IP address of bevy master #}
 {% set pxe_network_cidr = '192.168.88.0/24' %}
 
 {# define module functions which will each minion will run periodically to send data to Salt Mine #}
@@ -19,7 +19,7 @@ wol_test_machine_ip: 192.168.88.8  # the ip address of the minion machine
 wol_test_mac: '00-1a-4b-7c-2a-b2'  # mac address of minion machine
 wol_test_sender_id: bevymaster  # Salt node id of WoL transmitter
 
-bevymaster_external_ip: {{ bevymaster_ip }}
+bevymaster_external_ip: {{ bevymaster_url }}
 bevymaster_vagrant_ip: 172.17.2.2  # vagrant host-only IP address of master
 
 bevy_host_id: 'vc-ddell'  # Salt node id of Vagrant host machine

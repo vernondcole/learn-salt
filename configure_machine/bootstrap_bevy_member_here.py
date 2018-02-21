@@ -4,19 +4,18 @@
 """
 A utility program to install a SaltStack minion, and optionally, a master with cloud controller.
 """
-import subprocess, os, getpass, json, socket, platform
+import subprocess, os, getpass, json, socket, platform, ipaddress
 from pathlib import Path
 from urllib.request import urlopen
 
-import time
 import yaml
 import ifaddr
 
-import pwd_hash  # from the current working directory
-# noinspection PyUnresolvedReferences
+import pwd_hash
 import sudo
 
-sudo.run_elevated()  # re-run this command as an Administrator
+###sudo.run_elevated()  # Run this script using Administrator privileges
+
 # # # # #
 # This program attempts to establish a DRY single source of truth as the file
 # identified with BEVY_SETTINGS_FILE_NAME.
@@ -50,10 +49,10 @@ FROM_BOOTSTRAP_FILE_NAME = '/etc/salt{}/minion.d/01_settings_from_bootstrap.conf
 SALT_SRV_ROOT = '/srv/salt'
 USER_SSH_KEY_FILE_NAME = SALT_SRV_ROOT + '/ssh_keys/{}.pub'
 
-DEFAULT_NETWORK = '172.17'  # first two bytes of Vagrant private network
+DEFAULT_VAGRANT_PREFIX = '172.17'  # first two bytes of Vagrant private network
+DEFAULT_VAGRANT_NETWORK = '172.17.0.0/16'  #  Vagrant private network
 
-# the template for a bevy master fully qualified domain name. The bevy name will be supplied in {}
-BEVYMASTER_FQDN_PATTERN = 'bevymaster.{}.test'
+DEFAULT_FQDN_PATTERN = '{}.{}.test' # .test is ICANN reserved for test networks.
 
 minimum_salt_version = MINIMUM_SALT_VERSION.split('.')
 minimum_salt_version[1] = int(minimum_salt_version[1])  # use numeric compare of month field
@@ -63,11 +62,73 @@ def read_bevy_settings_file():
     prov_file = Path(BEVY_SETTINGS_FILE_NAME)
     try:
         with prov_file.open() as provision_file:
-            settings = yaml.safe_load(provision_file.read()) or {}
+            stored_settings = yaml.safe_load(provision_file.read()) or {}
     except (OSError, yaml.YAMLError) as e:
         print("Unable to read previous values from {} --> {}.".format(BEVY_SETTINGS_FILE_NAME, e))
-        settings = {}
-    return settings
+        stored_settings = {}
+    return stored_settings
+
+
+def write_bevy_settings_file(settings: dict):
+    bevy_settings_file_name = Path(BEVY_SETTINGS_FILE_NAME)
+    # python 3.4
+    os.makedirs(str(bevy_settings_file_name.parent), exist_ok=True)
+    # python 3.5
+    # bevy_settings_file_name.parent.mkdir(parents=True, exist_ok=True)
+
+    with bevy_settings_file_name.open('w') as f:
+        this_file = Path(__file__).resolve()
+        f.write('# this file was created by {}\n'.format(this_file))
+        f.write('# to remember some facts used by Salt.\n')
+        for name, value in settings.items():
+            f.write("{}: '{}'\n".format(name, value))
+    print('File "{}" written.'.format(bevy_settings_file_name))
+    print()
+
+def write_local_minion_config_file():
+    '''
+    writes a copy of the template, below, into a file named "minion" in this (the default) directory
+    substituting the actual path to the ../bevy_srv salt and pillar subdirectories,
+    -- which will be used as the Salt minion configuration during the "salt_state_apply" function below.
+    '''
+    template = """
+# stub minion configuration file for stand-alone bevy master bootstrapping.
+#
+# also used as the default to start building a virgin configuration record
+#
+master: localhost
+
+file_client: local  # run as masterless
+
+file_roots:    # states are searched in the given order -- first found wins
+  base:
+    - "{bevy_root}"    # then use directory from git repository
+    - /srv/salt         # then the one we dynamically create
+top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
+
+pillar_roots:  # all pillars are merged -- the last entry wins
+  base:
+    - "{bevy_pillar}"
+    - /srv/pillar
+pillar_source_merging_strategy: recurse
+
+file_ignore_regex:
+  - '/\.git($|/)'
+
+fileserver_backend:
+  - roots
+
+grains:
+  datacenter: bevy
+  environment: dev
+  roles:
+    - bevy_member
+"""
+    file_names = {'bevy_root': Path('../bevy_srv/salt').resolve(),
+                  'bevy_pillar': Path('../bevy_srv/pillar').resolve()}
+    with open('minion', 'w') as config_file:
+        config_file.write(
+            template.format(**file_names))
 
 
 def salt_state_apply(salt_state, **kwargs):
@@ -88,25 +149,24 @@ def salt_state_apply(salt_state, **kwargs):
     pillar_root = kwargs.pop('pillar_root', '')
     config_dir = kwargs.pop('config_dir', '')
 
-    cmdargs = {'salt_state': salt_state}
-    cmdargs['file_root'] = '--file-root={}'.format(file_root) if file_root else ""
-    cmdargs['pillar_root'] = '--pillar-root={}'.format(pillar_root) if pillar_root else ""
-    cmdargs['config_dir'] = '--config-dir={}'.format(config_dir) if config_dir else ''
-
-    cmdargs['pillar_data'] = 'pillar="{!r}"'.format(kwargs) if kwargs else ''
+    command_args = {'salt_state': salt_state,
+                    'file_root': '--file-root={}'.format(file_root) if file_root else "",
+                    'pillar_root': '--pillar-root={}'.format(pillar_root) if pillar_root else "",
+                    'config_dir': '--config-dir={}'.format(config_dir) if config_dir else '',
+                    'pillar_data': 'pillar="{!r}"'.format(kwargs) if kwargs else ''}
 
     cmd = "salt-call --local state.apply {salt_state} --retcode-passthrough " \
           "--state-output=mixed " \
           "{file_root} {pillar_root} {config_dir} --log-level=info " \
-          "{pillar_data} ".format(**cmdargs)
+          "{pillar_data} ".format(**command_args)
 
     print(cmd)
     ret = subprocess.call(cmd, shell=True)
     if ret == 0:
         print("Success")
     else:
-        print('Error %d occurred while running Salt state "%s"' % (ret,
-                                                                   salt_state if salt_state else "highstate"))
+        print('Error {} occurred while running Salt state "{}"'.format(
+               ret, salt_state if salt_state else "highstate"))
 
 
 def salt_call_json(salt_command):
@@ -119,25 +179,37 @@ def salt_call_json(salt_command):
         print('Error code %d returned from Salt command %r"' % (
             e.returncode, cmd))
         out = b''
-    resp = out.decode()
-    left = resp.find('{')
-    right = resp.rfind('}')
+    out = out.decode()
+    left = out.find('{')  # locate the actual json within the (Windows) response
+    right = out.rfind('}')
     try:
-        ret = json.loads(resp[left:right+1])
+        ret = json.loads(out[left:right + 1])
         return ret
     except json.decoder.JSONDecodeError:
         print("JSON error loading ==>", out)
 
 
+# noinspection PyShadowingNames
 def get_ip_choices():
-    adapters  = ifaddr.get_adapters()
+    """
+    lists the addresses and names of available network interfaces
+    :return: list of dicts {'addr', 'name', 'prefix'}
+    addr is the IPv4 or IPv6 network address
+    name is the "nice" name.
+    prefix is the number of bits in the network prefix
+    """
+    adapters = ifaddr.get_adapters()
     rtn = []
     for adapter in adapters:
         for ip in adapter.ips:
             if isinstance(ip.ip, str):  # IPv4
-                rtn.append({"addr": ip.ip, "name": adapter.nice_name, "prefix": ip.network_prefix})
-            else: # IPv6
-                rtn.append({"addr": ip.ip[0], "name": adapter.nice_name, "prefix": ip.network_prefix})
+                rtn.append({"addr": ipaddress.IPv4Address(ip.ip),
+                            "name": adapter.nice_name,
+                            "prefix": ip.network_prefix})
+            else:  # IPv6
+                rtn.append({"addr": ipaddress.IPv6Address(ip.ip[0]),
+                            "name": adapter.nice_name,
+                            "prefix": ip.network_prefix})
     return rtn
 
 
@@ -180,7 +252,7 @@ def salt_install(master=True):
             print('and then re-run this script. ...')
             if affirmative(input('... unless,  Salt is already installed and it is Okay to continue? [y/N]:')):
                 return True
-            write_bevy_settings_file(settings, '')  # keep the settings we have already found
+            write_bevy_settings_file(settings)  # keep the settings we have already found
             exit(1)
         _salt_install_script = "/tmp/bootstrap-salt.sh"
         print("Downloading Salt Bootstrap to %s" % _salt_install_script)
@@ -250,12 +322,12 @@ def request_bevy_username_and_password(master: bool, user_name: str):
         try:  # named user's default location on this machine?
             print('trying file: "{}"'.format(user_home_pub))
             pub = user_home_pub.open()
-        except (OSError):
+        except OSError:
             try:  # maybe it is already in the /srv tree?
                 user_home_pub = user_key_file
                 print('trying file: "{}"'.format(user_home_pub))
                 pub = user_home_pub.open()
-            except (OSError):
+            except OSError:
                 print('No ssh public key found. You will have to supply it the hard way...')
         if pub:
             pub_key = pub.read()
@@ -288,27 +360,6 @@ def request_bevy_username_and_password(master: bool, user_name: str):
     return bevy, my_linux_user
 
 
-def write_bevy_settings_file(settings: dict,
-                             bslpaswd: str=""):
-    bevy_settings_file_name = Path(BEVY_SETTINGS_FILE_NAME)
-    # python 3.4
-    os.makedirs(str(bevy_settings_file_name.parent), exist_ok=True)
-    # python 3.5
-    # bevy_settings_file_name.parent.mkdir(parents=True, exist_ok=True)
-
-    with bevy_settings_file_name.open('w') as f:
-        this_file = Path(__file__).resolve()
-        f.write('# this file was created by {}\n'.format(this_file))
-        f.write('# to remember some facts used by Salt.\n')
-        for name, value in settings.items():
-            f.write("{}: {}\n".format(name, value))
-        if bslpaswd:
-            f.write('linux_password_hash: "{}"\n'.format(bslpaswd))
-            f.write('force_linux_user_password: true\n')
-    print('File "{}" written.'.format(bevy_settings_file_name))
-    print()
-
-
 def get_salt_master_id():
     out = salt_call_json("config.get master")
     try:
@@ -321,95 +372,89 @@ def get_salt_master_id():
 
 
 def choose_master_address(host_name):
-    try:  # get first two bytes of network_mask, dot separated
-        default_network = '.'.join(settings['network_mask'].split('.')[0:2])
-    except (KeyError, AttributeError):
-        default_network = DEFAULT_NETWORK
-
     try:
-        default = settings['bevymaster_address']
+        default = settings['bevymaster_url']
     except KeyError:
         default = ''
-    choices = get_ip_choices()
-    if default == '':
-        if master:
-            print('This machine has the following IP addresses:')
-            for ip in choices:
-                print('{addr}/{prefix} - {name}', **ip)
-                if ip['addr'].startswith(default_network):
-                    default = ip['addr']
-        elif master_host:
-            default = default_network + '.2.2'
-        else:
-            default = ''
-
+    if master:
+        choices = get_ip_choices()
+        print('This machine has the following IP addresses:')
+        for ip in choices:
+            print('{addr}/{prefix} - {name}', **ip)
+            if ip['addr'].is_global:
+                default = default or str(ip['addr'])
     try:
         ip_ = socket.getaddrinfo(host_name, 4506, type=socket.SOCK_STREAM)
-        print('Its name {} translates to {}'.format(host_name, ip_[0][4]))
-        default = host_name  # if we arrive here, a DNS record was found
+        print('The name {} translates to {}'.format(host_name, ip_[0][4]))
+        default = default or host_name  # if we arrive here, a DNS record was found
         for ip1 in ip_[1:]:
             print(' - {}'.format(ip1[4]))
     except (socket.error, IndexError):
         pass
-    while Ellipsis:  # repeat until user is happy
+    while Ellipsis:  # repeat until user types a valid entry
         resp = input("What url address for the master? [{}]:".format(default))
         choice = resp or default
         try:  # look up the address we have, and see if it appears good
             ip_ = socket.getaddrinfo(choice, 4506, type=socket.SOCK_STREAM)
             addy = ip_[0][4]
             print("Okay, the bevy master's address is {}.".format(addy))
-            for ifc in choices:
-                if ifc['addr'] == addy:
-                    return choice, ifc['name']  # it looks good -- exit the loop
-            return choice, ""
+            return choice  # it looks good -- exit the loop
         except (socket.error, IndexError, AttributeError):
-            print('"{}" is not a valid IPv4 address.'.format(choice))
+            print('"{}" is not a valid IP address.'.format(choice))
 
 
-def chose_bridge_interface(host_name):
-    try:  # get first two bytes of network_mask, dot separated
-        default_network = '.'.join(settings['network_mask'].split('.')[0:2])
-    except (KeyError, AttributeError):
-        default_network = DEFAULT_NETWORK
+def choose_vagrant_network():
+    while Ellipsis:
+        network = settings['vagrant_network']
+        resp = input(
+            'What is your desired Vagrant internal network? [{}]:'.format(network))
+        network = resp or network
+        try:
+            ip_net = ipaddress.ip_network(network, strict=False)
+        except ipaddress.NetmaskValueError:
+            print('Invalid network string. Try again.')
+            continue
+        if not ip_net.is_private:
+            print('Sorry, internal network must be private.')
+            continue
+        try:
+            if ip_net.version == 4:
+                prefix = '.'.join(str(ip_net).split('.')[0:2])  # the first two octets of the network
+            else:
+                prefix = ip_net.compressed.partition("::")[0:2]  # leave out the part after the "::"
+        except Exception as e:
+            print(e)
+            continue
+        return prefix, network  # break out of loop if no errors
 
-    try:
-        default = settings['bevymaster_address']
-    except KeyError:
-        default = ''
-    choices = get_ip_choices()
-    if default == '':
-        if master:
-            print('This machine has the following IP addresses:')
-            for ip in choices:
-                print('{addr}/{prefix} - {name}', **ip)
-                if ip['addr'].startswith(default_network):
-                    default = ip['addr']
-        elif master_host:
-            default = default_network + '.2.2'
+
+def choose_bridge_interface():
+    host_network = ipaddress.ip_network(settings['vagrant_network'])
+    choices = []
+    for ip in get_ip_choices():
+        addy = ip['addr']
+        if addy.is_loopback or addy.is_link_local:
+            continue
+        if addy in host_network:
+            continue
+        choices.append(ip)
+    while Ellipsis:
+        print('This machine has the following possible external IP addresses:')
+        i = 0
+        for ip in choices:
+            i += 1
+            print(i, ': {addr}/{prefix} - {name}'.format(**ip), sep='')
+        if i == 0:
+            raise RuntimeError('Sorry. No external IP interfaces found.')
+        if i == 1:
+            print('Will use the only possible choice.')
+            return choices[0]
         else:
-            default = ''
-
-    try:
-        ip_ = socket.getaddrinfo(host_name, 4506, type=socket.SOCK_STREAM)
-        print('Its name {} translates to {}'.format(host_name, ip_[0][4]))
-        default = host_name  # if we arrive here, a DNS record was found
-        for ip1 in ip_[1:]:
-            print(' - {}'.format(ip1[4]))
-    except (socket.error, IndexError):
-        pass
-    while Ellipsis:  # repeat until user is happy
-        resp = input("What url address for the master? [{}]:".format(default))
-        choice = resp or default
-        try:  # look up the address we have, and see if it appears good
-            ip_ = socket.getaddrinfo(choice, 4506, type=socket.SOCK_STREAM)
-            addy = ip_[0][4]
-            print("Okay, the bevy master's address is {}.".format(addy))
-            for ifc in choices:
-                if ifc['addr'] == addy:
-                    return choice, ifc['name'] # it looks good -- exit the loop
-            return choice, ""  # cannot find exact interface, make Vagrant user choose
-        except (socket.error, IndexError, AttributeError):
-            print('"{}" is not a valid IPv4 address.'.format(choice))
+            try:
+                choice = choices[int(input('Which one do you want to use?:')) - 1]
+                return choice
+            except (ValueError, IndexError, AttributeError):
+                print('Bad choice.')
 
 
 def get_linux_password():
@@ -422,34 +467,46 @@ def get_linux_password():
 
 if __name__ == '__main__':
     settings = {}
-    user_name  = getpass.getuser()
+    user_name = getpass.getuser()
 
     if user_name == 'root':
         user_name = os.environ['SUDO_USER']
 
     settings = read_bevy_settings_file()
-
     try:
-        desktop = Path.home() / "Desktop"
+        import pwd  # works on Posix only
+        pwd_entry = pwd.getpwnam(user_name)  # look it up the hard way -- we are running SUDO
+        settings.setdefault('my_linux_uid', pwd_entry[2])  # useful for network shared files
+        settings.setdefault('my_linux_gid', pwd_entry[3])
+    except (ImportError, IndexError, AttributeError):
+        settings.setdefault('my_linux_uid', '')
+        settings.setdefault('my_linux_gid', '')
+
+    settings.setdefault('vagrant_prefix', DEFAULT_VAGRANT_PREFIX)
+    settings.setdefault('vagrant_network', DEFAULT_VAGRANT_NETWORK)
+    try:
+        desktop = Path.home() / "Desktop"  # try for a /home/<user>/Desktop directory
         on_a_workstation = desktop.exists()
     except AttributeError:
         on_a_workstation = False  # blatant assumption: Python version is less than 3.5, therefore not a Workstation
 
     master_host = False  # assume this machine is NOT the VM host for the Master
-    print('This program can create either a bevy salt-master (including cloud-master),')
-    print('or a simple workstation to join the bevy.')
+    print('This program can make this machine a simple workstation to join the bevy')
+    if platform.system() != 'Windows':
+        print('or a bevy salt-master (including cloud-master),')
     if on_a_workstation:
-        print('Or it can be a Vagrant host to host a bevy master.')
+        print('or a Vagrant host, hosting a bevy master.')
         recommendation = ' (not recommended)'
     else:
         recommendation = ''
-    master = affirmative(input('Should this machine BE the master?{} [y/N]:'))
+    master = platform.system() != 'Windows' and affirmative(
+        input('Should this machine BE the master?{} [y/N]:'))
     if not master and on_a_workstation:
         master_host = affirmative(input(
             'Will the Bevy Master be a VM guest of this machine? [y/N]:'.format(recommendation)))
 
     my_directory = Path(os.path.dirname(os.path.abspath(__file__)))
-    bevy_root_node = (my_directory / '../bevy_srv').resolve()  # this dir is the Salt file_roots dir
+    bevy_root_node = (my_directory / '../bevy_srv').resolve()  # this dir is part of the Salt file_roots dir
     if not bevy_root_node.is_dir():
         raise SystemError('Unexpected situation: Expected directory not present -->{}'.format(bevy_root_node))
 
@@ -511,15 +568,20 @@ if __name__ == '__main__':
             print('No Vagrant Box will be used.')
         if affirmative(input('Correct? [Y/n]:'), default=True):
             break
+    if settings['vagranthost']:
+        settings['vagrant_prefix'], settings['vagrant_network'] = choose_vagrant_network()
+        choice = choose_bridge_interface()
+        settings['vagrant_interface_guess'] = choice['name']
 
-    bevymaster_name = BEVYMASTER_FQDN_PATTERN.format(bevy)
+    settings.setdefault('fqdn_pattern',  DEFAULT_FQDN_PATTERN)
+    settings.setdefault('bevymaster_fqdn', settings['fqdn_pattern'].format('bevymaster', bevy))
 
     we_installed_it = salt_install()  # download & run salt
 
     if we_installed_it:
         run_second_minion = False
         if master_host:
-            master_id = DEFAULT_NETWORK + '.2.2'
+            master_id = settings['vagrant_prefix'] + '.2.2'
         else:
             master_id = 'salt'
     else:
@@ -531,30 +593,33 @@ if __name__ == '__main__':
         print('Your Salt master id was detected as: {}'.format(master_id))
         print('You may continue to use that master, and add a second master for your bevy.')
         run_second_minion = affirmative(input('Do you wish to run a second minion? [y/N]:'))
-
+    two = '2' if run_second_minion else ''
+    if platform.system() == 'Windows':
+        master_pub = Path(r'C:\salt{}\conf\pki\minion\minion_master.pub'.format(two))
+    else:
+        master_pub = Path('/etc/salt{}/pki/minion/minion_master.pub'.format(two))
     try:  # forget a former master's key (if any)
-        two = '2' if run_second_minion else ''
-        Path('/etc/salt{}/pki/minion/minion_master.pub'.format(two)).unlink()
+        print('Removing master public key "{}"'.format(master_pub))
+        master_pub.unlink()
     except (FileNotFoundError, PermissionError):
         pass
 
-    if master_host:  # create an environment for a VM master
-        master_address = choose_master_address(bevymaster_name)
-        settings['my_linux_uid'] = ''
-        settings['my_linux_gid'] = ''
-        settings['bevy_master_ip'] = master_address
-        write_bevy_settings_file(settings, get_linux_password())
+    master_address = choose_master_address(settings['bevymaster_fqdn'])
+    settings['bevymaster_url'] = master_address
 
+    write_local_minion_config_file()
+
+    settings.setdefault('force_linux_user_password', True)
+    settings['linux_password_hash'] = get_linux_password()
     if master:
-        write_bevy_settings_file(settings, get_linux_password())
-        master_address = choose_master_address(bevymaster_name)
+        write_bevy_settings_file(settings)
         print('\n\n. . . . . . . . . .\n')
         salt_state_apply('',  # blank name means: apply highstate
                          config_dir=str(my_directory.resolve()),
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
                          node_name='bevymaster',
-                         bevymaster_address=master_address,
+                         bevymaster_url=master_address,
                          run_second_minion=run_second_minion,
                          vbox_install=virtualbox_install,
                          vagranthost=settings['vagranthost'],
@@ -565,22 +630,21 @@ if __name__ == '__main__':
 
     else:  # not making a master, make a minion
         if master_host:
-            bevymaster_address = settings.setdefault('master_address', DEFAULT_NETWORK + '.2.2')
+            bevymaster_url = settings.setdefault('master_vagrant_ip', settings['vagrant_prefix'] + ',2.2')
         else:
-            bevymaster_address = bevymaster_name
-
+            bevymaster_url = settings['bevymaster_url']
         while Ellipsis:  # loop until user says okay
-            print('Trying {} for bevy master'.format(bevymaster_address))
+            print('Trying {} for bevy master'.format(bevymaster_url))
             try:  # look up the address we have, and see if it appears good
-                ip_ = socket.getaddrinfo(bevymaster_address, 4506, type=socket.SOCK_STREAM)
+                ip_ = socket.getaddrinfo(bevymaster_url, 4506, type=socket.SOCK_STREAM)
                 okay = input('Use {} as your bevy master address? [y/N]:'.format(ip_[0][4]))
                 if affirmative(okay):
                     break  # it looks good -- exit the loop
             except (socket.error, IndexError):
                 pass  # looks bad -- ask for another
-            bevymaster_address = input('Try again. Type the name or address of your bevy master?:')
+            bevymaster_url = input('Try again. Type the name or address of your bevy master?:')
 
-        write_bevy_settings_file(settings, get_linux_password())
+        write_bevy_settings_file(settings)
 
         print('\n\n. . . . . . . . . .\n')
         node_name = platform.node().split('.')[0]  # your workstation's hostname
@@ -588,7 +652,7 @@ if __name__ == '__main__':
                          config_dir=str(my_directory.resolve()),
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
-                         bevymaster_address=bevymaster_address,
+                         bevymaster_url=bevymaster_url,
                          node_name=node_name,
                          run_second_minion=run_second_minion,
                          vbox_install=virtualbox_install,
@@ -599,3 +663,5 @@ if __name__ == '__main__':
     print()
     print('{} done.'.format(__file__))
     print()
+    if platform.system() == 'Windows':
+        input('Hit <Enter> to close this window:')

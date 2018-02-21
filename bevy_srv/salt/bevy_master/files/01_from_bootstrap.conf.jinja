@@ -1,5 +1,5 @@
 {#- this is the jinja template used to create the configuration file
-     /etc/salt/minion.d/01_from_bootstrap.conf and .../master.d/...
+     {{ pillar['salt_config_directory'] }}minion.d/01_from_bootstrap.conf and .../master.d/...
      -#}
 # {{ pillar['salt_managed_message'] }}
 # created from template bevy_master/files/01_from_bootstrap.conf.jinja
@@ -27,7 +27,7 @@ grains:
 {% if not is_master -%}
   {% if salt['config.get']('run_second_minion', false) -%}
 pidfile: /var/run/salt-minion2.pid
-pki_dir: /etc/salt/pki/minion2
+pki_dir: {{ pillar['salt_config_directory'] }}/pki/minion2
 sock_dir: /var/run/salt-minion2
 log_file: /var/log/salt/minion2
   {% endif %}
@@ -64,7 +64,7 @@ pillar_source_merging_strategy: recurse
 file_ignore_regex:
   - '/\.git($|/)'
 
-{% if grains[os'] == 'Ubuntu' and grains['osrelease'] == '16.04' %}
+{% if grains['os'] == 'Ubuntu' and grains['osrelease'] == '16.04' %}
 # salt issue #35993 https://github.com/saltstack/salt/issues/35993
 # git cannot read an https: URL using pygit2 on Ubuntu 16.04
 winrepo_provider: gitpython

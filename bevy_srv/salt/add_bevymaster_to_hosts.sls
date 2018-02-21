@@ -4,7 +4,7 @@
 
 add_bevymaster_to_hosts:
   host.present:
-    - ip: {{ pillar['bevymaster_address'] }}
+    - ip: {{ pillar['bevymaster_url'] }}
     - names:
       - bevymaster
 ...

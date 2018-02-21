@@ -24,7 +24,7 @@ tls.create_self_signed_cert:
       - L: 'American Fork'
       - emailAddress: {{ salt['config.get']('my_linux_user') }}@sling.com # will not really work
 
-/etc/salt/master.d/api.conf:
+{{ pillar['salt_config_directory'] }}/master.d/api.conf:
   file.managed:
     - makedirs: True
     - source: salt://bevy_master/files/api.conf
@@ -36,7 +36,7 @@ salt-api-service:
     - enable: True
     - watch:
       - pkg: salt-api
-      - file: /etc/salt/master.d/api.conf
+      - file: {{ pillar['salt_config_directory'] }}/master.d/api.conf
     - require:
       - delay_master_restart
 ...

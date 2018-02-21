@@ -16,15 +16,14 @@ if File.exists?(BEVY_SETTINGS_FILE_NAME)
 else
   settings = {}
   if ARGV[0] == "up"
-    puts "You must run 'configure_machine\bootstrap_bevy_member_here.py'"
-    puts "as an Administrator before running 'vagrant up'"
+    puts "You must run 'configure_machine\bootstrap_bevy_member_here.py' before running 'vagrant up'"
     abort "Unable to read settings file #{BEVY_SETTINGS_FILE_NAME}."
     end
 end
 
 # .
-BEVY = "bevy01"  # change this to avoid domain name and MAC address conflicts
-NETWORK = "172.17"  # the first two bytes of your host-only network IP ("192.168")
+BEVY = settings["bevy"]
+NETWORK = settings['vagrant_prefix']  # the first two bytes of your host-only network IP ("192.168")
 # ^ ^ your VM host will be NETWORK.2.1, the others as set below.
 # ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
 DOMAIN = BEVY + ".test"  # .test is an ICANN reserved private top-level domain
@@ -36,14 +35,10 @@ BEVYMASTER = "bevymaster." + DOMAIN  # the name for your bevy master
 # .
 VAGRANT_HOST_NAME = Socket.gethostname
 login = Etc.getlogin    # get your own user information to use in the VM
-my_linux_user = login  # username used for login to VM
 my_linux_user = settings['my_linux_user']
 HASHFILE_NAME = 'bevy_linux_password.hash'  # filename for your Linux password hash
 hash_path = File.join(Dir.home, '.ssh', HASHFILE_NAME)  # where you store it ^ ^ ^
-# .
-# . ^ . ^ . end of customize things . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ . ^ .
-# . . . try to get previously stored settings values to replace above . . .
-
+#
 # . v . v . the program starts here . v . v . v . v . v . v . v . v . v .
 #
 vagrant_command = ARGV[0]
@@ -55,7 +50,7 @@ vagrant_object = ARGV.length > 1 ? ARGV[1] : ""  # the name (if any) of the vagr
 if (RUBY_PLATFORM=~/darwin/i)  # on Mac OS, guess two frequently used ports
   interface_guesses = ['en0: Ethernet', 'en1: Wi-Fi (AirPort)']
 else  # Windows or Linux
-  interface_guesses = settings['interface_name']
+  interface_guesses = settings['vagrant_interface_guess']
 end
 if ARGV[0] == "up" or ARGV[0] == "reload"
 puts "Running on host #{VAGRANT_HOST_NAME}"
@@ -166,7 +161,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
          "bevy_root" => "/vagrant/bevy_srv",
          "bevy" => BEVY,
          "node_name" => "bevymaster",
-         "bevymaster_address" => NETWORK + '.2.2',
+         "bevymaster_url" => NETWORK + '.2.2',
          "run_second_minion" => false,
          "linux_password_hash" => password_hash,
          "force_linux_user_password" => true,
