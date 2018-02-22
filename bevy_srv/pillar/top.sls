@@ -18,7 +18,7 @@
 base:
   '*':
     - core_settings  # all systems share these
-    - my_user_settings  # found in /srv/pillar
+    - 01_bevy_settings  # found in /srv/pillar
 
   'quail*':
     - manual_bevy_settings

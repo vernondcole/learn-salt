@@ -13,7 +13,7 @@ id: {{ salt['config.get']('node_name', salt['config.get']('id')) }}
 ipv6: true  # enable IPv6 dual-stack
 interface: '::'
 {% elif salt['grains.get']('virtual', '') == 'physical' -%}
-master: {{ salt['config.get']('bevymaster_external_ip', salt['config.get']('master')) }}
+master: {{ salt['config.get']('bevymaster_url', salt['config.get']('master')) }}
 {% else -%}
 master: {{ salt['config.get']('bevymaster_vagrant_ip', salt['config.get']('master')) }}
 {% endif %}
@@ -49,14 +49,14 @@ mine_interval: 5   # this is a test system, so run the mine every five minutes
 file_roots:    # use this directory rather than /srv/salt
   base:
     - /srv/salt         # first, use the normal place (if it exists)
-    - {{ bevy_root }}/salt
+    - '{{ bevy_root }}/salt'
     - /vagrant/local_salt/salt
 top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
 
 pillar_roots:  # use this directory rather than /srv/pillar
   base:
     - /srv/pillar
-    - {{ bevy_root }}/pillar
+    - '{{ bevy_root }}/pillar'
     - /vagrant/local_salt/pillar
 
 pillar_source_merging_strategy: recurse

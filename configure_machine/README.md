@@ -38,8 +38,9 @@ and [Ubuntu Server](https://www.ubuntu.com/server) are known to work.
     git clone --depth 1 https://github.com/vernondcole/learn-salt.git
     pip install pyyaml ifaddr
     cd configure_machine
-    sudo ./bootstrap_bevy_member_here.py
+    ./bootstrap_bevy_member_here.py
     ```
+    (You may need to use "pip3" and, on Windows, leave off the "./".)
 
 - Answer "yes" to "Should this machine be the master?"
 

@@ -149,7 +149,7 @@ on a VM on your workstation.  As the lessons progress, you may want to move it e
 - run the Python script to configure your workstation and master
   ```bash
     /projects/learn-salt$ cd configure_machine/
-    /projects/learn-salt/configure_machine$ sudo ./bootstrap_bevy_member_here.py 
+    /projects/learn-salt/configure_machine$ ./bootstrap_bevy_member_here.py 
     This program can create either a bevy salt-master (and cloud-master),
     or a simple workstation to join the bevy,
     or a Vagrant host to host the master

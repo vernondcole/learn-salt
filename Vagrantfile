@@ -26,12 +26,11 @@ BEVY = settings["bevy"]
 NETWORK = settings['vagrant_prefix']  # the first two bytes of your host-only network IP ("192.168")
 # ^ ^ your VM host will be NETWORK.2.1, the others as set below.
 # ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
-DOMAIN = BEVY + ".test"  # .test is an ICANN reserved private top-level domain
 bevy_mac = (BEVY.to_i(36) % 0x1000000).to_s(16)  # a MAC address based on hash of BEVY
 # in Python that would be: bevy_mac = format(int(BEVY, base=36) % 0x1000000, 'x')
 #
 # .
-BEVYMASTER = "bevymaster." + DOMAIN  # the name for your bevy master
+BEVYMASTER = "bevymaster"   # the name for your bevy master
 # .
 VAGRANT_HOST_NAME = Socket.gethostname
 login = Etc.getlogin    # get your own user information to use in the VM

@@ -243,7 +243,7 @@ restart-the-minion_1:
   file.managed:
     - name: /tmp/run_command_later.py
     - source: salt://run_command_later.py
-    - mode: 775
+    {% if grains['os'] != 'Windows' %}- mode: 775{% endif -%}
     - show_changes: false
 restart-the-minion:
   cmd.run:
@@ -252,8 +252,10 @@ restart-the-minion:
       - file: restart-the-minion_1
     - order: last
     - shell: /bin/bash
-    {% if salt['grains.get']('os_family') == 'MacOS' %}
+    {% if grains['os_family'] == 'MacOS' %}
     - name: '/tmp/run_command_later.py 10 "pkill -f salt-minion"'
+    {% elif grains['os_family'] == 'Windows' %}
+    - name: 'py \tmp\run_command_later.py 10 net stop salt-minion; net start salt-minion;echo .;echo .;echo "Hit [Enter] to close this window..."'
     {% else %}
     - name: "/tmp/run_command_later.py 10 systemctl restart salt{{ other_minion }}-minion"
     {% endif %}
