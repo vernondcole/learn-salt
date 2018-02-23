@@ -20,13 +20,14 @@ else
     abort "Unable to read settings file #{BEVY_SETTINGS_FILE_NAME}."
     end
 end
-
+puts "settings=#{settings}" ###
 # .
 BEVY = settings["bevy"]
+puts "BEVY=#{BEVY}" ###
 NETWORK = settings['vagrant_prefix']  # the first two bytes of your host-only network IP ("192.168")
 # ^ ^ your VM host will be NETWORK.2.1, the others as set below.
 # ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
-bevy_mac = (BEVY.to_i(36) % 0x1000000).to_s(16)  # a MAC address based on hash of BEVY
+bevy_mac = 'BADF00' #(BEVY.to_i(36) % 0x1000000).to_s(16)  # a MAC address based on hash of BEVY
 # in Python that would be: bevy_mac = format(int(BEVY, base=36) % 0x1000000, 'x')
 #
 # .
