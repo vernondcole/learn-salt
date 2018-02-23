@@ -113,12 +113,14 @@ file_client: local  # run as masterless
 file_roots:    # states are searched in the given order -- first found wins
   base:
     - '{bevy_root}'    # then use directory from git repository
+    - /vagrant/bevy_srv/salt
     - /srv/salt         # then the one we dynamically create
 top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
 
 pillar_roots:  # all pillars are merged -- the last entry wins
   base:
     - '{bevy_pillar}'
+    - /vagrant/bevy_srv/pillar
     - /srv/pillar
 pillar_source_merging_strategy: recurse
 
@@ -513,6 +515,7 @@ if __name__ == '__main__':
         raise SystemError('Unexpected situation: Expected directory not present -->{}'.format(bevy_root_node))
 
     bevy, settings['my_linux_user'] = request_bevy_username_and_password(master or master_host, user_name)
+    settings['bevy'] = bevy
     print('Setting up user "{}" on bevy "{}"'.format(settings['my_linux_user'], bevy))
 
     # check for use of virtualbox and Vagrant
