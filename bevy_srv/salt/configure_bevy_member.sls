@@ -243,7 +243,7 @@ restart-the-minion_1:
   file.managed:
     - name: /tmp/run_command_later.py
     - source: salt://run_command_later.py
-    {% if grains['os'] != 'Windows' %}- mode: 775{% endif -%}
+    {% if grains['os'] != 'Windows' %}- mode: 775{% endif %}
     - show_changes: false
 restart-the-minion:
   cmd.run:

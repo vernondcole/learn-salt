@@ -23,6 +23,7 @@ end
 
 # .
 BEVY = settings["bevy"]
+puts("BEVY=#{BEVY}") ###
 NETWORK = settings['vagrant_prefix']  # the first two bytes of your host-only network IP ("192.168")
 # ^ ^ your VM host will be NETWORK.2.1, the others as set below.
 # ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
