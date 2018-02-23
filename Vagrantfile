@@ -14,20 +14,19 @@ BEVY_SETTINGS_FILE_NAME = '/srv/pillar/01_bevy_settings.sls'
 if File.exists?(BEVY_SETTINGS_FILE_NAME)
   settings = YAML.load_file(BEVY_SETTINGS_FILE_NAME)
 else
-  settings = {}
+  settings = {"bevy" => "xxxx", "vagrant_prefix" => '172.17'}
   if ARGV[0] == "up"
     puts "You must run 'configure_machine\bootstrap_bevy_member_here.py' before running 'vagrant up'"
     abort "Unable to read settings file #{BEVY_SETTINGS_FILE_NAME}."
     end
 end
-puts "settings=#{settings}" ###
 # .
 BEVY = settings["bevy"]
-puts "BEVY=#{BEVY}" ###
-NETWORK = settings['vagrant_prefix']  # the first two bytes of your host-only network IP ("192.168")
+NETWORK = "#{settings['vagrant_prefix']}"  # the first two bytes of your host-only network IP ("192.168")
+puts "Your bevy name:#{BEVY} using local network #{NETWORK}"
 # ^ ^ your VM host will be NETWORK.2.1, the others as set below.
 # ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
-bevy_mac = 'BADF00' #(BEVY.to_i(36) % 0x1000000).to_s(16)  # a MAC address based on hash of BEVY
+bevy_mac = (BEVY.to_i(36) % 0x1000000).to_s(16)  # a MAC address based on hash of BEVY
 # in Python that would be: bevy_mac = format(int(BEVY, base=36) % 0x1000000, 'x')
 #
 # .
@@ -74,7 +73,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   # . . . . . . . . . . . . Define machine QUAIL1 . . . . . . . . . . . . . .
   config.vm.define "quail1", primary: true do |quail_config|  # this will be the default machine
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
-    quail_config.vm.hostname = "quail1." + DOMAIN
+    quail_config.vm.hostname = "quail1" # + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.8"  # needed so saltify_profiles.conf can find this unit
     quail_config.vm.network "public_network", bridge: interface_guesses
 
@@ -98,6 +97,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"  # your host machine will be at NETWORK.2.1
     master_config.vm.network "public_network", bridge: interface_guesses, mac: "be0000" + bevy_mac
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
+    master_config.vm.synced_folder "/srv", "/srv", :owner => "vagrant", :group => "staff"
 
     if vagrant_command == "ssh"
       master_config.ssh.username = my_linux_user  # if you type "vagrant ssh", use this username
@@ -116,23 +116,22 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.vmx["numvcpus"] = "1"
 	end
 
-    script = "mkdir -p /srv/pillar\n"  # put a skeleton /srv on the new master
-    script += "mkdir -p /srv/salt/ssh_keys\n"
-    script += "chown -R vagrant:staff /srv\n"
-    script += "chmod -R 775 /srv\n"
+    script = "mkdir -p /etc/salt/minion.d\n"  # put a skeleton /srv on the new master
+    script += "chown -R vagrant:staff /etc/salt/minion.d\n"
+    script += "chmod -R 775 /etc/salt/minion.d\n"
     master_config.vm.provision "shell", inline: script
+    master_config.vm.provision "file", source: "./configure_machine/minion", destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
 
     master_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "git v2018.2" # 9865a31e62dcf6b7d6184777483685e4f054168b"  # TODO: use "stable" when OXYGEN is released
+       salt.install_type = "git oxygen.rc1"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = true
        salt.colorize = true
-       salt.bootstrap_options = "-P -M -L -g https://github.com/vernondcole/salt.git"
+       salt.bootstrap_options = "-P -M -L # -g https://github.com/vernondcole/salt.git"
        # TODO: salt.bootstrap_options = ''-P -M -L -c /tmp'  # install salt-cloud and salt-master
        salt.masterless = true  # the provisioning script for the master is masterless
        salt.run_highstate = true
-       salt.minion_config = "configure_machine/minion"
        password_hash = ''
        if File.exists?(hash_path)
          File.foreach(hash_path, 'r') do |hashline|
@@ -178,7 +177,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   # . . . . . . . . . . . . Define machine QUAIL16 . . . . . . . . . . . . . . 
   config.vm.define "quail16", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
-    quail_config.vm.hostname = "quail16." + DOMAIN
+    quail_config.vm.hostname = "quail16" # + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.3"  # needed so saltify_profiles.conf can find this unit
     quail_config.vm.network "public_network", bridge: interface_guesses
 
@@ -198,7 +197,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
  # . . . . . . . . . . . . Define machine QUAIL14 . . . . . . . . . . . . . . 
   config.vm.define "quail14", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/trusty64-standard"  # a public VMware & Virtualbox box
-    quail_config.vm.hostname = "quail14." + DOMAIN
+    quail_config.vm.hostname = "quail14" # + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.4"  # needed so saltify_profiles.conf can find this unit
     quail_config.vm.network "public_network", bridge: interface_guesses
 
@@ -220,7 +219,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 # . Its master is "bevymaster".
   config.vm.define "quail42", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
-    quail_config.vm.hostname = "quail42." + DOMAIN
+    quail_config.vm.hostname = "quail42" # + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.5"  # your host machine will be at NETWORK.2.1
     quail_config.vm.network "public_network", bridge: interface_guesses
 

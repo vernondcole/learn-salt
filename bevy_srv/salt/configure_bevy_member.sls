@@ -28,7 +28,7 @@ make-dirs-visible:
         chflags nohidden /tmp
 {% endif %}
 
-{{ pillar['salt_config_directory'] }}{{ other_minion }}/minion.d/vagrant_sdb.conf:
+{{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/vagrant_sdb.conf:
   file.managed:
     - contents: |
         {{ message }}
@@ -146,15 +146,15 @@ pyvmomi_module:
 
 sure_minion_config_file:
   file.managed:
-    - name: {{ pillar['salt_config_directory'] }}{{ other_minion }}/minion.d/01_from_bootstrap.conf
-    - source: salt://bevy_master/files/01_from_bootstrap.conf.jinja
+    - name: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/02_configure_bevy_member.conf
+    - source: salt://bevy_master/files/02_configure_bevy_member.conf.jinja
     - template: jinja
     - makedirs: true
     - order: 3  {# do this early, before we crash #}
 
 {% if other_minion == "" %}
 # ... using the stock salt-minion instance #
-{{ pillar['salt_config_directory'] }}/minion:
+{{ salt['config.get']('salt_config_directory') }}/minion:
   file.managed:
     - contents: |
         # {{ message }}
@@ -167,7 +167,7 @@ sure_minion_config_file:
     - replace: false
 {% else %}  {# other_minion is non-blank #}
 # v v v installing a second minion instance to talk with Bevy Master #
-{{ pillar['salt_config_directory'] }}{{ other_minion }}/minion:
+{{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion:
   file.managed:
     - contents: |
         # {{ message }}
@@ -187,7 +187,7 @@ edit_salt-minion{{ other_minion }}_service:
   file.replace:
     - name: /lib/systemd/system/salt{{ other_minion }}-minion.service
     - pattern: "ExecStart=/usr/bin/salt-minion$"
-    - repl: "ExecStart=/usr/bin/salt-minion --config-dir={{ pillar['salt_config_directory'] }}{{ other_minion }}\n"
+    - repl: "ExecStart=/usr/bin/salt-minion --config-dir={{ salt['config.get']('salt_config_directory') }}{{ other_minion }}\n"
     - require:
       - file: make_salt{{ other_minion }}-minion_service
     - require_in:
@@ -234,7 +234,7 @@ start-salt{{ other_minion }}-minion:
     - name: salt{{ other_minion }}-minion
     - enable: true
     - require:
-      - file: {{ pillar['salt_config_directory'] }}{{ other_minion }}/minion
+      - file: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion
     - require_in:
       - cmd: restart-the-minion
 {% endif %}

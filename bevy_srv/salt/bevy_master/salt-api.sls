@@ -25,7 +25,7 @@ tls.create_self_signed_cert:
       emailAddress: {{ salt['pillar.get']('salt-api:tls_emailAddress') }}
       }
 
-{{ pillar['salt_config_directory'] }}/master.d/api.conf:
+{{ salt['config.get']('salt_config_directory') }}/master.d/api.conf:
   file.managed:
     - makedirs: True
     - source: salt://bevy_master/files/api.conf
@@ -37,7 +37,7 @@ salt-api-service:
     - enable: True
     - watch:
       - pkg: salt-api
-      - file: {{ pillar['salt_config_directory'] }}/master.d/api.conf
+      - file: {{ salt['config.get']('salt_config_directory') }}/master.d/api.conf
     - require:
       - delay_master_restart
 ...

@@ -8,7 +8,7 @@ Maintenance command-line switches:
   --no-sudo = Do not attempt to run with elevated privileges.
   --no-read-settings = Do not read an existing BEVY_SETTINGS_FILE
 """
-import subprocess, os, getpass, json, socket, platform, ipaddress, sys
+import subprocess, os, getpass, json, socket, platform, ipaddress, sys, shutil
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -55,6 +55,7 @@ SALT_DOWNLOAD_SOURCE = "git develop"
 FROM_BOOTSTRAP_FILE_NAME = '/etc/salt{}/minion.d/01_settings_from_bootstrap.conf'
 
 SALT_SRV_ROOT = '/srv/salt'
+SALT_PILLAR_ROOT = '/srv/pillar'
 USER_SSH_KEY_FILE_NAME = SALT_SRV_ROOT + '/ssh_keys/{}.pub'
 
 DEFAULT_VAGRANT_PREFIX = '172.17'  # first two bytes of Vagrant private network
@@ -71,6 +72,7 @@ def read_bevy_settings_file():
         return {}
     prov_file = Path(BEVY_SETTINGS_FILE_NAME)
     try:
+        print("Trying settings from {}".format(prov_file))
         with prov_file.open() as provision_file:
             stored_settings = yaml.safe_load(provision_file.read()) or {}
     except (OSError, yaml.YAMLError) as e:
@@ -112,9 +114,9 @@ file_client: local  # run as masterless
 
 file_roots:    # states are searched in the given order -- first found wins
   base:
-    - '{bevy_root}'    # then use directory from git repository
     - /vagrant/bevy_srv/salt
-    - /srv/salt         # then the one we dynamically create
+    - '{bevy_root}'
+    - /srv/salt
 top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
 
 pillar_roots:  # all pillars are merged -- the last entry wins
@@ -604,6 +606,16 @@ if __name__ == '__main__':
         master_pub.unlink()
     except (FileNotFoundError, PermissionError):
         pass
+
+    # if there is no top.sls, copy ours to make a start
+    if not os.path.exists(SALT_SRV_ROOT + 'top.sls'):
+        print('Creating a new default {}/top.sls'.format(SALT_SRV_ROOT))
+        os.makedirs(SALT_SRV_ROOT, exist_ok=True)  # 3.4
+        shutil.copy('../bevy_srv/salt/top.sls', SALT_SRV_ROOT)
+    if not os.path.exists(SALT_PILLAR_ROOT + 'top.sls'):
+        print('Creating a new default {}/top.sls'.format(SALT_PILLAR_ROOT))
+        os.makedirs(SALT_PILLAR_ROOT, exist_ok=True)  # 3.4
+        shutil.copy('../bevy_srv/pillar/top.sls', SALT_PILLAR_ROOT)
 
     master_address = choose_master_address(settings.get('bevymaster_url', master_id))
     settings['bevymaster_url'] = master_address
