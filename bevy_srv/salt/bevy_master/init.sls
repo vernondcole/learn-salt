@@ -62,7 +62,6 @@ pip2-installed:  # TODO: what about pip3?
   pkg.installed:
     - names:
       - python-pip
-      - gitpython  # needed on Ubuntu 16.04 for SaltStack issue 35993
 
 salt-master:
   pkg.installed:
@@ -103,28 +102,19 @@ salt-master-config:
 
 /srv/salt/README.txt:
   file.managed:
-    - user: {{ my_username }}
-    - group: staff
     - makedirs: true
-    - mode: 664
     - source: salt://bevy_master/files/README.notice.jinja
     - template: jinja
 
 /srv/pillar/README.txt:
   file.managed:
-    - user: {{ my_username }}
-    - group: staff
     - makedirs: true
-    - mode: 664
     - source: salt://bevy_master/files/README.notice.jinja
     - template: jinja
 
 /srv/salt/top.sls:
   file.managed:  # make the initial copy of top.sls
-    - user: {{ my_username }}
-    - group: staff
     - makedirs: true
-    - mode: 664
     - source: salt://bevy_master/files/top.sls.jinja
     - template: jinja
     - replace: false

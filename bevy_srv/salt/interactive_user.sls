@@ -13,16 +13,10 @@ staff:
   - present
 
 {{ my_user }}:
-  {% if grains['os'] != 'Windows' %}
-  group:
-    - present
-    {% if make_gid > 500 %}- gid: {{ make_gid }} {% endif %}
-  {% endif %}
   user:
     - present
-    - groups:
-      - {{ users }}
-      {% if grains['os'] != 'Windows' %}- sudo{% endif %}
+    {% if grains['os'] != 'Windows' %}- groups:
+      - sudo{% endif %}
     - optional_groups:
       - www-data
       - staff
@@ -33,8 +27,6 @@ staff:
     - password: "{{ salt['pillar.get']('linux_password_hash') }}"
     - enforce_password: {{ salt['config.get']('force_linux_user_password', false) }}
     {% if make_uid > 0 %}- uid: {{ make_uid }} {% endif %}
-    - require:
-      - group: {{ my_user }}
     {% endif %}
 {% endif %}
 ...

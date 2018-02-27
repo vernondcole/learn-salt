@@ -526,9 +526,9 @@ if __name__ == '__main__':
     vagrant_present = rtn == 0
 
     settings['cwd'] = settings['runas'] = settings['vagranthost'] = ''
-    virtualbox_install = False
+    settings['vbox_install'] = False
     while Ellipsis:  # repeat until user says okay
-        virtualbox_install = False
+        settings['vbox_install'] = False
         settings['vagranthost'] = ''  # node ID of Vagrant host machine
         isvagranthost = master_host or on_a_workstation and affirmative(input(
             'Will this machine be a bevy host for Vagrant virtual machines? [y/N]:'))
@@ -537,7 +537,7 @@ if __name__ == '__main__':
                 settings['vagranthost'] = 'bevymaster'
             else:
                 settings['vagranthost'] = platform.node().split('.')[0]
-            virtualbox_install = False if vagrant_present else affirmative(input(
+            settings['vbox_install'] = False if vagrant_present else affirmative(input(
                 'Do you wish to install VirtualBox and Vagrant? [y/N]:'))
         elif master:
             print('What is/will be the Salt node id of the Vagrant host machine?')
@@ -570,7 +570,7 @@ if __name__ == '__main__':
                 print('Vagrant is already presesent on this machine.')
             else:
                 print('VirtualBox and Vagrant {} be installed'.format(
-                    'will' if virtualbox_install else 'will not'))
+                    'will' if settings['vbox_install'] else 'will not'))
         else:
             print('No Vagrant Box will be used.')
         if affirmative(input('Correct? [Y/n]:'), default=True):
@@ -591,7 +591,8 @@ if __name__ == '__main__':
         master_id = get_salt_master_id()
         if master_id is None or master_id.startswith('!'):
             raise ValueError('Something wrong. Salt master should be known at this point.')
-        run_second_minion = master_id not in ['localhost', 'salt', '127.0.0.1']
+        run_second_minion = master_id not in ['localhost', 'salt', '127.0.0.1'] and \
+                            not platform.system() == 'Windows'  # TODO: figure out how to run 2nd minion on Windows
     if run_second_minion:
         print('Your Salt master id was detected as: {}'.format(master_id))
         print('You may continue to use that master, and add a second master for your bevy.')
@@ -638,7 +639,7 @@ if __name__ == '__main__':
                          node_name='bevymaster',
                          bevymaster_url=master_address,
                          run_second_minion=run_second_minion,
-                         vbox_install=virtualbox_install,
+                         vbox_install=settings['vbox_install'],
                          vagranthost=settings['vagranthost'],
                          runas=settings['runas'],
                          cwd=settings['cwd'],
@@ -674,7 +675,7 @@ if __name__ == '__main__':
                          bevymaster_url=my_master_url,
                          node_name=node_name,
                          run_second_minion=run_second_minion,
-                         vbox_install=virtualbox_install,
+                         vbox_install=settings['vbox_install'],
                          my_linux_user=settings['my_linux_user'],
                          vagranthost=settings['vagranthost'],
                          runas=settings['runas'],

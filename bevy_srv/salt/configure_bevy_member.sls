@@ -38,8 +38,8 @@ make-dirs-visible:
           table: sdb
           create_table: True
 
-{% if salt['config.get']('vbox_install') %}
-{%- if grains.os_family == 'Debian' %}
+{% if salt['config.get']('vbox_install', false) == true %}
+{% if grains.os_family == 'Debian' %}
 
 virtualbox_repo:
   pkgrepo.managed:
@@ -95,7 +95,7 @@ vagrant-plugin-{{ plugin }}:
 {% endif %}   {# vagrant_version #}
 {%- endif %}  {# vbox_install #}
 
-{% if salt['pillar.get']('vbox_api_install') %}
+{% if salt['config.get']('vbox_api_install', false) %}
 vbox_sdk:
   archive:
     - extracted
@@ -151,6 +151,12 @@ sure_minion_config_file:
     - template: jinja
     - makedirs: true
     - order: 3  {# do this early, before we crash #}
+
+remove_boot_config:
+  file.absent:
+    - name: {{ salt['config.get']('salt_config_directory') }}/00_vagrant_boot.conf
+    - require:
+      - file: sure_minion_config_file
 
 {% if other_minion == "" %}
 # ... using the stock salt-minion instance #

@@ -7,3 +7,4 @@ Then package management can be used on Windows minions.
 For example, to install firefox on node win16:
 * `sudo salt-run winrepo.update_git_repos`
 * `sudo salt win16 pkg.install firefox`
+

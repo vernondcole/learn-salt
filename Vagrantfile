@@ -167,6 +167,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
          "vagranthost" => VAGRANT_HOST_NAME,
          "runas" => login,
          "cwd" => Dir.pwd,
+         "vbox_install" => false,
          "doing_bootstrap" => true,  # flag for Salt state system
                    }
          )
