@@ -389,6 +389,7 @@ def choose_master_address(host_name):
     if master:
         choices = get_ip_choices()
         print('This machine has the following IP addresses:')
+        print(repr(choices)) ###
         for ip in choices:
             if not ip['addr'].is_loopback and not ip['addr'].is_link_local:
                 print('{addr}/{prefix} - {name}', **ip)
@@ -575,7 +576,7 @@ if __name__ == '__main__':
             print('No Vagrant Box will be used.')
         if affirmative(input('Correct? [Y/n]:'), default=True):
             break
-    if settings['vagranthost']:
+    if isvagranthost:
         settings['vagrant_prefix'], settings['vagrant_network'] = choose_vagrant_network()
         choice = choose_bridge_interface()
         settings['vagrant_interface_guess'] = choice['name']
