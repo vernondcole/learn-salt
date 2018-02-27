@@ -389,10 +389,9 @@ def choose_master_address(host_name):
     if master:
         choices = get_ip_choices()
         print('This machine has the following IP addresses:')
-        print(repr(choices)) ###
         for ip in choices:
             if not ip['addr'].is_loopback and not ip['addr'].is_link_local:
-                print('{addr}/{prefix} - {name}', **ip)
+                print('{addr}/{prefix} - {name}'.format(**ip))
     try:
         ip_ = socket.getaddrinfo(default, 4506, type=socket.SOCK_STREAM)
         print('The name {} translates to {}'.format(host_name, ip_[0][4][0]))
