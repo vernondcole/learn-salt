@@ -550,12 +550,13 @@ if __name__ == '__main__':
                 except OSError:
                     pass  # entry was not an IP address.  Good.
         if settings['vagranthost']:
+            runas = settings.get('runas') or settings['my_linux_user']
             resp = input(
                 'What user on {} will own the Vagrantbox files?'
-                ' [{}]:'.format(settings['vagranthost'], settings['my_linux_user']))
-            settings['runas'] = resp or settings['my_linux_user']
+                ' [{}]:'.format(settings['vagranthost'], runas))
+            settings['runas'] = resp or runas
 
-            parent = os.path.abspath('..')
+            parent = settings.get('cwd') or os.path.abspath('..')
             resp = input(
                 'What is the full path to the Vagrantfile on {}?'
                 '[{}]:'.format(settings['vagranthost'], parent))
