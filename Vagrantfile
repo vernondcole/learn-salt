@@ -52,8 +52,8 @@ else  # Windows or Linux
   interface_guesses = settings['vagrant_interface_guess']
 end
 if ARGV[0] == "up" or ARGV[0] == "reload"
-puts "Running on host #{VAGRANT_HOST_NAME}"
-puts "Will try bridge network using interface(s): #{interface_guesses}"
+  puts "Running on host #{VAGRANT_HOST_NAME}"
+  puts "Will try bridge network using interface(s): #{interface_guesses}"
 end
 
 Vagrant.configure(2) do |config|  # the literal "2" is required.
@@ -61,7 +61,9 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
   config.ssh.forward_agent = true
 
-  config.vm.provision "shell", inline: "ip address", run: "always"  # what did we get?
+  if ARGV.length > 2 and not ARGV[2].start_with? 'win'
+    config.vm.provision "shell", inline: "ip address", run: "always"  # what did we get?
+  end
 
   # Now ... just in case our user is running some flavor of VMWare, we will
   # set up his VM, too. But first we need to discover his Host OS ...
@@ -116,7 +118,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.vmx["numvcpus"] = "1"
 	end
 
-    script = "mkdir -p /etc/salt/minion.d\n"  # put a skeleton /srv on the new master
+    script = "mkdir -p /etc/salt/minion.d\n"
     script += "chown -R vagrant:staff /etc/salt/minion.d\n"
     script += "chmod -R 775 /etc/salt/minion.d\n"
     master_config.vm.provision "shell", inline: script
@@ -214,6 +216,37 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 	end
   end
 
+ # . . . . . . . . . . . . Define machine win16 . . . . . . . . . . . . . .
+ # . this machine has salt installed .
+  config.vm.define "win16", autostart: false do |quail_config|
+    quail_config.vm.box = "mwrock/Windows2016"  # Windows 2016 server
+    # quail_config.vm.hostname = "windowstest"  # use of this setting causes VM to reboot Windows.
+
+    quail_config.vm.network "public_network", bridge: interface_guesses
+
+    # on your Windows guest - your shared \vagrant folder will be found on `Network --> VBOXSVR`
+
+    quail_config.vm.provider "virtualbox" do |v|
+        v.name = 'win16'  # ! N.O.T.E.: name must be unique
+        v.gui = true  # turn on the graphic window
+        v.linked_clone = true
+        v.customize ["modifyvm", :id, "--vram", "27"]  # enough video memory for full screen
+        v.memory = 4096
+        v.cpus = 2
+    end
+    quail_config.vm.guest = :windows
+    quail_config.vm.boot_timeout = 200
+    quail_config.vm.graceful_halt_timeout = 120
+    script = "new-item C:\\salt\\conf\\minion.d -itemtype directory\r\n"
+    script += "'master: #{settings['bevymaster_url']}' > C:\\salt\\conf\\minion.d\\00_vagrant_master_address.conf\r\n"
+    quail_config.vm.provision "shell", inline: script
+    quail_config.vm.provision :salt do |salt|  # salt_cloud cannot push Windows salt
+        salt.minion_id = "win16"
+        salt.log_level = "info"
+        salt.verbose = false
+        salt.run_highstate = true
+    end
+  end
 
 # . . . . . . .  Define Quail42 as the answer to everything. . . . . . . . . . . . . .
 # . this machine has Salt installed but no states run or defined.

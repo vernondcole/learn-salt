@@ -22,6 +22,11 @@ bevy_dir: '/projects/learn-salt'  # path to learn-salt directory tree
 vagrant_bridge_target_network: '192.168.88.0/24'
 #
 
+# the minion ID's to be put in the master's AUTOSIGN_FILE
+autosign_minion_ids:
+  - 'win16'
+  - 'quail42'
+
 dhcp_pxe_range: {{ pxe_network_cidr.split('/')[0] }}  # network for dnsmasq PXE server replies
 {% set pxe_server_ip_list = salt['network.ip_addrs']() %}
 {%- if pxe_server_ip_list %}

@@ -15,18 +15,41 @@ staff:
 {{ my_user }}:
   user:
     - present
-    {% if grains['os'] != 'Windows' %}- groups:
+    - groups:
+    {% if grains['os'] == 'Windows' %}
+      - Administrators {% else %}
       - sudo{% endif %}
     - optional_groups:
+      - {{ users }}
       - www-data
       - staff
       - dialout
       - wireshark
+    {% if grains['os'] == 'Windows' %}
+    - home: 'C:\\Users\\{{ my_user }}'
+    #- win_homedrive: 'C:'
+    {% elif grains['os'] == 'MacOS' %}
+    - home: '/Users/{{ my_user }}'
+    {% endif %}
     {% if grains['os'] != 'Windows' %}
     - shell: /bin/bash
     - password: "{{ salt['pillar.get']('linux_password_hash') }}"
     - enforce_password: {{ salt['config.get']('force_linux_user_password', false) }}
     {% if make_uid > 0 %}- uid: {{ make_uid }} {% endif %}
     {% endif %}
+
+{% if grains['os'] == 'Windows' %}
+'C:\\Users\\{{ my_user }}':
+  file.directory:
+    - user: {{ my_user }}
+    - recurse:
+      - user
+{% elif grains['os'] == 'MacOS' %}
+'/Users/{{ my_user }}':
+  file.directory:
+    - user: {{ my_user }}
+    - recurse:
+      - user
+{% endif %}
 {% endif %}
 ...

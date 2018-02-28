@@ -109,4 +109,5 @@ bevy_srv/salt/ssh_keys
 bevy_srv/pillar/01_*
 configure_machine/grains
 configure_machine/minion
+configure_machine/windows_minion
 bevy_srv/salt/pki_cache

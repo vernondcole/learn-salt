@@ -81,11 +81,10 @@ salt-master-config:
     - template: jinja
     - makedirs: true
 
-#{{ salt['config.get']('salt_config_directory') }}/pki/master/minions/mydns.pub:    # pre-accept the nameserver minion
-#  file.managed:
-#    - mode: 644
-#    - source: salt://bevy_master/mydns.pub
-#    - makedirs: true
+salt-master-autosign-file:
+  file.managed:
+    - name: {{ salt['config.get']('salt_config_directory') }}/autosign.minions
+    - contents_pillar: autosign_minion_ids
 
 {{ salt['config.get']('salt_config_directory') }}:
   file.directory:  {# allow the user to easily edit configuration files #}
