@@ -21,16 +21,14 @@ grains:
   datacenter: bevy
   bevy: {{ salt['config.get']('bevy') }}
   environment: dev
-  groups:
-    - dynamux
-
+  bevy_controller: {{ salt['config.get']('bevy_controller', False) }}  # master or workstation
 salt_config_directory: {{ salt['config.get']('salt_config_directory') }}  # remember where I am at
-run_second_minion: {{ salt['config.get']('run_second_minion', false) }}
+run_second_minion: {{ salt['config.get']('run_second_minion', False) }}
 
 {% if is_master -%}
 autosign_file: {{ salt['config.get']('salt_config_directory') }}/autosign.minions
 {% else %}
-  {% if salt['config.get']('run_second_minion', false) -%}
+  {% if salt['config.get']('run_second_minion', False) -%}
 pidfile: /var/run/salt-minion2.pid  # settings for second minion
 pki_dir: {{ salt['config.get']('salt_config_directory') }}/pki/minion2
 sock_dir: /var/run/salt-minion2

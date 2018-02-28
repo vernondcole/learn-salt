@@ -19,7 +19,7 @@ update_the_grains:
 include:
   - ensure_user_privs
   - sdb
-  - configure_bevy_member  {# master is a member, too #}
+  - configure_bevy_member  {# master is configured like a member, too #}
 
 {% if salt['file.directory_exists']('/vagrant/bevy_srv/salt/pki_cache') %}
 restore_keys_from_cache:

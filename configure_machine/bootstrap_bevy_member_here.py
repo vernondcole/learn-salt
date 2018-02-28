@@ -618,7 +618,7 @@ if __name__ == '__main__':
         master_pub = Path('/etc/salt{}/pki/minion/minion_master.pub'.format(two))
     if master_pub.exists():
         if affirmative(input('Will this be a new minion<-->master relationship? [y/N]:')):
-            print("** Remember to accept this machine's Minion key on its new Master. **")
+            print("/n** Remember to accept this machine's Minion key on its new Master. **/n")
             try:  # forget a former master's key (if any)
                 print('Removing master public key "{}"'.format(master_pub))
                 master_pub.unlink()
@@ -648,6 +648,7 @@ if __name__ == '__main__':
                          runas=settings['runas'],
                          cwd=settings['cwd'],
                          doing_bootstrap=True,  # initialize environment
+                         bevy_controller=True,
                          )
 
     else:  # not making a master, make a minion
@@ -683,6 +684,7 @@ if __name__ == '__main__':
                          my_linux_user=settings['my_linux_user'],
                          vagranthost=settings['vagranthost'],
                          runas=settings['runas'],
+                         bevy_controller=on_a_workstation,
                          cwd=settings['cwd'])
     print()
     print('{} done.'.format(__file__))
