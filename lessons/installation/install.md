@@ -9,19 +9,39 @@ git checkout my_edits
 ```
 now ... on to what you really came here for ...
 
-#### MarkDown Viewer
+#### Installer Sources
 
-Some of the lesson material in this project (especially the home index)
+This project requires the Oxygen (2018.3?) version of Salt, which has the modules needed to run Vagrant machines,
+and extended features for the `saltify` driver.
+
+- Windows
+  - [official installers](https://docs.saltstack.com/en/latest/topics/installation/windows.html)
+  - [release candidates](https://repo.saltstack.com/salt_rc/windows/)
+- MacOS [official installers](https://docs.saltstack.com/en/latest/topics/installation/osx.html)
+- Linux
+   - [automatic for this project](../../configure_machine) ./bootstrap_bevy_member_here.py
+   - [salt_bootstrap](https://docs.saltstack.com/en/latest/topics/tutorials/salt_bootstrap.html#salt-bootstrap)
+    ```(bash)  TODO: simplify this code when Oxygen is released
+    # Oxygen release candidate
+    wget  -O bootstrap-salt.sh https://bootstrap.saltstack.com
+    # that ^ is a capitol "o", not a zero
+    sudo sh bootstrap-salt.sh git v2018.3
+    ```
+
+
+#### MarkDown Viewer for your Browser
+
+Much of the lesson material in this project (especially the home index)
 is in [MarkDown](http://commonmark.org/) format.  The GitHub web site automatically converts MarkDown
 (.md) files to html, so that you can read them in your browser within GitHub.
 
-But, you will be downloading the repository to your workstation anyway, and it
+But, you should be downloading this repository to your workstation anyway, so it
 makes sense to use your local copy of the lessons.
 On your workstation, you will not have the advantage of the GitHub magic, so
 you will want to load an addon to your browser to display .md files prettily.
 
 
-For [Firefox]() try
+For [Firefox](https://www.mozilla.org/en-US/firefox/) try
 [MarkDown Viewer](https://addons.mozilla.org/en-US/firefox/addon/markdown-viewer/).
 
 For [Chrome](https://www.google.com/chrome/) try
@@ -29,40 +49,6 @@ For [Chrome](https://www.google.com/chrome/) try
 
 To install a native MarkDown reader/editor on your workstation, try
 [ReText](https://github.com/retext-project/retext).
-
-#### Salt (after Salt Oxygen is released)
-
-- Linux (and other POSIX systems)
-    ```(bash)
-    wget  -O bootstrap-salt.sh https://bootstrap.saltstack.com
-    # that ^ is a capitol "Oh" not a zero
-    sudo sh bootstrap-salt.sh 
-    ```
-
-- Everything else
-
-    [See the official Salt page](https://docs.saltstack.com/en/latest/topics/installation/index.html#quick-install)
-
-#### Salt (Oxygen development version, run time)
-
-The Oxygen version of Salt has the modules needed to run Vagrant machines,
-and extended features for the `saltify` driver.
-
-
-- linux (running system, no source code remaining)
-    ```(bash)
-    wget  -O bootstrap-salt.sh https://bootstrap.saltstack.com
-    # that ^ is a capitol "Oh" not a zero
-    sudo sh bootstrap-salt.sh git
-    ```
-
-- others
-
-    do the full install-from-source below
-
-#### Salt (development copy of source)
-
-refer to [the dirty details here](install_salt_development.md).
 
 #### install Vagrant and Virtualbox (or VMware)
 
@@ -105,7 +91,7 @@ pip3 install passlib
 ``` 
 
 ```(bash)
-cd /projects/learn_salt/configure_machine directory)
+cd /projects/learn_salt/configure_machine
 ./pwd_hash.py
 ```
 
@@ -146,9 +132,10 @@ on a VM on your workstation.  As the lessons progress, you may want to move it e
 
 - clone this repository
 
-- run the Python script to configure your workstation and master
+- run the enclosed Python script to configure your workstation and master...
+  (Windows users, replace the  './' below with 'py '.
   ```bash
-    /projects/learn-salt$ cd configure_machine/
+    /projects/learn-salt$ cd configure_machine
     /projects/learn-salt/configure_machine$ ./bootstrap_bevy_member_here.py 
     This program can create either a bevy salt-master (and cloud-master),
     or a simple workstation to join the bevy,
@@ -159,4 +146,7 @@ on a VM on your workstation.  As the lessons progress, you may want to move it e
     ```
 Continue to answer the configuration questions as appropriate.    
 
-The script should configure both your host and the bevymaster in one operation.
+The script should configure both your host workstation and the bevymaster in one operation.
+
+The settings from you installation script are stored in `/srv/pillar/01_bevy_settings.sls`
+and my be edited there, or altered by subsequent runs of `./bootstrap_bevy_member_here.py`

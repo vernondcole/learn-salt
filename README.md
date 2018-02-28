@@ -2,17 +2,26 @@
 
 ### Using salt-cloud to learn SaltStack basics
 
-This project uses a salt-cloud network with Vagrant controlled VirtualBox virtual machines as a sandbox to experiment with and learn [Salt](https://saltstack.com/) and [salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud) by building and controlling a bevy of computers.
+This project uses a salt-cloud network with Vagrant-controlled VirtualBox virtual machines 
+as a sandbox to experiment with and learn [Salt](https://saltstack.com/) and 
+[salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud) 
+by building and controlling a bevy[3] of computers.
 
-Go to [the Lesson index](lessons/index.md).
+See [the Lesson index](lessons/index.md).
 
 ### Installation
+
+Install [git](https://git-scm.com/downloads). If on Linux, use your package manager. 
+If on Windows, please select the option to 
+"`Use Get and optional Unix tools from the Windows Command Prompt`". It will make your life
+easier. Many lessons assume that these utilities are present.
 
 Clone [1] [this git repository](https://github.com/vernondcole/learn-salt) onto your target environment --
 which should be the workstation where you plan to do the lessons. You will control your bevy
 from this place.
 
-Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really have to put it there. All lessons should work if you put it somewhere else, like `/home/myusername/learn` or wherever. 
+Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really have to put it there. 
+All lessons should work if you put it somewhere else, like `/home/myusername/learn` or wherever. 
 Examples will be configured and tested to operate from any random directory you like.  
 But, for simplicity sake, all examples will be given as if they were in `/projects/learn-salt`.
 
@@ -31,9 +40,11 @@ Proceed with the instructions in [the installation lesson](lessons/installation/
 
 [1]: see [how to git stuff](lessons/git/how_to_git_stuff.md) if you don't understand what "clone" means.
 
-[2]: Windows users -- use the `C:\projects\learn-salt` folder. All future instructions will use POSIX names with right-leaning slashes and no drive letter. Live with it. If you need help, look in the [Linux for Windows Users](lessons/windows/Linux_for_Windows_users.md) lesson.
+[2]: Windows users -- use the `C:\projects\learn-salt` folder. 
+All future instructions will use POSIX names with right-leaning slashes and no drive letter. Live with it. 
+If you need help, look in the [Linux for Windows Users](lessons/windows/Linux_for_Windows_users.md) lesson.
 
-
+[3]: v v v
 ### What the #&*$%! is a `bevy`?
 
 In this project, we will use the term "bevy" to specify the collection of virtual (and sometimes physical) computers which are managed by our Salt master.
@@ -46,13 +57,19 @@ The Oxford English dictionary says:
        a large group of people or things of a particular kind.
 ```
 
-A bevy might have more than one master (if we are experimenting with multi-master arrangements) but each master (or set of masters) will control only one bevy. The machines in the bevy may reside on any number of IP networks.
+A bevy might have more than one master (if we are using a multi-master arrangement) 
+but each master (or set of masters) will control only one bevy. 
+The machines in the bevy may reside on any number of IP networks.
 
 #### Why not just call it a `<fill in the blank>` rather than a `bevy`?
 
-Most collective nouns are already used in computer science jargon. "Network" has several meanings -- so does "array", "collection", "cluster", "group", "quorum", "environment" and so on. The thesarus was searched for a unique, unused term. 
+Most collective nouns are already used in computer science jargon. "Network" has several meanings -- 
+so does "array", "collection", "cluster", "group", "quorum", "environment" and so on. 
+The thesarus was searched for a unique, unused term. 
 "Bevy" is a collective noun used for quail. (Other terms are "covey" and "flock".)
-Being a part-time hunter and full-time westerner, I (Vernon) admire the way a group of quail co-operate together. (They are [very pretty](https://www.pfwebsites.org/chapter/snakeriverqforg/photos/002.jpg), too.) So I decided to adopt that term for a co-operating group of computers.  Blame me.
+Being a part-time hunter and full-time westerner, I (Vernon) admire the way a group of quail co-operate together. 
+(They are [very pretty](https://www.pfwebsites.org/chapter/snakeriverqforg/photos/002.jpg), too.) 
+So I decided to adopt that term for a co-operating group of computers.  Blame me.
 
 Feel free to substitute some other word if you prefer.
 
@@ -84,22 +101,25 @@ or even [Notepad++](https://notepad-plus-plus.org/).
 But do yourself a favor and select an environment from early, rather than late, in the list.
 - Workstation Operating System. Why would anyone use Windows for a programmer's workstation?
 But we test with (as of this writing): Ubuntu 17.10, and MacOS High Sierra, and Windows 10.
-- Your Bevy_Master machine. As of this writing, we test with Ubuntu 16.04 on a Vagran VM, 
+- Your Bevy_Master machine. As of this writing, we test with Ubuntu 16.04 on a Vagrant VM, 
 and Raspbian Jesse on a Raspberry Pi W0.
 - Your Internet Router.
 Most lessons will be runnable from a large corporate router or a default home router. 
 For some lessons, you will need control over who runs your PXE, DHCP and/or DNS servers. 
-Any home-type router should be suitable for that, but you may spend some time finding the correct "expert" settings screen.
+Any home-type router should be suitable for that, 
+but you may spend some time finding the correct "expert" settings screen.
 Examples will be for a router running [MicroTik RouterOS](https://mikrotik.com/software) software.
 
 
-[1] On Windows, the home directory may be spelled either "C:\Users" or "c:\users", but the group must be spelled "Users".
-On Linux, the home directory must be spelled "/home" ("/Home" is a different directory) and the group must be spelled "users".
+[1] On Windows, the home directory may be spelled either "C:\Users" or "c:\users", 
+but the group must be spelled "Users".
+On Linux, the home directory must be spelled "/home" ("/Home" is a different directory) 
+and the group must be spelled "users".
 
 ##### Prerequisites
 
 Things that are **NOT** optional:
-- Python3 version 3.4 or later. See [the Python clock](https://pythonclock.org/).
+- [Python3](https://www.python.org/) version 3.4 or later. See [the Python clock](https://pythonclock.org/).
 - [git](https://git-scm.com/). I hate git. [But, I use it, because Github is great](https://www.python.org/dev/peps/pep-0512/). 
 Be careful not to shoot any toes off.
 
@@ -109,24 +129,21 @@ This directory has this README.md file,
 along with a big complex *Vagrantfile*,
 and a few other handy files.
 
-The [lessons](./lessons) directory contains 
+- The [lessons](./lessons) directory contains 
 the [lesson index](lessons/index.md).  
-
 Often, the lessons will have lab or example files
 associated with them. When studying each lesson, you should be running the examples using
 a terminal with your current default directory set for that lesson.
 For example, if you are running the [Basics of Vagrant](vagrant_basics/basics_of_vagrant.md)
-lesson, you should start by running: 
-
+lesson, you should start by typing: 
 `cd /projects/learn-salt/lessons/vagrant_basics`
-
 
 [comment]: # (The file index.md is the source for index.html)
 
-The [bevy_srv](./bevy_srv) directory contains a complete SaltStack
+- The [bevy_srv](./bevy_srv) directory contains a complete SaltStack
 directory tree used for building the examples and lessons here.
 
-The [configure_machine](./configure_machine) directory contains 
+- The [configure_machine](./configure_machine) directory contains 
 scripts used to configure your bevy_master machine, your workstation
 (as a minion), and perhaps other bevy member computers as needed.
 
@@ -213,8 +230,9 @@ especially if you are running Windows.
 ### Single Source of Truth
 
  This project attempts to establish a [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)
-"single source of truth" for your bevy's settings using the file identified with `BEVY_SETTINGS_FILE_NAME` 
-(usually `/srv/pillar/01_bevy_settings.sls`). On Windows, this would appear as `C:\srv\pillar\01_bevy_settings.sls`.
+"single source of truth" for your bevy's settings using the file identified with 
+`BEVY_SETTINGS_FILE_NAME` (usually `/srv/pillar/01_bevy_settings.sls`). 
+On Windows, this would appear as `C:\srv\pillar\01_bevy_settings.sls`.
 
 That file should work in many (but not all) cases. (It can be extended to more cases with some fiddling.)
 We will attempt to keep the /srv directory mapped to local Vagrant VMs as "/srv" so the settings will be
@@ -241,7 +259,8 @@ If you are working from a home office, you may be okay using your home router --
 but not while your spouse is streaming a movie. 
 Otherwise, you will want a router of your very own to mess up. 
 
-Consider ordering a special router soon. I use a RouterBoard / Mikrotik [hAP lite](https://mikrotik.com/product/RB941-2nD-TC).
+Consider ordering a special router soon. I use a RouterBoard / Mikrotik 
+[hAP lite](https://mikrotik.com/product/RB941-2nD-TC).
 Their RouterOS operating system has professional features lacking in most popular home routers.
 I found mine on Amazon for less than $30 USD. Buy some CAT-5 cables, too.
 
