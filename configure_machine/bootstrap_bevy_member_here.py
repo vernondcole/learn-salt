@@ -616,7 +616,7 @@ if __name__ == '__main__':
         master_pub = Path(r'C:\salt{}\conf\pki\minion\minion_master.pub'.format(two))
     else:
         master_pub = Path('/etc/salt{}/pki/minion/minion_master.pub'.format(two))
-    if os.path.exists(master_pub):
+    if master_pub.exists():
         if affirmative(input('Will this be a new minion<-->master relationship? [y/N]:')):
             print("** Remember to accept this machine's Minion key on its new Master. **")
             try:  # forget a former master's key (if any)
