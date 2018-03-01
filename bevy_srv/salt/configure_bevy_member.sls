@@ -234,6 +234,7 @@ add_salt{{ other_minion }}_call_command:
 
 {% endif %} # endif other_minion
 
+{# TODO: this seems to be unneccessary ...
 {% if grains['os_family'] == 'MacOS' %}
 {% set salt_minion_service_name = 'com.saltstack.salt.minion' %}
 install-mac-minion-service:
@@ -242,14 +243,15 @@ install-mac-minion-service:
     - source: salt://bevy_master/darwin/{{ salt_minion_service_name }}.plist
     - makedirs: true
     - template: jinja
-{% else %}  {# not MacOS #}
+{% endif %}
+... #}
+
 start-salt{{ other_minion }}-minion:
   service.running:
     - name: salt{{ other_minion }}-minion
     - enable: true
     - require:
       - file: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion
-{% endif %}
     - require_in:
       - cmd: restart-the-minion
 
@@ -267,8 +269,8 @@ restart-the-minion:
     - order: last
     - shell: /bin/bash
     {% if grains['os_family'] == 'MacOS' %}
-    - name: '/tmp/run_command_later.py 10 "pkill -f salt-minion"'  # this command works for "brew" installed Salt
-    - name: "/tmp/run_command_later.py 10 launchctl unload {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist; launchctl load {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist"
+    - name: '/tmp/run_command_later.py 10 "pkill -f salt-minion"'  {# this command seems to work for any installed Salt #}
+    {# - name: "/tmp/run_command_later.py 10 launchctl unload {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist; launchctl load {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist" #}
     {% elif grains['os_family'] == 'Windows' %}
     - name: 'py \tmp\run_command_later.py 10 net stop salt-minion; net start salt-minion;echo .;echo .;echo "Hit [Enter] to close this window..."'
     {% else %}
