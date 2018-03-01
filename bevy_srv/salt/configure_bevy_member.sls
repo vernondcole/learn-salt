@@ -234,18 +234,20 @@ add_salt{{ other_minion }}_call_command:
 
 {% endif %} # endif other_minion
 
-{# TODO: this seems to be unneccessary ...
 {% if grains['os_family'] == 'MacOS' %}
 {% set salt_minion_service_name = 'com.saltstack.salt.minion' %}
 install-mac-minion-service:
+{# TODO: this seems to be unneccessary ...
   file.managed:
-    - name: {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist
+    - name: /Library/LaunchAgents/{{ salt_minion_service_name }}.plist
     - source: salt://bevy_master/darwin/{{ salt_minion_service_name }}.plist
     - makedirs: true
     - template: jinja
-{% endif %}
 ... #}
+  cmd.run:
+    - name: launchctl load /Library/LaunchAgents/{{ salt_minion_service_name }}.plist
 
+{% else %}
 start-salt{{ other_minion }}-minion:
   service.running:
     - name: salt{{ other_minion }}-minion
@@ -254,6 +256,7 @@ start-salt{{ other_minion }}-minion:
       - file: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion
     - require_in:
       - cmd: restart-the-minion
+{% endif %}
 
 restart-the-minion_setup:
   file.managed:
@@ -270,7 +273,7 @@ restart-the-minion:
     - shell: /bin/bash
     {% if grains['os_family'] == 'MacOS' %}
     - name: '/tmp/run_command_later.py 10 "pkill -f salt-minion"'  {# this command seems to work for any installed Salt #}
-    {# - name: "/tmp/run_command_later.py 10 launchctl unload {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist; launchctl load {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist" #}
+    {# - name: "/tmp/run_command_later.py 10 launchctl unload /Library/LaunchAgents/{{ salt_minion_service_name }}.plist; launchctl load /Library/LaunchAgents/{{ salt_minion_service_name }}.plist" #}
     {% elif grains['os_family'] == 'Windows' %}
     - name: 'py \tmp\run_command_later.py 10 net stop salt-minion; net start salt-minion;echo .;echo .;echo "Hit [Enter] to close this window..."'
     {% else %}
