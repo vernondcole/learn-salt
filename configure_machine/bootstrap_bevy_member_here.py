@@ -44,7 +44,7 @@ BEVY_SETTINGS_FILE_NAME = '/srv/pillar/01_bevy_settings.sls'
 # we are running three or more minions, but that situation would be really weird.
 # # # # #
 
-MINIMUM_SALT_VERSION = "2017.8.3"  # ... as a string... the month will be integerized below
+MINIMUM_SALT_VERSION = "2018.8.3"  # ... as a string... the month will be integerized below
 SALT_BOOTSTRAP_URL = "http://bootstrap.saltstack.com/develop/bootstrap-salt.sh"
 # TODO: use release version - "http://bootstrap.saltstack.com/stable/bootstrap-salt.sh"
 # SALT_DOWNLOAD_SOURCE = " -g https://github.com/vernondcole/salt git saltify-wol-fix-ping"
