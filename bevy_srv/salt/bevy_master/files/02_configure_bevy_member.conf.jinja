@@ -12,10 +12,8 @@ id: {{ salt['config.get']('node_name', salt['config.get']('id')) }}
 {% if is_master %}master: localhost
 ipv6: true  # enable IPv6 dual-stack
 interface: '::'
-{% elif salt['grains.get']('virtual', '') == 'physical' -%}
-master: {{ salt['config.get']('bevymaster_url', salt['config.get']('master')) }}
-{% else -%}
-master: {{ salt['config.get']('bevymaster_vagrant_ip', salt['config.get']('master')) }}
+{% else %}
+master: {{ salt['config.get']('my_master_url', salt['config.get']('master')) }}
 {% endif %}
 grains:
   datacenter: bevy

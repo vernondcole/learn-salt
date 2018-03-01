@@ -525,8 +525,6 @@ if __name__ == '__main__':
     rtn = subprocess.call('vagrant -v', shell=True) if on_a_workstation else NotImplemented
     vagrant_present = rtn == 0
 
-    settings['cwd'] = settings['runas'] = settings['vagranthost'] = ''
-    settings['vbox_install'] = False
     while Ellipsis:  # repeat until user says okay
         settings['vbox_install'] = False
         settings['vagranthost'] = ''  # node ID of Vagrant host machine
@@ -678,7 +676,8 @@ if __name__ == '__main__':
                          config_dir=str(my_directory.resolve()),
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
-                         bevymaster_url=my_master_url,
+                         bevymaster_url=settings['bevymaster_url'],
+                         my_master_url=my_master_url,
                          node_name=node_name,
                          run_second_minion=run_second_minion,
                          vbox_install=settings['vbox_install'],
