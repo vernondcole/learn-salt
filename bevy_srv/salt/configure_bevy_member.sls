@@ -234,18 +234,26 @@ add_salt{{ other_minion }}_call_command:
 
 {% endif %} # endif other_minion
 
-{% if grains['os_family'] != 'MacOS' %}
+{% if grains['os_family'] == 'MacOS' %}
+{% set salt_minion_service_name = 'com.saltstack.salt.minion' %}
+install-mac-minion-service:
+  file.managed:
+    - name: {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist
+    - source: salt://bevy_master/darwin/{{ salt_minion_service_name }}.plist
+    - makedirs: true
+    - template: jinja
+{% else %}  {# not MacOS #}
 start-salt{{ other_minion }}-minion:
   service.running:
     - name: salt{{ other_minion }}-minion
     - enable: true
     - require:
       - file: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion
+{% endif %}
     - require_in:
       - cmd: restart-the-minion
-{% endif %}
 
-restart-the-minion_1:
+restart-the-minion_setup:
   file.managed:
     - name: /tmp/run_command_later.py
     - source: salt://run_command_later.py
@@ -255,11 +263,12 @@ restart-the-minion:
   cmd.run:
     - bg: true  # do not wait for completion of this command
     - require:
-      - file: restart-the-minion_1
+      - file: restart-the-minion_setup
     - order: last
     - shell: /bin/bash
     {% if grains['os_family'] == 'MacOS' %}
-    - name: '/tmp/run_command_later.py 10 "pkill -f salt-minion"'
+    - name: '/tmp/run_command_later.py 10 "pkill -f salt-minion"'  # this command works for "brew" installed Salt
+    - name: "/tmp/run_command_later.py 10 launchctl unload {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist; launchctl load {{ salt['environ.get']('HOME') }}/Library/LaunchAgents/{{ salt_minion_service_name }}.plist"
     {% elif grains['os_family'] == 'Windows' %}
     - name: 'py \tmp\run_command_later.py 10 net stop salt-minion; net start salt-minion;echo .;echo .;echo "Hit [Enter] to close this window..."'
     {% else %}
