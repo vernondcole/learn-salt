@@ -81,10 +81,13 @@ salt-master-config:
     - template: jinja
     - makedirs: true
 
+{% if salt['pillar.get']('autosign_minion_ids', '') %}
 salt-master-autosign-file:
   file.managed:
     - name: {{ salt['config.get']('salt_config_directory') }}/autosign.minions
     - contents_pillar: autosign_minion_ids
+    - mode: 600  # access to the autosign file must be restricted.
+{% endif %}
 
 {{ salt['config.get']('salt_config_directory') }}:
   file.directory:  {# allow the user to easily edit configuration files #}

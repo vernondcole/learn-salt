@@ -10,7 +10,7 @@ include:
 {% if grains['os'] == "Windows" %}
 ssh_public_key:
   file.managed:
-    - name: 'C:\\Users\\{{ my_user }}\\.ssh\\id_rsa.pub'
+    - name: 'C:\Users\{{ my_user }}\.ssh\id_rsa.pub'
     - user: {{ my_user }}
     - source: salt://ssh_keys/{{ my_user }}.pub
     - makedirs: True

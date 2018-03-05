@@ -23,8 +23,11 @@ vagrant_bridge_target_network: '192.168.88.0/24'
 #
 
 # the minion ID's to be put in the master's AUTOSIGN_FILE
+#  -- this is an insecure method for automatically accepting minions with known names.
 autosign_minion_ids:
-  - 'win16'
+  - '# these id names are from pillar file "manual_bevy_settings.sls" entry "autosign_minion_ids".'
+  - '# A minion (or wildcard) named in this list will be accepted automatically.  (Insecure!)'
+  - 'win1[06]' {# regular expression matches either win10 or win16 #}
   - 'quail42'
 
 dhcp_pxe_range: {{ pxe_network_cidr.split('/')[0] }}  # network for dnsmasq PXE server replies

@@ -243,7 +243,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.provision :salt do |salt|  # salt_cloud cannot push Windows salt
         salt.minion_id = "win16"
         salt.log_level = "info"
-        salt.verbose = false
+        salt.verbose = true
+        salt.colorize = true
         salt.run_highstate = true
     end
   end
@@ -273,8 +274,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        salt.install_type = "-f git" # b7c0182d93a1092b7369eedfbcf5bc2512c12f1b"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = false
-       salt.colorize = true
-       salt.bootstrap_options = "-A " + NETWORK + ".2.2 -i quail42 -F -P " # -g https://github.com/vernondcole/salt.git"
+       salt.bootstrap_options = "-A " + NETWORK + ".2.2 -i quail42 -F -P "
        salt.masterless = true  # the provisioning script is masterless
     end
   end

@@ -10,8 +10,8 @@
 id: {{ salt['config.get']('node_name', salt['config.get']('id')) }}
 {% set is_master = salt['config.get']('id', '').startswith('bevymaster') %}
 {% if is_master %}master: localhost
-ipv6: true  # enable IPv6 dual-stack
-interface: '::'
+{# ipv6: true  # enable IPv6 dual-stack
+interface: '::' #}
 {% else %}
 master: {{ salt['config.get']('my_master_url', salt['config.get']('master')) }}
 {% endif %}
@@ -24,7 +24,10 @@ salt_config_directory: {{ salt['config.get']('salt_config_directory') }}  # reme
 run_second_minion: {{ salt['config.get']('run_second_minion', False) }}
 
 {% if is_master -%}
+{% if salt['pillar.get']('autosign_minion_ids', false) %}
+{# This quick and dirty way to pre-accept minions with known names is insecure. #}
 autosign_file: {{ salt['config.get']('salt_config_directory') }}/autosign.minions
+{% endif %}
 {% else %}
   {% if salt['config.get']('run_second_minion', False) -%}
 pidfile: /var/run/salt-minion2.pid  # settings for second minion
