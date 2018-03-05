@@ -129,7 +129,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        salt.install_type = "git oxygen.rc1"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = true
-       salt.colorize = true
+        salt.log_level = "info"
+        salt.colorize = true
        salt.bootstrap_options = "-P -M -L # -g https://github.com/vernondcole/salt.git"
        # TODO: salt.bootstrap_options = ''-P -M -L -c /tmp'  # install salt-cloud and salt-master
        salt.masterless = true  # the provisioning script for the master is masterless

@@ -23,6 +23,7 @@ ssh_public_key:
     {% if grains['os'] != "Windows" %}
     - group: {{ my_user }}
     - dir_mode: 755
+    - makedirs: True
     {% endif %}
 
 ssh_public_key:
