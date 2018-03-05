@@ -267,6 +267,11 @@ def salt_install(master=True):
                 return True
             write_bevy_settings_file(settings)  # keep the settings we have already found
             exit(1)
+        print('\nYou need a recent version of SaltStack installed for this project.')
+        okay = affirmative(input('Shall I install that now?[Y/n]:'), True)
+        if not okay:
+            print('Okay. Goodbye. Rerun this script when you are ready.\n')
+            exit(1)
         _salt_install_script = "/tmp/bootstrap-salt.sh"
         print("Downloading Salt Bootstrap to %s" % _salt_install_script)
         with open(_salt_install_script, "w+") as f:
