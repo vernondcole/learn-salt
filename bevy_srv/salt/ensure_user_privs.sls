@@ -2,11 +2,21 @@
 # salt state file to ensure user's priviledges on a virtual machine
 
 {% set my_user = salt['pillar.get']('my_linux_user') %}
-{% set home = 'C:/Users/' if grains['os'] == "Windows" else '/home/' %}
+{% set home = '/Users/' if grains['os'] == "MacOs" else '/home/' %}
 
 include:
   - interactive_user
 
+{% if grains['os'] == "Windows" %}
+ssh_public_key:
+  file.managed:
+    - name: 'C:\\Users\\{{ my_user }}\\.ssh\\id_rsa.pub'
+    - user: {{ my_user }}
+    - source: salt://ssh_keys/{{ my_user }}.pub
+    - makedirs: True
+    - replace: False
+
+{% else %}  {# not Windows #}
 {{ home }}{{ my_user }}/.ssh:
   file.directory:
     - user: {{ my_user }}
@@ -22,7 +32,6 @@ ssh_public_key:
     - require:
       - file: {{ home }}{{ my_user }}/.ssh
 
-{% if grains['os'] != "Windows" %}
 /etc/sudoers:  # set the interactive linux user for passwordless sudo
   file.append:
     - text: |
