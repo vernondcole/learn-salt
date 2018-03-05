@@ -497,7 +497,7 @@ if __name__ == '__main__':
         on_a_workstation = False  # blatant assumption: Python version is less than 3.5, therefore not a Workstation
 
     master_host = False  # assume this machine is NOT the VM host for the Master
-    print('This program can make this machine a simple workstation to join the bevy')
+    print('/n/nThis program can make this machine a simple workstation to join the bevy')
     if platform.system() != 'Windows':
         print('or a bevy salt-master (including cloud-master),')
     if on_a_workstation:
