@@ -644,8 +644,8 @@ if __name__ == '__main__':
                          run_second_minion=run_second_minion,
                          vbox_install=settings['vbox_install'],
                          vagranthost=settings['vagranthost'],
-                         runas=settings['runas'],
-                         cwd=settings['cwd'],
+                         runas=settings.get('runas', ''),
+                         cwd=settings.get('cwd', ''),
                          doing_bootstrap=True,  # initialize environment
                          bevy_controller=True,
                          )
@@ -683,9 +683,10 @@ if __name__ == '__main__':
                          vbox_install=settings['vbox_install'],
                          my_linux_user=settings['my_linux_user'],
                          vagranthost=settings['vagranthost'],
-                         runas=settings['runas'],
+                         runas=settings.get('runas', ''),
+                         cwd=settings.get('cwd', ''),
                          bevy_controller=on_a_workstation,
-                         cwd=settings['cwd'])
+                         )
     print()
     print('{} done.'.format(__file__))
     print()

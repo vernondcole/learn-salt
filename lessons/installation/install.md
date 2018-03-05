@@ -9,7 +9,7 @@ git checkout my_edits
 ```
 now ... on to what you really came here for ...
 
-#### Installer Sources
+#### Salt Installer Sources
 
 This project requires the Oxygen (2018.3?) version of Salt, which has the modules needed to run Vagrant machines,
 and extended features for the `saltify` driver.
@@ -19,8 +19,8 @@ and extended features for the `saltify` driver.
   - [release candidates](https://repo.saltstack.com/salt_rc/windows/)
 - MacOS [official installers](https://docs.saltstack.com/en/latest/topics/installation/osx.html)
 - Linux
-   - [automatic for this project](../../configure_machine) ./bootstrap_bevy_member_here.py
-   - [salt_bootstrap](https://docs.saltstack.com/en/latest/topics/tutorials/salt_bootstrap.html#salt-bootstrap)
+   - Installation is automatic when running the `joinbevy.sh` (or `bootstrap_bevy_member_here.py`) script.
+   - [or by salt_bootstrap](https://docs.saltstack.com/en/latest/topics/tutorials/salt_bootstrap.html#salt-bootstrap)
     ```(bash)  TODO: simplify this code when Oxygen is released
     # Oxygen release candidate
     wget  -O bootstrap-salt.sh https://bootstrap.saltstack.com
@@ -28,6 +28,30 @@ and extended features for the `saltify` driver.
     sudo sh bootstrap-salt.sh git v2018.3
     ```
 
+#### Installation Prerequisites 
+
+- Linux
+  - Python3 ... it is the default Python on Ubuntu 16.04 and Debain Jesse.
+  - git ... you have already intalled it, haven't you?
+  - pip3 ... `sudo apt install python3-pip`
+  - ifaddr ... `sudo -H pip3 install ifaddr pyyaml`
+  - pyyaml ... already done ^ ^ ^ 
+  - Salt ... will be automatically installed by the setup script if possible.
+  
+- MacOS
+  Please use the installation helper of your choice to install the packages listed above.
+  
+- Windows
+  - Python3 ... from [python.org](https://www.python.org/)
+  The "Python Launcher for Windows" will be installed with Windows Python3.
+  Type a `py` command (rather than `python3` to run a program from the command line.
+  You will probably discover that the `-3` switch is not necessary in your installation.
+  - [git](https://git-scm.com/)
+  - pip3 is a module within your Python3 installation. 
+  Learn to type `py -3 -m pip install` when these lessons say `pip3 install`.
+  - ifaddr ... `py -3 -m pip install ifaddr`
+  - pyyaml ... `py -3 -m pip install pyyaml`
+  - passlib ... `py -3 -m pip install passlib`
 
 #### MarkDown Viewer for your Browser
 
@@ -68,6 +92,10 @@ To install both packages on *Mac workstations*, you may want to try
 `sh mac_install_vagrant.sh` on the off-chance that I got it right.
 If you supply a correction, please consider a pull request.
 
+- Windows
+  - Install Virtualbox from [the official web site](https://www.virtualbox.org/wiki/Downloads)
+  - and https://www.vagrantup.com/downloads.html
+  
 ### Creating a password hash
 
 It is generally a good practice to use a personal account rather than
@@ -92,7 +120,7 @@ pip3 install passlib
 
 ```(bash)
 cd /projects/learn_salt/configure_machine
-./pwd_hash.py
+python3 pwd_hash.py
 ```
 
 ### Where to install your bevy master.

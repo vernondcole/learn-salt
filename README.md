@@ -13,8 +13,11 @@ See [the Lesson index](lessons/index.md).
 
 Install [git](https://git-scm.com/downloads). If on Linux, use your package manager. 
 If on Windows, please select the option to 
-"`Use Get and optional Unix tools from the Windows Command Prompt`". It will make your life
-easier. Many lessons assume that these utilities are present.
+"`Use Git and optional Unix tools from the Windows Command Prompt`". It will make your life
+easier. Many lessons assume that these utilities are present, and the conflicts with similarly
+named DOS commands are rare.  Also select the option to "checkout as-is, commit as-is" so that
+git does not foul up any Windows-friendly file's line endings. Python (and Salt) do not care.
+
 
 Clone [1] [this git repository](https://github.com/vernondcole/learn-salt) onto your target environment --
 which should be the workstation where you plan to do the lessons. You will control your bevy
@@ -37,6 +40,7 @@ to restore it.
 `git checkout master`
 
 Proceed with the instructions in [the installation lesson](lessons/installation/install.md).
+- \[Short version: type `bash joinbevy.sh`, or on Windows just type `joinbevy`.\]
 
 [1]: see [how to git stuff](lessons/git/how_to_git_stuff.md) if you don't understand what "clone" means.
 
