@@ -48,7 +48,7 @@ MINIMUM_SALT_VERSION = "2018.8.3"  # ... as a string... the month will be intege
 SALT_BOOTSTRAP_URL = "http://bootstrap.saltstack.com/develop/bootstrap-salt.sh"
 # TODO: use release version - "http://bootstrap.saltstack.com/stable/bootstrap-salt.sh"
 # SALT_DOWNLOAD_SOURCE = " -g https://github.com/vernondcole/salt git saltify-wol-fix-ping"
-SALT_DOWNLOAD_SOURCE = "git develop"
+SALT_DOWNLOAD_SOURCE = "git v2018.3.0rc1"
 # TODO: use release version when Salt "Oxygen" version is released
 
 # the path to the user definition file will change if two minions are running, hence the "{}"
@@ -264,13 +264,15 @@ def salt_install(master=True):
             print('or later, according to the instructions in the README text,')
             print('and then re-run this script. ...')
             if affirmative(input('... unless,  Salt is already installed and it is Okay to continue? [y/N]:')):
-                return True
+                return False  # we did not install Salt
             write_bevy_settings_file(settings)  # keep the settings we have already found
             exit(1)
         print('\nYou need a recent version of SaltStack installed for this project.')
-        okay = affirmative(input('Shall I install that now?[Y/n]:'), True)
+        okay = affirmative(input('Shall I install that for you now?[Y/n]:'), True)
         if not okay:
-            print('Okay. Goodbye. Rerun this script when you are ready.\n')
+            if affirmative(input('Do you wish to try using the old version? [y/N]:')):
+                return False  # we did not install Salt
+            write_bevy_settings_file(settings)  # keep the settings we have already found
             exit(1)
         _salt_install_script = "/tmp/bootstrap-salt.sh"
         print("Downloading Salt Bootstrap to %s" % _salt_install_script)
