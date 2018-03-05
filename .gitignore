@@ -102,6 +102,7 @@ ENV/
 
 # PyCharm, etc.
 .idea/
+vs_*
 
 # project
 .vagrant
