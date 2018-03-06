@@ -654,7 +654,6 @@ if __name__ == '__main__':
                          runas=settings.get('runas', ''),
                          cwd=settings.get('cwd', ''),
                          doing_bootstrap=True,  # initialize environment
-                         bevy_controller=True,
                          )
 
     else:  # not making a master, make a minion
@@ -692,7 +691,6 @@ if __name__ == '__main__':
                          vagranthost=settings['vagranthost'],
                          runas=settings.get('runas', ''),
                          cwd=settings.get('cwd', ''),
-                         bevy_controller=on_a_workstation,
                          )
     print()
     print('{} done.'.format(__file__))
