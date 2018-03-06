@@ -269,20 +269,20 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     end
   end
 
-# . . . . . . .  Define Quail42 as the answer to everything. . . . . . . . . . . . . .
+# . . . . . . .  Define quail2 with Salt minion installed . . . . . . . . . . . . . .
 # . this machine has Salt installed but no states run or defined.
 # . Its master is "bevymaster".
-  config.vm.define "quail42", autostart: false do |quail_config|
+  config.vm.define "quail2", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
-    quail_config.vm.hostname = "quail42" # + DOMAIN
+    quail_config.vm.hostname = "quail2" # + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.5"
-    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "quail42"
+    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "quail2"
       puts "Starting #{ARGV[1]} at #{NETWORK}.2.5 as a Salt minion with master=#{settings['bevymaster_url']}...\n."
       end
     quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|
-        v.name = BEVY + '_quail42'  # ! N.O.T.E.: name must be unique
+        v.name = BEVY + '_quail2'  # ! N.O.T.E.: name must be unique
         v.memory = 4000       # limit memory for the virtual box
         v.cpus = 2
         v.linked_clone = true # make a soft copy of the base Vagrant box
@@ -297,7 +297,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        salt.install_type = "-f git v2018.3.0rc1"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = false
-       salt.bootstrap_options = "-A #{settings['bevymaster_url']} -i quail42 -F -P "
+       salt.bootstrap_options = "-A #{settings['bevymaster_url']} -i quail2 -F -P "
        salt.masterless = true  # the provisioning script is masterless
     end
   end

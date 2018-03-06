@@ -28,7 +28,7 @@ autosign_minion_ids:
   - '# these id names are from pillar file "manual_bevy_settings.sls" entry "autosign_minion_ids".'
   - '# A minion (or wildcard) named in this list will be accepted automatically.  (Insecure!)'
   - 'win1[06]' {# regular expression matches either win10 or win16 #}
-  - 'quail42'
+  - 'quail2'
 
 dhcp_pxe_range: {{ pxe_network_cidr.split('/')[0] }}  # network for dnsmasq PXE server replies
 {% set pxe_server_ip_list = salt['network.ip_addrs']() %}

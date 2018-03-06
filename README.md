@@ -197,7 +197,7 @@ The Vagrantfile also defines two simple empty Ubuntu 16.04 VMs, named "quail1" a
   
 There is also an Ubuntu 14.04 VM (named "quail14") defined in the Vagrantfile. 
 
-Finally, there is a VM named "quail42" for quick-and-dirty operation which will be configured as a Salt minion.
+Finally, there is a VM named "quail2" for quick-and-dirty operation which will be configured as a Salt minion.
 
 Each of these has three virtual network ports:
 
