@@ -27,9 +27,9 @@ end
 BEVY = settings["bevy"]  # the name of your bevy
 # the first two bytes of your Vagrant host-only network IP ("192.168.x.x")
 NETWORK = "#{settings['vagrant_prefix']}"
+# ^ ^ each VM below will have a NAT network in NETWORK.17.x/27.
 puts "Your bevy name:#{BEVY} using local network #{NETWORK}.x.x"
-puts "This computer will be at #{NETWORK}.2.1"  # the others as set below.
-# ^ ^ also each VM below will have a NAT network in NETWORK.17.x/27.
+puts "This computer will be at #{NETWORK}.2.1" if ARGV[1] == "up"
 bevy_mac = (BEVY.to_i(36) % 0x1000000).to_s(16)  # a MAC address based on hash of BEVY
 # in Python that would be: bevy_mac = format(int(BEVY, base=36) % 0x1000000, 'x')
 #
@@ -294,7 +294,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        salt.install_type = "-f git v2018.3.rc1"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = false
-       salt.bootstrap_options = "-A " + settings['bevymaster_url'] -i quail42 -F -P "
+       salt.bootstrap_options = "-A #{settings['bevymaster_url']} -i quail42 -F -P "
        salt.masterless = true  # the provisioning script is masterless
     end
   end
