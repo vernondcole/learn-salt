@@ -81,12 +81,13 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail1" # + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.8"  # needed so saltify_profiles.conf can find this unit
-    if ARGV.length > 2 and ARGV[1] == "up" and ARGV[2] == "quail1"
-      puts "Starting #{ARGV[2]} at #{NETWORK}.2.8..."
+    if ARGV[0] == "up" and (ARGV.length == 1 or (ARGV.length > 1 and ARGV[1] == "quail1"))
+      puts "Starting 'quail1' at #{NETWORK}.2.8..."
       end
     quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|  # only for VirtualBox boxes
+        v.name = BEVY + '_quail1'  # ! N.O.T.E.: name must be unique
         v.memory = 1024       # limit memory for the virtual box
         v.cpus = 1
         v.linked_clone = true # make a soft copy of the base Vagrant box
@@ -98,14 +99,13 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 	end
   end
 
-
   # . . . . . . .  Define the BEVYMASTER . . . . . . . . . . . . . . . .
   config.vm.define "bevymaster", autostart: false do |master_config|
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     master_config.vm.hostname = "bevymaster"
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"
-    if ARGV.length > 2 and ARGV[1] == "up" and ARGV[2] == "bevymaster"
-      puts "Starting #{ARGV[2]} at #{NETWORK}.2.2..."
+    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "bevymaster"
+      puts "Starting #{ARGV[1]} at #{NETWORK}.2.2..."
       end
     master_config.vm.network "public_network", bridge: interface_guesses, mac: "be0000" + bevy_mac
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
@@ -117,6 +117,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     end
 
     master_config.vm.provider "virtualbox" do |v|
+        v.name = BEVY + '_bevymaster'  # ! N.O.T.E.: name must be unique
         v.memory = 1024       # limit memory for the virtual box
         v.cpus = 1
         v.linked_clone = true # make a soft copy of the base Vagrant box
@@ -139,8 +140,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        salt.install_type = "git v2018.3.0rc1"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = true
-        salt.log_level = "info"
-        salt.colorize = true
+       salt.log_level = "info"
+       salt.colorize = true
        salt.bootstrap_options = "-P -M -L "  # install salt-cloud and salt-master
        salt.masterless = true  # the provisioning script for the master is masterless
        salt.run_highstate = true
@@ -192,12 +193,13 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail16" # + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.3"
-    if ARGV.length > 2 and ARGV[1] == "up" and ARGV[2] == "quail16"
-      puts "Starting #{ARGV[2]} at #{NETWORK}.2.3..."
+    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "quail16"
+      puts "Starting #{ARGV[1]} at #{NETWORK}.2.3..."
       end
     quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|
+        v.name = BEVY + '_quai16'  # ! N.O.T.E.: name must be unique
         v.memory = 1024       # limit memory for the virtual box
         v.cpus = 1
         v.linked_clone = true # make a soft copy of the base Vagrant box
@@ -215,12 +217,13 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.box = "boxesio/trusty64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail14" # + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.4"
-    if ARGV.length > 2 and ARGV[1] == "up" and ARGV[2] == "quail14"
-      puts "Starting #{ARGV[2]} at #{NETWORK}.2.4..."
+    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "quail14"
+      puts "Starting #{ARGV[1]} at #{NETWORK}.2.4..."
       end
     quail_config.vm.network "public_network", bridge: interface_guesses
 
     quail_config.vm.provider "virtualbox" do |v|
+        v.name = BEVY + '_quail14'  # ! N.O.T.E.: name must be unique
         v.memory = 1024       # limit memory for the virtual box
         v.cpus = 1
         v.linked_clone = true # make a soft copy of the base Vagrant box
@@ -239,12 +242,12 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     # quail_config.vm.hostname = "windowstest"  # use of this setting causes VM to reboot Windows.
 
     quail_config.vm.network "public_network", bridge: interface_guesses
-    if ARGV.length > 2 and ARGV[1] == "up" and ARGV[2] == "win16"
-      puts "Starting #{ARGV[2]} as a Salt minion of #{settings['bevymaster_url']}."
+    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "win16"
+      puts "Starting #{ARGV[1]} as a Salt minion of #{settings['bevymaster_url']}."
       end
 
     quail_config.vm.provider "virtualbox" do |v|
-        v.name = 'win16'  # ! N.O.T.E.: name must be unique
+        v.name = BEVY + '_win16'  # ! N.O.T.E.: name must be unique
         v.gui = true  # turn on the graphic window
         v.linked_clone = true
         v.customize ["modifyvm", :id, "--vram", "27"]  # enough video memory for full screen
@@ -273,8 +276,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail42" # + DOMAIN
     quail_config.vm.network "private_network", ip: NETWORK + ".2.5"
-    if ARGV.length > 2 and ARGV[1] == "up" and ARGV[2] == "quail42"
-      puts "Starting #{ARGV[2]} at #{NETWORK}.2.5 as a Salt minion of #{settings['bevymaster_url']}."
+    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "quail42"
+      puts "Starting #{ARGV[1]} at #{NETWORK}.2.5 as a Salt minion with master=#{settings['bevymaster_url']}...\n."
       end
     quail_config.vm.network "public_network", bridge: interface_guesses
 
@@ -291,7 +294,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     end
     quail_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "-f git v2018.3.rc1"  # TODO: use "stable" when OXYGEN is released
+       salt.install_type = "-f git v2018.3.0rc1"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = false
        salt.bootstrap_options = "-A #{settings['bevymaster_url']} -i quail42 -F -P "
