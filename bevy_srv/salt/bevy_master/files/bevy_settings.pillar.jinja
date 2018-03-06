@@ -4,6 +4,7 @@
 include:
   - manual_bevy_settings
 {% raw %}
+{# * * * INSTALLER: set your actual local network addresses below * * * #}
 {% set bevymaster_url = salt['config.get']('bevymaster_url', '192.168.88.2') %}  {# main IP address of bevy master #}
 {% set pxe_network_cidr = '192.168.88.0/24' %}
 
