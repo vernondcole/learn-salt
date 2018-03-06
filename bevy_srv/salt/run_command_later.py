@@ -48,8 +48,8 @@ for command in commands:
         # 3.5 retcd = sp.returncode
         retcd = subprocess.call(command, shell=True, stdout=sys.stdout, stderr=subprocess.STDOUT) # 3.4
         if retcd != 0:  #3.4
-            raise subprocess.CalledProcessError(  #3.4
-                'Command {} returned non-zero exit status {}'.format(command, retcd))  # 3.4
+            print('ERROR: '
+                'Command "{}" returned non-zero exit status "{}"'.format(command, retcd))  # 3.4
     except subprocess.CalledProcessError as e:
         print('* * * ERROR running command . . .')
         print('(try checking {} for details)'.format(CHEAP_LOG_FILE))

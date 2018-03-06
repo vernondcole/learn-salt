@@ -28,7 +28,7 @@ make-dirs-visible:
         chflags nohidden /tmp
 {% endif %}
 
-/etc/salt{{ other_minion }}/minion.d/vagrant_sdb.conf:
+{{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/vagrant_sdb.conf:
   file.managed:
     - contents: |
         {{ message }}
@@ -38,8 +38,8 @@ make-dirs-visible:
           table: sdb
           create_table: True
 
-{% if salt['config.get']('vbox_install') %}
-{%- if grains.os_family == 'Debian' %}
+{% if salt['config.get']('vbox_install', false) == true %}
+{% if grains.os_family == 'Debian' %}
 
 virtualbox_repo:
   pkgrepo.managed:
@@ -95,7 +95,7 @@ vagrant-plugin-{{ plugin }}:
 {% endif %}   {# vagrant_version #}
 {%- endif %}  {# vbox_install #}
 
-{% if salt['pillar.get']('vbox_api_install') %}
+{% if salt['config.get']('vbox_api_install', false) %}
 vbox_sdk:
   archive:
     - extracted
@@ -146,15 +146,21 @@ pyvmomi_module:
 
 sure_minion_config_file:
   file.managed:
-    - name: /etc/salt{{ other_minion }}/minion.d/01_from_bootstrap.conf
-    - source: salt://bevy_master/files/01_from_bootstrap.conf.jinja
+    - name: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/02_configure_bevy_member.conf
+    - source: salt://bevy_master/files/02_configure_bevy_member.conf.jinja
     - template: jinja
     - makedirs: true
     - order: 3  {# do this early, before we crash #}
 
+remove_boot_config:
+  file.absent:
+    - name: {{ salt['config.get']('salt_config_directory') }}/00_vagrant_boot.conf
+    - require:
+      - file: sure_minion_config_file
+
 {% if other_minion == "" %}
 # ... using the stock salt-minion instance #
-/etc/salt/minion:
+{{ salt['config.get']('salt_config_directory') }}/minion:
   file.managed:
     - contents: |
         # {{ message }}
@@ -167,7 +173,7 @@ sure_minion_config_file:
     - replace: false
 {% else %}  {# other_minion is non-blank #}
 # v v v installing a second minion instance to talk with Bevy Master #
-/etc/salt{{ other_minion }}/minion:
+{{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion:
   file.managed:
     - contents: |
         # {{ message }}
@@ -187,7 +193,7 @@ edit_salt-minion{{ other_minion }}_service:
   file.replace:
     - name: /lib/systemd/system/salt{{ other_minion }}-minion.service
     - pattern: "ExecStart=/usr/bin/salt-minion$"
-    - repl: "ExecStart=/usr/bin/salt-minion --config-dir=/etc/salt{{ other_minion }}\n"
+    - repl: "ExecStart=/usr/bin/salt-minion --config-dir={{ salt['config.get']('salt_config_directory') }}{{ other_minion }}\n"
     - require:
       - file: make_salt{{ other_minion }}-minion_service
     - require_in:
@@ -228,32 +234,48 @@ add_salt{{ other_minion }}_call_command:
 
 {% endif %} # endif other_minion
 
-{% if grains['os_family'] != 'MacOS' %}
+{% if grains['os_family'] == 'MacOS' %}
+{% set salt_minion_service_name = 'com.saltstack.salt.minion' %}
+install-mac-minion-service:
+{# TODO: this seems to be unneccessary ...
+  file.managed:
+    - name: /Library/LaunchAgents/{{ salt_minion_service_name }}.plist
+    - source: salt://bevy_master/darwin/{{ salt_minion_service_name }}.plist
+    - makedirs: true
+    - template: jinja
+... #}
+  cmd.run:
+    - name: launchctl load /Library/LaunchAgents/{{ salt_minion_service_name }}.plist
+
+{% else %}
 start-salt{{ other_minion }}-minion:
   service.running:
     - name: salt{{ other_minion }}-minion
     - enable: true
     - require:
-      - file: /etc/salt{{ other_minion }}/minion
+      - file: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion
     - require_in:
       - cmd: restart-the-minion
 {% endif %}
 
-restart-the-minion_1:
+restart-the-minion_setup:
   file.managed:
     - name: /tmp/run_command_later.py
     - source: salt://run_command_later.py
-    - mode: 775
+    {% if grains['os'] != 'Windows' %}- mode: 775{% endif %}
     - show_changes: false
 restart-the-minion:
   cmd.run:
     - bg: true  # do not wait for completion of this command
     - require:
-      - file: restart-the-minion_1
+      - file: restart-the-minion_setup
     - order: last
     - shell: /bin/bash
-    {% if salt['grains.get']('os_family') == 'MacOS' %}
-    - name: '/tmp/run_command_later.py 10 "pkill -f salt-minion"'
+    {% if grains['os_family'] == 'MacOS' %}
+    - name: '/tmp/run_command_later.py 10 "pkill -f salt-minion"'  {# this command seems to work for any installed Salt #}
+    {# - name: "/tmp/run_command_later.py 10 launchctl unload /Library/LaunchAgents/{{ salt_minion_service_name }}.plist; launchctl load /Library/LaunchAgents/{{ salt_minion_service_name }}.plist" #}
+    {% elif grains['os_family'] == 'Windows' %}
+    - name: 'py \tmp\run_command_later.py 10 net stop salt-minion; net start salt-minion;echo .;echo .;echo "Hit [Enter] to close this window..."'
     {% else %}
     - name: "/tmp/run_command_later.py 10 systemctl restart salt{{ other_minion }}-minion"
     {% endif %}

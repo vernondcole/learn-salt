@@ -19,22 +19,21 @@ update_the_grains:
 include:
   - ensure_user_privs
   - sdb
-  - ./populate_bootstrap_settings
-  - configure_bevy_member  {# master is a member, too #}
+  - configure_bevy_member  {# master is configured like a member, too #}
 
 {% if salt['file.directory_exists']('/vagrant/bevy_srv/salt/pki_cache') %}
 restore_keys_from_cache:
   file.recurse:
     - source: salt://pki_cache
     - clean: false
-    - name: /etc/salt
+    - name: {{ salt['config.get']('salt_config_directory') }}
 {% else %}  {# must make new keys #}
 generate-own-key:
   cmd.run:  # generates a minion key, if it does not already exist
-    - name: salt-key --gen-keys=minion --auto-create --gen-keys-dir=/etc/salt/pki/minion{{ other_minion }}
+    - name: salt-key --gen-keys=minion --auto-create --gen-keys-dir={{ salt['config.get']('salt_config_directory') }}/pki/minion{{ other_minion }}
     - creates:
-      - /etc/salt/pki/minion{{ other_minion }}/minion.pem
-      - /etc/salt/pki/minion{{ other_minion }}/minion.pub
+      - {{ salt['config.get']('salt_config_directory') }}/pki/minion{{ other_minion }}/minion.pem
+      - {{ salt['config.get']('salt_config_directory') }}/pki/minion{{ other_minion }}/minion.pub
     - require:
       - pkg: salt-master
     - require_in:
@@ -42,8 +41,8 @@ generate-own-key:
 
 accept-own-key:
   file.copy:
-    - name: /etc/salt/pki/master/minions/bevymaster
-    - source: "/etc/salt/pki/minion{{ other_minion }}/minion.pub"   # accept yourself as a minion
+    - name: {{ salt['config.get']('salt_config_directory') }}/pki/master/minions/bevymaster
+    - source: "{{ salt['config.get']('salt_config_directory') }}/pki/minion{{ other_minion }}/minion.pub"   # accept yourself as a minion
     - makedirs: true
     - require:
       - cmd: wait_until_end
@@ -51,17 +50,18 @@ accept-own-key:
 clean_up_own_pki:
   file.absent:  # clean up
     - names:
-      - /etc/salt/pki/master/minions_pre/bevymaster
-      - /etc/salt/pki/master/minions_autosign/bevymaster
+      - {{ salt['config.get']('salt_config_directory') }}/pki/master/minions_pre/bevymaster
+      - {{ salt['config.get']('salt_config_directory') }}/pki/master/minions_autosign/bevymaster
     - onlyif:
-      - test -e /etc/salt/pki/master/minions/bevymaster
+      - test -e {{ salt['config.get']('salt_config_directory') }}/pki/master/minions/bevymaster
     - require:
       - accept-own-key
 {% endif %}
 
 pip2-installed:  # TODO: what about pip3?
   pkg.installed:
-    - name: python-pip
+    - names:
+      - python-pip
 
 salt-master:
   pkg.installed:
@@ -76,18 +76,20 @@ salt-cloud:
 
 salt-master-config:
   file.managed:
-    - name: /etc/salt/master.d/01_master_from_bootstrap.conf
-    - source: salt://bevy_master/files/01_from_bootstrap.conf.jinja
+    - name: {{ salt['config.get']('salt_config_directory') }}/master.d/02_configure_bevy_member.conf
+    - source: salt://bevy_master/files/02_configure_bevy_member.conf.jinja
     - template: jinja
     - makedirs: true
 
-#/etc/salt/pki/master/minions/mydns.pub:    # pre-accept the nameserver minion
-#  file.managed:
-#    - mode: 644
-#    - source: salt://bevy_master/mydns.pub
-#    - makedirs: true
+{% if salt['pillar.get']('autosign_minion_ids', '') %}
+salt-master-autosign-file:
+  file.managed:
+    - name: {{ salt['config.get']('salt_config_directory') }}/autosign.minions
+    - contents_pillar: autosign_minion_ids
+    - mode: 600  # access to the autosign file must be restricted.
+{% endif %}
 
-/etc/salt:
+{{ salt['config.get']('salt_config_directory') }}:
   file.directory:  {# allow the user to easily edit configuration files #}
     - user: {{ my_username }}
     - makedirs: true
@@ -102,33 +104,24 @@ salt-master-config:
 
 /srv/salt/README.txt:
   file.managed:
-    - user: {{ my_username }}
-    - group: staff
     - makedirs: true
-    - mode: 664
     - source: salt://bevy_master/files/README.notice.jinja
     - template: jinja
 
 /srv/pillar/README.txt:
   file.managed:
-    - user: {{ my_username }}
-    - group: staff
     - makedirs: true
-    - mode: 664
     - source: salt://bevy_master/files/README.notice.jinja
     - template: jinja
 
 /srv/salt/top.sls:
   file.managed:  # make the initial copy of top.sls
-    - user: {{ my_username }}
-    - group: staff
     - makedirs: true
-    - mode: 664
     - source: salt://bevy_master/files/top.sls.jinja
     - template: jinja
     - replace: false
 
-/etc/salt/cloud.conf.d/01_cloud_from_bootstrap.conf:
+{{ salt['config.get']('salt_config_directory') }}/cloud.conf.d/01_cloud_from_bootstrap.conf:
   file.managed:
     - source: salt://bevy_master/files/cloud.conf
     - makedirs: true
@@ -136,7 +129,7 @@ salt-master-config:
     - group: staff
     - template: jinja
 
-/etc/salt/cloud.providers:
+{{ salt['config.get']('salt_config_directory') }}/cloud.providers:
   file.managed:
     - contents: |
         # managed by Salt
@@ -146,13 +139,13 @@ salt-master-config:
 
 salt_cloud_providers_d:
   file.recurse:
-    - name: /etc/salt/cloud.providers.d
+    - name: {{ salt['config.get']('salt_config_directory') }}/cloud.providers.d
     - source: salt://bevy_master/files/cloud.providers.d
     - template: jinja
     - user: {{ my_username }}
     - group: staff
 
-/etc/salt/cloud.profiles:
+{{ salt['config.get']('salt_config_directory') }}/cloud.profiles:
   file.managed:
     - contents: |
         # managed by Salt
@@ -163,7 +156,7 @@ salt_cloud_providers_d:
 
 salt_cloud_profiles_d:
   file.recurse:
-    - name: /etc/salt/cloud.profiles.d
+    - name: {{ salt['config.get']('salt_config_directory') }}/cloud.profiles.d
     - source: salt://bevy_master/files/cloud.profiles.d
     - template: jinja
     - user: {{ my_username }}
@@ -221,3 +214,4 @@ delay_master_restart:
 wait_until_end:
   cmd.run:
     - name: sleep 1
+...

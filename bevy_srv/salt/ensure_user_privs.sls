@@ -1,27 +1,46 @@
 ---
 # salt state file to ensure user's priviledges on a virtual machine
 
-# assumes that Vagrant (or somebody) has mapped the /my_home/.ssh directory
-{% set my_linux_user = salt['pillar.get']('my_linux_user') %}
+{% set my_user = salt['pillar.get']('my_linux_user') %}
+{% set home = '/Users/' if grains['os'] == "MacOs" else '/home/' %}
 
 include:
   - interactive_user
 
-/home/{{ my_linux_user }}/.ssh:
+{% if grains['os'] == "Windows" %}
+ssh_public_key:
+  file.managed:
+    - name: 'C:\Users\{{ my_user }}\.ssh\id_rsa.pub'
+    - user: {{ my_user }}
+    - source: salt://ssh_keys/{{ my_user }}.pub
+    - makedirs: True
+    - replace: False
+
+{% else %}  {# not Windows #}
+{{ home }}{{ my_user }}/.ssh:
   file.directory:
-    - user: {{ my_linux_user }}
-    - group: {{ my_linux_user }}
+    - user: {{ my_user }}
+    {% if grains['os'] != "Windows" %}
+    - group: {{ my_user }}
     - dir_mode: 755
+    - makedirs: True
+    {% endif %}
 
 ssh_public_key:
   ssh_auth.present:
-    - user: {{ pillar["my_linux_user"] }}
-    - source: salt://ssh_keys/{{ my_linux_user }}.pub
+    - user: {{ my_user }}
+    - source: salt://ssh_keys/{{ my_user }}.pub
     - require:
-      - file: /home/{{ my_linux_user }}/.ssh
+      - file: {{ home }}{{ my_user }}/.ssh
 
 /etc/sudoers:  # set the interactive linux user for passwordless sudo
   file.append:
     - text: |
-        {{ my_linux_user }} ALL=(ALL) NOPASSWD: ALL
+        {{ my_user }} ALL=(ALL) NOPASSWD: ALL
+
+/etc/defaults/login:
+  file.append:
+    - text: "UMASK=002  # create files as group-readable by default ## added by Salt"
+    - makedirs: true
+{% endif %}
 ...

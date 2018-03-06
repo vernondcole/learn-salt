@@ -2,17 +2,29 @@
 
 ### Using salt-cloud to learn SaltStack basics
 
-This project uses a salt-cloud network with Vagrant controlled VirtualBox virtual machines as a sandbox to experiment with and learn [Salt](https://saltstack.com/) and [salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud) by building and controlling a bevy of computers.
+This project uses a salt-cloud network with Vagrant-controlled VirtualBox virtual machines 
+as a sandbox to experiment with and learn [Salt](https://saltstack.com/) and 
+[salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud) 
+by building and controlling a bevy[3] of computers.
 
-Go to [the Lesson index](lessons/index.md).
+See [the Lesson index](lessons/index.md).
 
 ### Installation
+
+Install [git](https://git-scm.com/downloads). If on Linux, use your package manager. 
+If on Windows, please select the option to 
+"`Use Git and optional Unix tools from the Windows Command Prompt`". It will make your life
+easier. Many lessons assume that these utilities are present, and the conflicts with similarly
+named DOS commands are rare.  Also select the option to "checkout as-is, commit as-is" so that
+git does not foul up any Windows-friendly file's line endings. Python (and Salt) do not care.
+
 
 Clone [1] [this git repository](https://github.com/vernondcole/learn-salt) onto your target environment --
 which should be the workstation where you plan to do the lessons. You will control your bevy
 from this place.
 
-Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really have to put it there. All lessons should work if you put it somewhere else, like `/home/myusername/learn` or wherever. 
+Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really have to put it there. 
+All lessons should work if you put it somewhere else, like `/home/myusername/learn` or wherever. 
 Examples will be configured and tested to operate from any random directory you like.  
 But, for simplicity sake, all examples will be given as if they were in `/projects/learn-salt`.
 
@@ -28,12 +40,15 @@ to restore it.
 `git checkout master`
 
 Proceed with the instructions in [the installation lesson](lessons/installation/install.md).
+- \[Short version: type `bash joinbevy.sh`, or on Windows just type `joinbevy`.\]
 
 [1]: see [how to git stuff](lessons/git/how_to_git_stuff.md) if you don't understand what "clone" means.
 
-[2]: Windows users -- use the `C:\projects\learn-salt` folder. All future instructions will use POSIX names with right-leaning slashes and no drive letter. Live with it. If you need help, look in the [Linux for Windows Users](lessons/windows/Linux_for_Windows_users.md) lesson.
+[2]: Windows users -- use the `C:\projects\learn-salt` folder. 
+All future instructions will use POSIX names with right-leaning slashes and no drive letter. Live with it. 
+If you need help, look in the [Linux for Windows Users](lessons/windows/Linux_for_Windows_users.md) lesson.
 
-
+[3]: v v v
 ### What the #&*$%! is a `bevy`?
 
 In this project, we will use the term "bevy" to specify the collection of virtual (and sometimes physical) computers which are managed by our Salt master.
@@ -46,15 +61,71 @@ The Oxford English dictionary says:
        a large group of people or things of a particular kind.
 ```
 
-A bevy might have more than one master (if we are experimenting with multi-master arrangements) but each master (or set of masters) will control only one bevy. The machines in the bevy may reside on any number of IP networks.
+A bevy might have more than one master (if we are using a multi-master arrangement) 
+but each master (or set of masters) will control only one bevy. 
+The machines in the bevy may reside on any number of IP networks.
 
 #### Why not just call it a `<fill in the blank>` rather than a `bevy`?
 
-Most collective nouns are already used in computer science jargon. "Network" has several meanings -- so does "array", "collection", "cluster", "group", "quorum", "environment" and so on. The thesarus was searched for a unique, unused term. 
+Most collective nouns are already used in computer science jargon. "Network" has several meanings -- 
+so does "array", "collection", "cluster", "group", "quorum", "environment" and so on. 
+The thesarus was searched for a unique, unused term. 
 "Bevy" is a collective noun used for quail. (Other terms are "covey" and "flock".)
-Being a part-time hunter and full-time westerner, I (Vernon) admire the way a group of quail co-operate together. (They are [very pretty](https://www.pfwebsites.org/chapter/snakeriverqforg/photos/002.jpg), too.) So I decided to adopt that term for a co-operating group of computers.  Blame me.
+Being a part-time hunter and full-time westerner, I (Vernon) admire the way a group of quail co-operate together. 
+(They are [very pretty](https://www.pfwebsites.org/chapter/snakeriverqforg/photos/002.jpg), too.) 
+So I decided to adopt that term for a co-operating group of computers.  Blame me.
 
 Feel free to substitute some other word if you prefer.
+
+### File Name Formats, IDEs and Other Assumptions
+
+In these lessons, you will use both Linux and Windows.
+Linux is case sensitive. 
+Windows is usually[1] case insensitive, but case preserving.
+Some software can get confused when the case changes. 
+If you always pretend that file names must be in the exact case, you should have no problems.
+
+For simplicity, we will assume a few things which may be different in your situation.
+These are not prerequisites, but merely conventions which you can freely ignore. 
+If you chose not to follow the convention, everything should work correctly anyway.
+For example, this documentation my refer to `/projects/learn-salt/lessons/windows/xkcd.py`
+but on your system, the file may actually be `C:\Users\Vernon\PyCharmProjects\ls\lessons\windows\xkcd.py`.
+You are expected to mentally make the translation between the lesson's examples and your reality.
+
+Things that are optional include:
+- your project's root directory node. We assume `/projects/learn-salt`.
+- your [IDE](https://en.wikipedia.org/wiki/Integrated_development_environment). 
+We assume [PyCharm Professional](https://www.jetbrains.com/pycharm/), 
+but you might use many other choices, such as PyCharm Community Edition, 
+[Wing](https://wingware.com/), 
+[Visual Studio](https://docs.microsoft.com/en-us/visualstudio/python/installing-python-support-in-visual-studio),
+Pythonwin from [pywin32](https://github.com/mhammond/pywin32),
+[IDLE](https://docs.python.org/3/library/idle.html),
+or even [Notepad++](https://notepad-plus-plus.org/).
+But do yourself a favor and select an environment from early, rather than late, in the list.
+- Workstation Operating System. Why would anyone use Windows for a programmer's workstation?
+But we test with (as of this writing): Ubuntu 17.10, and MacOS High Sierra, and Windows 10.
+- Your Bevy_Master machine. As of this writing, we test with Ubuntu 16.04 on a Vagrant VM, 
+and Raspbian Jesse on a Raspberry Pi W0.
+- Your Internet Router.
+Most lessons will be runnable from a large corporate router or a default home router. 
+For some lessons, you will need control over who runs your PXE, DHCP and/or DNS servers. 
+Any home-type router should be suitable for that, 
+but you may spend some time finding the correct "expert" settings screen.
+Examples will be for a router running [MicroTik RouterOS](https://mikrotik.com/software) software.
+
+
+[1] On Windows, the home directory may be spelled either "C:\Users" or "c:\users", 
+but the group must be spelled "Users".
+On Linux, the home directory must be spelled "/home" ("/Home" is a different directory) 
+and the group must be spelled "users".
+
+##### Prerequisites
+
+Things that are **NOT** optional:
+- [Python3](https://www.python.org/) version 3.4 or later. See [the Python clock](https://pythonclock.org/).
+- [git](https://git-scm.com/). I hate git. [But, I use it, because Github is great](https://www.python.org/dev/peps/pep-0512/). 
+Be careful not to shoot any toes off.
 
 ### How this project is arranged.
 
@@ -62,24 +133,21 @@ This directory has this README.md file,
 along with a big complex *Vagrantfile*,
 and a few other handy files.
 
-The [lessons](./lessons) directory contains 
-the [lesson index](lessons/index.md). 
-
+- The [lessons](./lessons) directory contains 
+the [lesson index](lessons/index.md).  
 Often, the lessons will have lab or example files
 associated with them. When studying each lesson, you should be running the examples using
 a terminal with your current default directory set for that lesson.
 For example, if you are running the [Basics of Vagrant](vagrant_basics/basics_of_vagrant.md)
-lesson, you should start by running: 
-
+lesson, you should start by typing: 
 `cd /projects/learn-salt/lessons/vagrant_basics`
-
 
 [comment]: # (The file index.md is the source for index.html)
 
-The [bevy_srv](./bevy_srv) directory contains a complete SaltStack
+- The [bevy_srv](./bevy_srv) directory contains a complete SaltStack
 directory tree used for building the examples and lessons here.
 
-The [configure_machine](./configure_machine) directory contains 
+- The [configure_machine](./configure_machine) directory contains 
 scripts used to configure your bevy_master machine, your workstation
 (as a minion), and perhaps other bevy member computers as needed.
 
@@ -129,7 +197,7 @@ The Vagrantfile also defines two simple empty Ubuntu 16.04 VMs, named "quail1" a
   
 There is also an Ubuntu 14.04 VM (named "quail14") defined in the Vagrantfile. 
 
-Finally, there is a VM named "quail42" for quick-and-dirty operation which will be configured as a Salt minion.
+Finally, there is a VM named "quail2" for quick-and-dirty operation which will be configured as a Salt minion.
 
 Each of these has three virtual network ports:
 
@@ -163,156 +231,46 @@ There is a messy bunch of Ruby code in the Vagrantfile to try getting the correc
 You may want to supply your network adapter name in the Vagrantfile, 
 especially if you are running Windows.
 
+### Single Source of Truth
+
+ This project attempts to establish a [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)
+"single source of truth" for your bevy's settings using the file identified with 
+`BEVY_SETTINGS_FILE_NAME` (usually `/srv/pillar/01_bevy_settings.sls`). 
+On Windows, this would appear as `C:\srv\pillar\01_bevy_settings.sls`.
+
+That file should work in many (but not all) cases. (It can be extended to more cases with some fiddling.)
+We will attempt to keep the /srv directory mapped to local Vagrant VMs as "/srv" so the settings will be
+seen in both environments. Normal minions will receive their settings from the Bevy Master.
+If the Bevy Master is a stand-alone server, it might be a "good idea" to connect its `/srv` directory to
+the `/srv` directory on your Workstation using a deployment engine such as PyCharm's.
+
+Machines other than the Bevy Master which are configured individually (using the Python script) will
+have their local version of the `bevy_settings` file. These copies will be kept in synchronization
+with the Bevy Master's copy by a Salt `file.managed` state command. That way a `salt-call --local`
+operation ought to produce the same result as a `salt` operation.
+
+The value of `BEVY_SETTINGS_FILE_NAME` appears as a constant in at least three places in the system code.
+If you change it, search for all occurrances.
+
 ### A Private Test Network
 
 Some of the more advanced lessons (such as DHCP and PXE) cannot be run on a corporate or
 school network without messing up many things. Don't do that. 
-\[Trust me -- I once killed the then-experimental
-Internet in all of Utah and Colorado with a router misconfiguration.\] 
+\[Trust me, I know about messing things up -- I once killed the then-experimental
+Internet in all of Utah and Colorado by misconfiguring a router. -- Vernon\] 
 
-If you are working from a home office, you will be okay testing on your home router -- 
+If you are working from a home office, you may be okay using your home router -- 
 but not while your spouse is streaming a movie. 
 Otherwise, you will want a router of your very own to mess up. 
 
-Consider ordering one soon. I use a RouterBoard / Mikrotik "hAP lite" which I highly recommend.
+Consider ordering a special router soon. I use a RouterBoard / Mikrotik 
+[hAP lite](https://mikrotik.com/product/RB941-2nD-TC).
+Their RouterOS operating system has professional features lacking in most popular home routers.
 I found mine on Amazon for less than $30 USD. Buy some CAT-5 cables, too.
 
 For test computers, I use an old HP laptop that once ran Windows Vista, and a Raspberry Pi. 
 Also running on the same net, I have two development Ubuntu laptops, a Windows 10 laptop, 
 an old MacBook, and my Android phone. Those make a good test bed.
-
-
-
-v v v v v v v v v v Text below should be moved to individual class lessons v v v v
-
-
-##### Start a bevy minion VM, control it, and connect a terminal session to it. 
-
-(In the examples below, subistitute 'quail14' to run an Ubuntu 14.04 machine.)
-
-`vagrant up quail16` or `vagrant up quail16 --provider vmware_fusion`
-
-NOTE: you must use the same VM provider on all machines. Mixing VirtualBox and VMware machines messes up networking.
-
-```(bash)
-me@myhost$ vagrant ssh
-...
-me@bevymaster $ sudo salt-cloud -p quail16 myminion
-me@bevymaster $ sudo salt myminion network.ip_addrs
-```
-
-`me@bmyhost $ vagrant ssh quail16`
-
-or
-
-`me@anymachine $ ssh 10.<ip address from above>`
-
-### Steps to use a VMware GP2 cloud machine as your bevy master.
- 
-Define a small virtual machine (1 CPU, 1GB RAM) on [Javelin](https://d-gp2-javelin2-1.imovetv.com). 
-For "App Name" use the word "bevy" followed by a number. The number you pick cannot be the same as an existing bevy.
-
-Log in to your Bevy-Master-to-be using the user name assigned by dev-ops.  Mine is "VCole". Then download the
-bevy master repository.  For move explananion of the steps, refer to the "external VM" section below.
-
-```(bash)
-ssh-add -K  # Mac only -- starts authentication agent
-ssh -A vcole@d-gp2-bevy2-1.imovetv.com`  # -A means "forward my agent authentication"
-sudo mkdir /projects
-sudo chown vcole:staff /projects
-git clone ssh://git@p-bitbucket.imovetv.com/msl/bevy_master.git
-cd bevy_master/configure_machine/
-sudo ./bootstrap_bevy_member_here.pyhttps://github.com/vernondcole/learn-salt
-
-Using [salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud/index.html),
-you will create, manage, and destroy virtual computers.
-You will also integrate and control physical machines using the 
-[Saltify](https://docs.saltstack.com/en/latest/topics/cloud/saltify.html) driver
-Name your bevy: {'bevy01'}: bevy2  # type the same bevy number you selected above
-
-User Name: elmerfudd  # type the user name you use on your workstation
-```
-
-The remaining interactive script should be self explanitory.  The python script will run a Salt highstate.
-After the highstate completes, you should log off the ssh session and log back in with your workstation 
-user name.
-
-N O T E : The script will install a second Salt Minon. The normal salt minion will be connected to the GP2
-salt master. The second minion will be connected to the Bevy Master. Its service name will be salt2-minion.
-A bash alias named "salt2" is defined for convenient operation of the second minion.
-https://github.com/vernondcole/learn-salt
-### Steps to use an external VM (or a workstatio
-Using [salt-cloud](https://docs.saltstack.com/en/latest/topics/cloud/index.html),
-you will create, manage, and destroy virtual computers.
-You will also integrate and control physical machines using the 
-[Saltify](https://docs.saltstack.com/en/latest/topics/cloud/saltify.html) drivern) as your bevy master.
- 
-Your proposed bevy master must be running an ssh server (unless it _is_ your workstation).
- `sudo apt install openssh-server`
-
-Your local workstation must have a registered 
-[ssh public key](https://confluence.atlassian.com/bitbucketserver0413/using-ssh-keys-to-secure-git-operations-873874478.html)
- on [p-bitbucket.imovetv.com](http://p-bitbucket.imovetv.com:7990).
- 
-- Log in to your proposed Salt Master using ssh agent forwarding.
-
-```(bash)
-    ssh-add -K ~/.ssh/id_rsa    # needed once per reboot, only on Mac OS-x, to register your key with your agent
-    ssh -A <target_username>@<your proposed master>
-    ```https://github.com/vernondcole/learn-salt
-
-- Decide on your project root directory.  I find it very convenient to create:
-
-    ```  
-    (bash)
-    sudo mkdir /projects
-    sudo chown <your username>:staff /projects
-    ```
-
-- Clone this repo onto your intended master using git.
-
-    ``` (bash)
-    sudo apt install git  # if needed...
-    cd /projects  # go to your project directory
-    git clone ssh://git@p-bitbucket.imovetv.com/msl/bevy_master.git
-    cd bevy_master
-    ```
-
-- run scripts to install all the files and directories.
-
-    ```
-    (bash)
-    # assuming you are in the bevy_master directory...
-    cd configure_member
-    sudo ./bootstrap_bevy_member_here.py
-    ```
-
-Be prepared to supply the username, password, and ssh public key you wish to have installed on the bevy master and on all of the bevy minions.
-This should be your dish user name.  Salt will also create the standard "vagrant" user on all minions.
-
-If the script detects a minion connected to another Salt master 
-(not localhost) it will install a second minion to connect its local Salt master.
-
-#### Create other Virtual Minions
-
-For more information, see
-https://docs.saltstack.com/en/latest/topics/cloud/qs.html
-
-##### Pre-created minions using Saltify provider.
-
-The salt-cloud "saltify" provider is used to connect hardware machines, or
-virtual machines (not created by salt-cloud) as bevy member minions.
-It installs salt-minion on the target machine and connects it to the bevy master with the appropriate keys. 
-The target machine is then ready to run any Salt command, including state.highstate.
-
-The definition of all machines to be connected to your bevy is found in the 
-/etc/salt/cloud.profiles.d/ directory. That directory is initially populated by a Salt file.recurse
- operation which will overwrite any file found in its source directory, which is
- `/bevy_srv/salt/bevy_master/cloud.profiles.d`. The saltify_demo_profiles.conf file contains the
-demo or default examples.  To avoid having Salt overwrite
- your own machine definitions, you should make a new `.conf` file with a different name. 
-
-^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
 
 # Updating this project.
 
@@ -323,4 +281,4 @@ demo or default examples.  To avoid having Salt overwrite
  To submit updates, please follow the flow used for SaltStack, as suggested in
  [Developing Salt](https://docs.saltstack.com/en/latest/topics/development/contributing.html#sending-a-github-pull-request).
 
-Compile markdown (.md) files into .html using [ReText](https://github.com/retext-project/retext)
+You can compile markdown (.md) files into .html using [ReText](https://github.com/retext-project/retext)

@@ -8,13 +8,15 @@ remove_the_competition:  # these take a lot of virtual memory.
       - puppet
       - chef
 
+{% if grains['os'] != "Windows" %}
 ensure-virt-what:
   pkg.installed:  # gets removed (with puppet) by autoremove
     - name: virt-what
-{% if salt['grains.get']('os_family') == 'Debian' %}
+  {% if grains['os_family'] == 'Debian' %}
     - require:
       - pkg.autoremove
 pkg.autoremove:
   module.run:
     - order: last
+  {% endif %}
 {% endif %}

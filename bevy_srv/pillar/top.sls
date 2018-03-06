@@ -18,14 +18,14 @@
 base:
   '*':
     - core_settings  # all systems share these
-    - my_user_settings  # found in /srv/pillar
+    - 01_bevy_settings  # found in /srv/pillar
 
   'quail*':
-    - demo_bevy_settings
+    - manual_bevy_settings
 
   bevymaster*:
-    - demo_bevy_settings
+    - manual_bevy_settings
 
   'bevy:*':
     - match: grain
-    - demo_bevy_settings
+    - manual_bevy_settings
