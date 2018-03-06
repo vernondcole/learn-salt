@@ -291,7 +291,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     end
     quail_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "-f git v2018.3.rc1  # TODO: use "stable" when OXYGEN is released
+       salt.install_type = "-f git v2018.3.rc1"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = false
        salt.bootstrap_options = "-A " + settings['bevymaster_url'] -i quail42 -F -P "
