@@ -1,6 +1,6 @@
 ---
 # salt state file for defining a generic administrator username
-{% if grains['virtual'] != 'physical' or salt['config.get']('create_administrator') %}
+{% if salt['grains.get']('virtual', 'physical') != 'physical' or salt['config.get']('create_administrator') %}
 {% set users = 'Users' if grains['os'] == "Windows" else 'users' %}
 
 staff_group:
