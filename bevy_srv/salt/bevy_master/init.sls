@@ -20,6 +20,7 @@ include:
   - ensure_user_privs
   - sdb
   - configure_bevy_member  {# master is configured like a member, too #}
+  - .local_windows_repository
 
 {% if salt['file.directory_exists']('/vagrant/bevy_srv/salt/pki_cache') %}
 restore_keys_from_cache:
@@ -73,7 +74,6 @@ salt-cloud:
     - unless:  # see if cloud-master is already installed
       - 'salt-cloud --version'
 
-
 salt-master-config:
   file.managed:
     - name: {{ salt['config.get']('salt_config_directory') }}/master.d/02_configure_bevy_member.conf
@@ -84,12 +84,38 @@ salt-master-config:
 {% if salt['pillar.get']('autosign_minion_ids', '') %}
 salt-master-autosign-file:
   file.managed:
-    - name: {{ salt['config.get']('salt_config_directory') }}/autosign.minions
+    - name: {{ salt['config.get']('salt_config_directory') }}/pki/master/autosign.minions
     - contents_pillar: autosign_minion_ids
     - mode: 600  # access to the autosign file must be restricted.
 {% endif %}
 
-{{ salt['config.get']('salt_config_directory') }}:
+{{ salt['config.get']('salt_config_directory') }}/cloud.profiles.d:
+  file.directory:  {# allow the user to easily edit configuration files #}
+    - user: {{ my_username }}
+    - makedirs: true
+    - group: staff
+    - mode: 775
+    - recurse:
+      - user
+      - group
+      - mode
+    - require:
+      - wait_until_end
+
+{{ salt['config.get']('salt_config_directory') }}/cloud.providers.d:
+  file.directory:  {# allow the user to easily edit configuration files #}
+    - user: {{ my_username }}
+    - makedirs: true
+    - group: staff
+    - mode: 775
+    - recurse:
+      - user
+      - group
+      - mode
+    - require:
+      - wait_until_end
+
+{{ salt['config.get']('salt_config_directory') }}/cloud.maps.d:
   file.directory:  {# allow the user to easily edit configuration files #}
     - user: {{ my_username }}
     - makedirs: true

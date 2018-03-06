@@ -25,7 +25,7 @@ run_second_minion: {{ salt['config.get']('run_second_minion', False) }}
 {% if is_master -%}
 {% if salt['pillar.get']('autosign_minion_ids', false) %}
 {# This quick and dirty way to pre-accept minions with known names is insecure. #}
-autosign_file: {{ salt['config.get']('salt_config_directory') }}/autosign.minions
+autosign_file: {{ salt['config.get']('salt_config_directory') }}/pki/master/autosign.minions
 {% endif %}
 {% else %}
   {% if salt['config.get']('run_second_minion', False) -%}
