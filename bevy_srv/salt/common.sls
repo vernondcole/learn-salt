@@ -1,7 +1,7 @@
 ---
 # salt state file for all systems
 {% if grains['os_family'] == 'Windows' %}
-{# TODO: the Salt Windows package feature does not actually work, yet ...
+
 pkg.refresh_db:
   module.run:
   - require_in:
@@ -10,9 +10,8 @@ pkg.refresh_db:
 windows_packages:
   pkg.installed:
     - pkgs:
-      - git
       - npp
-      TODO: end #}
+
 {% else %}
 {% if grains['mem_total'] < 2000 %}
 swapspace:
