@@ -37,5 +37,10 @@ ssh_public_key:
   file.append:
     - text: |
         {{ my_user }} ALL=(ALL) NOPASSWD: ALL
+
+/etc/defaults/login:
+  file.append:
+    - text: "UMASK=002  # create files as group-readable by default ## added by Salt"
+    - makedirs: true
 {% endif %}
 ...

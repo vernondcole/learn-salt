@@ -16,7 +16,7 @@ if File.exists?(BEVY_SETTINGS_FILE_NAME)
 else
   settings = {"bevy" => "xxxx", "vagrant_prefix" => '172.17'}
   if ARGV[0] == "up"
-    puts "You must run 'configure_machine\bootstrap_bevy_member_here.py' before running 'vagrant up'"
+    puts "You must run 'configure_machine/bootstrap_bevy_member_here.py' before running 'vagrant up'"
     abort "Unable to read settings file #{BEVY_SETTINGS_FILE_NAME}."
     end
 end
@@ -126,13 +126,12 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 
     master_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "git oxygen.rc1"  # TODO: use "stable" when OXYGEN is released
+       salt.install_type = "git v2018.3.0rc1"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = true
         salt.log_level = "info"
         salt.colorize = true
-       salt.bootstrap_options = "-P -M -L # -g https://github.com/vernondcole/salt.git"
-       # TODO: salt.bootstrap_options = ''-P -M -L -c /tmp'  # install salt-cloud and salt-master
+       salt.bootstrap_options = "-P -M -L "  # install salt-cloud and salt-master
        salt.masterless = true  # the provisioning script for the master is masterless
        salt.run_highstate = true
        password_hash = ''
@@ -272,7 +271,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     end
     quail_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "-f git" # b7c0182d93a1092b7369eedfbcf5bc2512c12f1b"  # TODO: use "stable" when OXYGEN is released
+       salt.install_type = "-f git v2018.3.rc1  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = false
        salt.bootstrap_options = "-A " + NETWORK + ".2.2 -i quail42 -F -P "

@@ -1,5 +1,6 @@
 ---
 # salt state file for defining a generic administrator username
+{% if grains['virtual'] != 'physical' or salt['config.get']('create_administrator') %}
 {% set users = 'Users' if grains['os'] == "Windows" else 'users' %}
 
 staff_group:
@@ -22,16 +23,13 @@ vagrant:
       - staff
       - www-data
       - dialout
-  {% if grains['os'] != "Windows" %}
+  {% if grains['os'] == "Windows" %}
+      - Administrators
+  {% else %}
       - sudo
     - password: $6$cIiKCbvKbLcXR7FL$N08PF11jBzcRpCKNvwboW/ErEMzJ1l899LDEAbn2frCuS7mzCRDrRwgOAD4iIb9nPw9vxfLHeKxOcl2JDVx3L0
     # the default password is "vagrant"
     - enforce_password: false
-
-/etc/defaults/login:
-  file.append:
-    - text: "UMASK=002  # create files as group-readable by default ## added by Salt"
-    - makedirs: true
   {% endif %}
-
+{% endif %}
 ...
