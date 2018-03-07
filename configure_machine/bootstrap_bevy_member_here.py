@@ -466,7 +466,7 @@ def choose_bridge_interface():
             return choices[0]
         else:
             try:
-                choice = choices[int(input('Which one do you want to use?:')) - 1]
+                choice = choices[int(input('Which network do you want to use for bridging?:')) - 1]
                 return choice
             except (ValueError, IndexError, AttributeError):
                 print('Bad choice.')

@@ -19,7 +19,7 @@ and extended features for the `saltify` driver.
   - [release candidates](https://repo.saltstack.com/salt_rc/windows/)
 - MacOS [official installers](https://docs.saltstack.com/en/latest/topics/installation/osx.html)
 - Linux
-   - Installation is automatic when running the `joinbevy.sh` (or `bootstrap_bevy_member_here.py`) script.
+   - Installation is automatic when running the `join-bevy.sh` (or `bootstrap_bevy_member_here.py`) script.
    - [or by salt_bootstrap](https://docs.saltstack.com/en/latest/topics/tutorials/salt_bootstrap.html#salt-bootstrap)
     ```(bash)  TODO: simplify this code when Oxygen is released
     # Oxygen release candidate

@@ -40,7 +40,7 @@ to restore it.
 `git checkout master`
 
 Proceed with the instructions in [the installation lesson](lessons/installation/install.md).
-- \[Short version: type `bash joinbevy.sh`, or on Windows just type `joinbevy`.\]
+- \[Short version: type `bash join-bevy.sh`, or on Windows just type `join-bevy`.\]
 
 [1]: see [how to git stuff](lessons/git/how_to_git_stuff.md) if you don't understand what "clone" means.
 
