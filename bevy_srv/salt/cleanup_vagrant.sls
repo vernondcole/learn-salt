@@ -8,7 +8,7 @@ remove_the_competition:  # these take a lot of virtual memory.
       - puppet
       - chef
 
-{% if grains['os'] != "Windows" %}
+{% if grains['os'] not in ["Windows", "MacOS"] %}
 ensure-virt-what:
   pkg.installed:  # gets removed (with puppet) by autoremove
     - name: virt-what
