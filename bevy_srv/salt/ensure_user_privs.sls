@@ -2,7 +2,6 @@
 # salt state file to ensure user's priviledges on a virtual machine
 
 {% set my_user = salt['pillar.get']('my_linux_user') %}
-{% set home = '/Users/' if grains['os'] == "MacOs" else '/home/' %}
 
 include:
   - interactive_user
@@ -17,6 +16,7 @@ ssh_public_key:
     - replace: False
 
 {% else %}  {# not Windows #}
+{% set home = '/Users/' if grains['os'] == "MacOS" else '/home/' %}
 {{ home }}{{ my_user }}/.ssh:
   file.directory:
     - user: {{ my_user }}
