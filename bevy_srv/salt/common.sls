@@ -1,5 +1,7 @@
 ---
 # salt state file for all systems
+{# this is an example of things you may always want installed. #}
+
 {% if grains['os_family'] == 'Windows' %}
 
 pkg.refresh_db:
@@ -8,9 +10,18 @@ pkg.refresh_db:
     - pkg: windows_packages
 
 windows_packages:
+{# Assumes that you ran bevy_master.local_windows_repository on the Master #}
   pkg.installed:
     - pkgs:
       - npp
+
+{# Note: .sls files are interpreted on the Minion, so the environment variables are local to it #}
+{{ salt['environ.get']('SystemRoot') }}/edit.bat:  {# very dirty way to create an "edit" command for all users #}
+  file.managed:
+    - contents:
+      - '"{{ salt['environ.get']('ProgramFiles(x86)') }}\Notepad++\Notepad++.exe" %*'
+    - unless:  {# do not install this if there is an existing "edit" command #}
+      - where edit
 
 {% else %}
 {% if grains['mem_total'] < 2000 %}
