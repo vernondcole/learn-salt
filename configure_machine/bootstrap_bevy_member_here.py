@@ -235,6 +235,8 @@ def salt_minion_version():
     except (IndexError, subprocess.CalledProcessError, TypeError):
         print("salt-minion not installed or no output")
         version = ['', 0, '']
+    else:
+        print("Detected installed Salt version={!r}".format(version))
     return version
 
 
