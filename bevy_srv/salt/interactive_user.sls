@@ -34,7 +34,7 @@ staff:
     {% endif %}
 
 {% if grains['os'] in ['Windows', 'MacOS'] %}
-{{ home }}{{ my_user }}':
+{{ home }}{{ my_user }}:
   file.directory:
     - user: {{ my_user }}
  {% endif %}
