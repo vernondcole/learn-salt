@@ -145,18 +145,23 @@ pyvmomi_module:
 {% endif %} {# vbox_api_install #}
 
 sure_minion_config_file:
+{% if salt['config.get']('minion_config_file', False) %}  # this value passed in from bootstrap_bevy_member_here.py
+  file.managed:
+    - name: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/01_from_bootstrap_py.conf
+    - source: salt://{{ salt['config.get']('minion_config_file') }}
+    - makedirs: true
+{% else %}  {# just keep the rest of the State happy #}
+test.nop:
+{% endif %}
+    - order: 3  {# do this early, before we crash #}
+
+usual_minion_config_file:
   file.managed:
     - name: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/02_configure_bevy_member.conf
     - source: salt://bevy_master/files/02_configure_bevy_member.conf.jinja
     - template: jinja
     - makedirs: true
-    - order: 3  {# do this early, before we crash #}
 
-remove_boot_config:
-  file.absent:
-    - name: {{ salt['config.get']('salt_config_directory') }}/00_vagrant_boot.conf
-    - require:
-      - file: sure_minion_config_file
 
 {% if other_minion == "" %}
 # ... using the stock salt-minion instance #

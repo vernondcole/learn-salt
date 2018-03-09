@@ -4,6 +4,10 @@
 """
 A utility program to install a SaltStack minion, and optionally, a master with cloud controller.
 
+arguments:  add one or more file_roots or pillar_roots entries.  "[]" are optional.
+  --add-roots=directory1,path/to/directory2  #
+  --add-pillars=[path/to/pillar1,pillar2]
+
 Maintenance command-line switches:
   --no-sudo = Do not attempt to run with elevated privileges.
   --no-read-settings = Do not read an existing BEVY_SETTINGS_FILE
@@ -15,6 +19,7 @@ from urllib.request import urlopen
 import yaml
 import ifaddr
 
+# import modules from this directory
 import pwd_hash
 import sudo
 
@@ -39,23 +44,22 @@ BEVY_SETTINGS_FILE_NAME = '/srv/pillar/01_bevy_settings.sls'
 # Any of these (except a local VM) might very possibly already have been a minion of some other Salt Master
 # before our bevy arrives on the scene. We may want to preserve that minion's connection.
 # We will attempt to detect that situation, and we will use the setting "run_second_minion" (which may contain
-# "False" or a literal "2") to allow both minions to operate side-by-side.
-#  It might work to have run_second_minion be any of the values "2" through "Z", in case
+# "False" or a string literal "2") to allow both minions to operate side-by-side.
+#  It theoretically might work to have "run_second_minion" be any of the values "2" through "Z", in case
 # we are running three or more minions, but that situation would be really weird.
 # # # # #
 
-MINIMUM_SALT_VERSION = "2018.8.3"  # ... as a string... the month will be integerized below
-SALT_BOOTSTRAP_URL = "http://bootstrap.saltstack.com/develop/bootstrap-salt.sh"
-# TODO: use release version - "http://bootstrap.saltstack.com/stable/bootstrap-salt.sh"
+MINIMUM_SALT_VERSION = "2018.3.0"  # ... as a string... the month will be integerized below
+SALT_BOOTSTRAP_URL = "http://bootstrap.saltstack.com/stable/bootstrap-salt.sh"
 # SALT_DOWNLOAD_SOURCE = " -g https://github.com/vernondcole/salt git saltify-wol-fix-ping"
 SALT_DOWNLOAD_SOURCE = "git v2018.3.0rc1"
 # TODO: use release version when Salt "Oxygen" version is released
 
-# the path to the user definition file will change if two minions are running, hence the "{}"
-FROM_BOOTSTRAP_FILE_NAME = '/etc/salt{}/minion.d/01_settings_from_bootstrap.conf'
-
 SALT_SRV_ROOT = '/srv/salt'
 SALT_PILLAR_ROOT = '/srv/pillar'
+# the path to write the bootstrap Salt Minion configuration file
+MINION_CONFIG_FILE_NAME = 'minion_boot/minion'
+
 USER_SSH_KEY_FILE_NAME = SALT_SRV_ROOT + '/ssh_keys/{}.pub'
 
 DEFAULT_VAGRANT_PREFIX = '172.17'  # first two bytes of Vagrant private network
@@ -65,7 +69,7 @@ DEFAULT_FQDN_PATTERN = '{}.{}.test' # .test is ICANN reserved for test networks.
 
 minimum_salt_version = MINIMUM_SALT_VERSION.split('.')
 minimum_salt_version[1] = int(minimum_salt_version[1])  # use numeric compare of month field
-
+this_file = Path(__file__).resolve()  # the absolute path name of this program's source
 
 def read_bevy_settings_file():
     if '--no-read-settings' in argv:
@@ -89,7 +93,6 @@ def write_bevy_settings_file(settings: dict):
     # bevy_settings_file_name.parent.mkdir(parents=True, exist_ok=True)
 
     with bevy_settings_file_name.open('w') as f:
-        this_file = Path(__file__).resolve()
         f.write('# this file was created by {}\n'.format(this_file))
         f.write('# Edits here will become the new default values.\n')
         for name, value in settings.items():
@@ -97,33 +100,23 @@ def write_bevy_settings_file(settings: dict):
     print('File "{}" written.'.format(bevy_settings_file_name))
     print()
 
-def write_local_minion_config_file():
+def write_local_minion_config_file(is_master: bool):
     '''
-    writes a copy of the template, below, into a file named "minion" in this (the default) directory
+    writes a copy of the template, below, into a file in this /srv/salt directory
     substituting the actual path to the ../bevy_srv salt and pillar subdirectories,
     -- which will be used as the Salt minion configuration during the "salt_state_apply" function below.
     '''
     template = """
-# stub minion configuration file for stand-alone bevy master bootstrapping.
+# starting minion configuration file for the bevy master, and minions who can do "salt-call --local".
 #
-# also used as the default to start building a virgin configuration record
-#
-master: localhost
-
-file_client: local  # run as masterless
+master: {}
 
 file_roots:    # states are searched in the given order -- first found wins
-  base:
-    - /vagrant/bevy_srv/salt
-    - '{bevy_root}'
-    - /srv/salt
-top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
+  base: {!r}
+top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt, just use it
 
 pillar_roots:  # all pillars are merged -- the last entry wins
-  base:
-    - '{bevy_pillar}'
-    - /vagrant/bevy_srv/pillar
-    - /srv/pillar
+  base: {!r}
 pillar_source_merging_strategy: recurse
 
 file_ignore_regex:
@@ -138,11 +131,14 @@ grains:
   roles:
     - bevy_member
 """
-    file_names = {'bevy_root': Path('../bevy_srv/salt').resolve(),
-                  'bevy_pillar': Path('../bevy_srv/pillar').resolve()}
-    with open('minion', 'w') as config_file:
-        config_file.write(
-            template.format(**file_names))
+    master = 'localhost' if is_master else settings('bevymaster_url')
+    file_roots = ['/srv/salt'] + more_roots + [str(this_file.parent.parent / 'bevy_srv/salt')]
+    pillar_roots = [str(this_file.parent.parent / 'bevy_srv/pillar')] + more_pillars + ['/srv/pillar']
+    minion_config_path = Path(SALT_SRV_ROOT) / MINION_CONFIG_FILE_NAME
+    os.makedirs(str(minion_config_path.parent), exist_ok=True)  # old Python 3.4 method
+    # minion_config_path.parent.mkdir(parents=True, exist_ok=True)  # 3.5+
+    with minion_config_path.open('w') as config_file:
+        config_file.write(template.format(master, file_roots, pillar_roots))
 
 
 def salt_state_apply(salt_state, **kwargs):
@@ -293,8 +289,10 @@ def salt_install(master=True):
             print("Salt Installation script done.")
         except OSError as ex:
             print(ex)
-            raise ex
-        return ret == 0  # flag that we installed Salt
+            if not affirmative(input('Continue to process? [y/N]:')):
+               exit(1)  # quit with error indication
+            ret = 1  # return an error indication
+        return ret == 0  # show whether we installed Salt
 
 
 def request_bevy_username_and_password(master: bool, user_name: str):
@@ -479,6 +477,22 @@ def get_linux_password():
         linux_password = f.read().strip()  # 3.4
     return linux_password
 
+# set up global variables for additional file_roots and pillar_root directories
+# if the command line calls for them.
+more_roots = []  # list of additional file_roots directories
+try:
+    more = next((arg[12:] for arg in argv if arg.startswith('--add-roots=')), '')
+    if more:
+        more_roots = more.strip('[').rstrip(']').split(',')
+except Exception:
+    raise ValueError('Error in "--add-roots=" processing.')
+more_pillars = []  # list of additional pillar_roots directories
+try:
+    more = next((arg[14:] for arg in argv if arg.startswith('--add-pillars=')), '')
+    if more:
+        more_pillars = more.strip('[').rstrip(']').split(',')
+except Exception:
+    raise ValueError('Error in "--add-pillars=" processing.')
 
 if __name__ == '__main__':
     settings = {}
@@ -636,7 +650,7 @@ if __name__ == '__main__':
     if master_host:
         settings.setdefault('master_vagrant_ip', settings['vagrant_prefix'] + '.2.2')
 
-    write_local_minion_config_file()
+    write_local_minion_config_file(master)
 
     settings.setdefault('force_linux_user_password', True)
     settings['linux_password_hash'] = get_linux_password()
@@ -645,7 +659,8 @@ if __name__ == '__main__':
     if master:
         print('\n\n. . . . . . . . . .\n')
         salt_state_apply('',  # blank name means: apply highstate
-                         config_dir=str(my_directory.resolve()),
+                         config_dir=str((Path(SALT_SRV_ROOT) / MINION_CONFIG_FILE_NAME).resolve().parent),
+                         minion_config_file=MINION_CONFIG_FILE_NAME,
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
                          node_name='bevymaster',
@@ -681,7 +696,8 @@ if __name__ == '__main__':
         print('\n\n. . . . . . . . . .\n')
         node_name = platform.node().split('.')[0]  # your workstation's hostname
         salt_state_apply('configure_bevy_member',
-                         config_dir=str(my_directory.resolve()),
+                         config_dir=str((Path(SALT_SRV_ROOT) / MINION_CONFIG_FILE_NAME).resolve().parent),
+                         minion_config_file=MINION_CONFIG_FILE_NAME,
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
                          bevymaster_url=settings['bevymaster_url'],

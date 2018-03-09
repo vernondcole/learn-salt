@@ -40,24 +40,5 @@ worker_threads: 2  {# sufficient for test systems #}
 
 mine_interval: 5   # this is a test system, so run the mine every five minutes
 
-{% if bevy_root != '' %}
-#
-# for salt-call --local, and master we need to tell Salt where to find its files
-#
-file_roots:    # use this directory rather than /srv/salt
-  base:
-    - /srv/salt         # first, use the normal place (if it exists)
-    - '{{ bevy_root }}/salt'
-    - /vagrant/local_salt/salt
-top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
-
-pillar_roots:  # use this directory rather than /srv/pillar
-  base:
-    - /srv/pillar
-    - '{{ bevy_root }}/pillar'
-    - /vagrant/local_salt/pillar
-
-pillar_source_merging_strategy: recurse
-{% endif %}
 file_ignore_regex:
   - '/\.git($|/)'
