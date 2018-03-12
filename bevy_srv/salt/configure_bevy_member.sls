@@ -151,7 +151,7 @@ sure_minion_config_file:
     - source: salt://{{ salt['config.get']('minion_config_file') }}
     - makedirs: true
 {% else %}  {# just keep the rest of the State happy #}
-test.nop:
+  test.nop:
 {% endif %}
     - order: 3  {# do this early, before we crash #}
 
