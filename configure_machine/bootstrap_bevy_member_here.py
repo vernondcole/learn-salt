@@ -131,7 +131,7 @@ grains:
   roles:
     - bevy_member
 """
-    master = 'localhost' if is_master else settings('bevymaster_url')
+    master = 'localhost' if is_master else settings['bevymaster_url']
     file_roots = ['/srv/salt'] + more_roots + [str(this_file.parent.parent / 'bevy_srv/salt')]
     pillar_roots = [str(this_file.parent.parent / 'bevy_srv/pillar')] + more_pillars + ['/srv/pillar']
     minion_config_path = Path(SALT_SRV_ROOT) / MINION_CONFIG_FILE_NAME
@@ -529,7 +529,7 @@ if __name__ == '__main__':
     else:
         recommendation = ''
     master = platform.system() != 'Windows' and affirmative(
-        input('Should this machine BE the master?{} [y/N]:'))
+        input('Should this machine BE the master? [y/N]:'))
     if not master and on_a_workstation:
         master_host = affirmative(input(
             'Will the Bevy Master be a VM guest of this machine? [y/N]:'.format(recommendation)))
@@ -548,29 +548,36 @@ if __name__ == '__main__':
     rtn = subprocess.call('vagrant -v', shell=True) if on_a_workstation else NotImplemented
     vagrant_present = rtn == 0
 
-    while Ellipsis:  # repeat until user says okay
+    isvagranthost = False
+    while on_a_workstation:  # if on a workstation, repeat until user says okay
         settings['vbox_install'] = False
-        settings['vagranthost'] = ''  # node ID of Vagrant host machine
-        isvagranthost = master_host or on_a_workstation and affirmative(input(
-            'Will this machine be a bevy host for Vagrant virtual machines? [y/N]:'))
+        vhost = settings.setdefault('vagranthost', 'none')  # node ID of Vagrant host machine
+        my_machine = platform.node().split('.')[0]
+        default_yes = vhost == my_machine
+        default_prompt = '[Y/n]' if default_yes else '[y/N]'
+        isvagranthost = master_host or affirmative(input(
+            'Will this machine be the Host for other Vagrant virtual machines? {}:'
+            .format(default_prompt)),
+            default_yes)
         if isvagranthost:
             if master:
                 settings['vagranthost'] = 'bevymaster'
             else:
-                settings['vagranthost'] = platform.node().split('.')[0]
+                settings['vagranthost'] = my_machine
             settings['vbox_install'] = False if vagrant_present else affirmative(input(
                 'Do you wish to install VirtualBox and Vagrant? [y/N]:'))
         elif master:
-            print('What is/will be the Salt node id of the Vagrant host machine?')
-            settings['vagranthost'] = input('(Leave blank if none.):')
-            if settings['vagranthost']:
+            print('What is/will be the Salt node id of the Vagrant host machine? [{}]'
+                  .format(settings['vagranthost']))
+            settings['vagranthost'] = input('(Type "none" if none.):') or settings['vagranthost']
+            if settings['vagranthost'] and settings['vagranthost'] != "none":
                 try:
                     socket.inet_aton(settings['vagranthost'])  # an exception is expected and is correct
                     print('Please enter a node ID, not an IP address.')
                     continue  # user committed an entry error ... retry
                 except OSError:
                     pass  # entry was not an IP address.  Good.
-        if settings['vagranthost']:
+        if settings['vagranthost'] and settings['vagranthost'] != "none":
             runas = settings.get('runas') or settings['my_linux_user']
             resp = input(
                 'What user on {} will own the Vagrantbox files?'
@@ -589,7 +596,7 @@ if __name__ == '__main__':
             ))
             print('owned by {}.'.format(settings['runas']))
             if vagrant_present:
-                print('Vagrant is already presesent on this machine.')
+                print('Vagrant is already present on this machine.')
             else:
                 print('VirtualBox and Vagrant {} be installed'.format(
                     'will' if settings['vbox_install'] else 'will not'))
@@ -604,7 +611,7 @@ if __name__ == '__main__':
 
     settings.setdefault('fqdn_pattern',  DEFAULT_FQDN_PATTERN)
 
-    we_installed_it = salt_install()  # download & run salt
+    we_installed_it = salt_install(master)  # download & run salt
 
     if we_installed_it:
         run_second_minion = False
