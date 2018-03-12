@@ -105,6 +105,9 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     master_config.vm.hostname = "bevymaster"
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"
     if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "bevymaster"
+      if settings['master_vagrant_ip'] != NETWORK + ".2.2"
+        abort "Sorry. Your master_vagrant_ip value of #{settings['master_vagrant_ip']} suggests that the VM is not the correct Master."
+        end
       puts "Starting #{ARGV[1]} at #{NETWORK}.2.2..."
       end
     master_config.vm.network "public_network", bridge: interface_guesses, mac: "be0000" + bevy_mac
