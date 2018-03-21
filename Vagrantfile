@@ -297,6 +297,11 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.vmx["memsize"] = "5000"
         v.vmx["numvcpus"] = "2"
     end
+
+    script = "mkdir -p /etc/salt/minion.d\n"
+    script += "chown -R vagrant:staff /etc/salt/minion.d\n"
+    script += "chmod -R 775 /etc/salt/minion.d\n"
+    quail_config.vm.provision "shell", inline: script
     quail_config.vm.provision "file", source: settings['GUEST_MINION_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
     quail_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
