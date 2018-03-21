@@ -136,7 +136,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     script += "chown -R vagrant:staff /etc/salt/minion.d\n"
     script += "chmod -R 775 /etc/salt/minion.d\n"
     master_config.vm.provision "shell", inline: script
-    master_config.vm.provision "file", source: "./configure_machine/minion", destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
+    master_config.vm.provision "file", source: settings['GUEST_MASTER_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
 
     master_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
@@ -245,6 +245,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     # quail_config.vm.hostname = "windowstest"  # use of this setting causes VM to reboot Windows.
 
     quail_config.vm.network "public_network", bridge: interface_guesses
+    quail_config.vm.network "private_network", ip: NETWORK + ".2.16"
     if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "win16"
       puts "Starting #{ARGV[1]} as a Salt minion of #{settings['bevymaster_url']}."
       end
@@ -263,6 +264,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     script = "new-item C:\\salt\\conf\\minion.d -itemtype directory\r\n"
     script += "'master: #{settings['bevymaster_url']}' > C:\\salt\\conf\\minion.d\\00_vagrant_master_address.conf\r\n"
     quail_config.vm.provision "shell", inline: script
+    quail_config.vm.provision "file", source: settings['WINDOWS_GUEST_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
     quail_config.vm.provision :salt do |salt|  # salt_cloud cannot push Windows salt
         salt.minion_id = "win16"
         salt.log_level = "info"
@@ -295,13 +297,14 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.vmx["memsize"] = "5000"
         v.vmx["numvcpus"] = "2"
     end
+    quail_config.vm.provision "file", source: settings['GUEST_MINION_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
     quail_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17
        salt.install_type = "-f git v2018.3.0rc1"  # TODO: use "stable" when OXYGEN is released
        # # #  ---
        salt.verbose = false
        salt.bootstrap_options = "-A #{settings['bevymaster_url']} -i quail2 -F -P "
-       salt.masterless = true  # the provisioning script is masterless
+       ## this will trigger a highstate ## salt.masterless = true  # the provisioning script is masterless
     end
   end
 end

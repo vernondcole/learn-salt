@@ -58,13 +58,15 @@ SALT_DOWNLOAD_SOURCE = "git v2018.3.0rc1"
 SALT_SRV_ROOT = '/srv/salt'
 SALT_PILLAR_ROOT = '/srv/pillar'
 # the path to write the bootstrap Salt Minion configuration file
-MINION_CONFIG_FILE_NAME = 'minion_boot/minion'
+SALTCALL_CONFIG_FILE = '/srv/saltcall_config/minion'
+GUEST_MASTER_CONFIG_FILE = '/srv/bevymaster_config/minion'
+GUEST_MINION_CONFIG_FILE = '/srv/guest_config/minion'
+WINDOWS_GUEST_CONFIG_FILE = '/srv/windows_config/minion'
 
 USER_SSH_KEY_FILE_NAME = SALT_SRV_ROOT + '/ssh_keys/{}.pub'
 
 DEFAULT_VAGRANT_PREFIX = '172.17'  # first two bytes of Vagrant private network
 DEFAULT_VAGRANT_NETWORK = '172.17.0.0/16'  #  Vagrant private network
-
 DEFAULT_FQDN_PATTERN = '{}.{}.test' # .test is ICANN reserved for test networks.
 
 minimum_salt_version = MINIMUM_SALT_VERSION.split('.')
@@ -96,18 +98,32 @@ def write_bevy_settings_file(settings: dict):
         f.write('# this file was created by {}\n'.format(this_file))
         f.write('# Edits here will become the new default values.\n')
         for name, value in settings.items():
-            f.write("{}: '{}'\n".format(name, value))
+            if not name.isupper():  # ignore settings for Vagrant as supplied below
+                f.write("{}: '{}'\n".format(name, value))
+        f.write('# settings for Vagrant to read...\n')
+        # f'strings' are only available in Python 3.5+
+        # f.write(f"SALTCALL_CONFIG_FILE: '{SALTCALL_CONFIG_FILE}'\n")
+        # f.write(f"GUEST_MASTER_CONFIG_FILE: '{GUEST_MASTER_CONFIG_FILE}'\n")
+        # f.write(f"GUEST_MINION_CONFIG_FILE: '{GUEST_MINION_CONFIG_FILE}'\n")
+        # f.write(f"WINDOWS_GUEST_CONFIG_FILE: '{WINDOWS_GUEST_CONFIG_FILE}'\n")
+        f.write("SALTCALL_CONFIG_FILE: '{}'\n".format(SALTCALL_CONFIG_FILE))
+        f.write("GUEST_MASTER_CONFIG_FILE: '{}'\n".format(GUEST_MASTER_CONFIG_FILE))
+        f.write("GUEST_MINION_CONFIG_FILE: '{}'\n".format(GUEST_MINION_CONFIG_FILE))
+        f.write("WINDOWS_GUEST_CONFIG_FILE: '{}'\n".format(WINDOWS_GUEST_CONFIG_FILE))
+
     print('File "{}" written.'.format(bevy_settings_file_name))
     print()
 
-def write_local_minion_config_file(is_master: bool):
+
+def write_config_file(config_file_name, is_master: bool, virtual=True, windows=False):
     '''
     writes a copy of the template, below, into a file in this /srv/salt directory
     substituting the actual path to the ../bevy_srv salt and pillar subdirectories,
     -- which will be used as the Salt minion configuration during the "salt_state_apply" function below.
+    :param conf_file_name:
     '''
     template = """
-# starting minion configuration file for the bevy master, and minions who can do "salt-call --local".
+# initial configuration file for the bevy member.
 #
 master: {}
 
@@ -131,13 +147,16 @@ grains:
   roles:
     - bevy_member
 """
+    # note: must use dumb path building here because WindowsPath turns out invalid path strings for Linux
+    bevy_srv_path = '/vagrant' if virtual else str(this_file.parent.parent)
     master = 'localhost' if is_master else settings['bevymaster_url']
-    file_roots = ['/srv/salt'] + more_roots + [str(this_file.parent.parent / 'bevy_srv/salt')]
-    pillar_roots = [str(this_file.parent.parent / 'bevy_srv/pillar')] + more_pillars + ['/srv/pillar']
-    minion_config_path = Path(SALT_SRV_ROOT) / MINION_CONFIG_FILE_NAME
-    os.makedirs(str(minion_config_path.parent), exist_ok=True)  # old Python 3.4 method
-    # minion_config_path.parent.mkdir(parents=True, exist_ok=True)  # 3.5+
-    with minion_config_path.open('w') as config_file:
+    file_roots = ['/srv/salt'] + more_roots + [bevy_srv_path + '/bevy_srv/salt']
+    pillar_roots = [bevy_srv_path + '/bevy_srv/pillar'] + more_pillars + ['/srv/pillar']
+
+    os.makedirs(str(config_file_name.parent), exist_ok=True)  # old Python 3.4 method
+    # config_file_name.parent.mkdir(parents=True, exist_ok=True)  # 3.5+
+    newline = '\r\n' if windows else '\n'
+    with config_file_name.open('w', newline=newline) as config_file:
         config_file.write(template.format(master, file_roots, pillar_roots))
 
 
@@ -384,7 +403,7 @@ def get_salt_master_id():
     out = salt_call_json("config.get master")
     try:
         master_id = out['local']
-    except KeyError:
+    except (KeyError, TypeError):
         master_id = "!!No answer from salt-call!!"
     ans = master_id[0] if isinstance(master_id, list) else master_id
     print('configured master now = "{}"'.format(master_id))
@@ -656,8 +675,12 @@ if __name__ == '__main__':
 
     if master_host:
         settings.setdefault('master_vagrant_ip', settings['vagrant_prefix'] + '.2.2')
+        write_config_file(Path(SALT_SRV_ROOT) / GUEST_MASTER_CONFIG_FILE, is_master=True, virtual=True)
 
-    write_local_minion_config_file(master)
+    write_config_file(Path(SALTCALL_CONFIG_FILE), master, virtual=False, windows=platform.system()=='Windows')
+    if isvagranthost or master_host:
+        write_config_file(Path(GUEST_MINION_CONFIG_FILE), is_master=False, virtual=True)
+        write_config_file(Path(WINDOWS_GUEST_CONFIG_FILE), is_master=False, virtual=True, windows=True)
 
     settings.setdefault('force_linux_user_password', True)
     settings['linux_password_hash'] = get_linux_password()
@@ -666,8 +689,7 @@ if __name__ == '__main__':
     if master:
         print('\n\n. . . . . . . . . .\n')
         salt_state_apply('',  # blank name means: apply highstate
-                         config_dir=str((Path(SALT_SRV_ROOT) / MINION_CONFIG_FILE_NAME).resolve().parent),
-                         minion_config_file=MINION_CONFIG_FILE_NAME,
+                         config_dir=str(Path(SALTCALL_CONFIG_FILE).resolve().parent),
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
                          node_name='bevymaster',
@@ -692,7 +714,7 @@ if __name__ == '__main__':
                 okay = input("Use {} as this machine's bevy master address? [Y/n]:".format(ip_[0][4][0]))
                 if affirmative(okay, True):
                     if master_host and my_master_url != settings['master_vagrant_ip']:
-                        if affirmative(input('Also use as the default Vagrant master address? [Y/n]:', True)):
+                        if affirmative(input('Also use as the default Vagrant master address? [Y/n]:'), True):
                             settings['master_vagrant_ip'] = my_master_url
                             write_bevy_settings_file(settings)
                     break  # it looks good -- exit the loop
@@ -703,8 +725,7 @@ if __name__ == '__main__':
         print('\n\n. . . . . . . . . .\n')
         node_name = platform.node().split('.')[0]  # your workstation's hostname
         salt_state_apply('configure_bevy_member',
-                         config_dir=str((Path(SALT_SRV_ROOT) / MINION_CONFIG_FILE_NAME).resolve().parent),
-                         minion_config_file=MINION_CONFIG_FILE_NAME,
+                         config_dir=str(Path(SALTCALL_CONFIG_FILE).resolve().parent), # for local
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
                          bevymaster_url=settings['bevymaster_url'],

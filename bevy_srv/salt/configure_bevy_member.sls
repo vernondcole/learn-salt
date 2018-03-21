@@ -11,7 +11,7 @@ include:
 # ANOTHER NOTE: edit the vbox_settings.sls pillar definition when the version of VirtualBox changes
 #
 {% set my_username = salt['config.get']('my_linux_user') %}
-{% if salt['config.get']('run_second_minion', false) %}
+{% if salt['config.get']('run_second_minion', False) %}
   {% set other_minion = "2" %}
 {% else %}
   {% set other_minion = "" %}
@@ -144,10 +144,15 @@ pyvmomi_module:
       {% endif %}
 {% endif %} {# vbox_api_install #}
 
-sure_minion_config_file:
+{% if salt['grains.get']('os_family') == 'Windows' %}
+  {% set my_salt_config = 'C:/salt/conf/minion.d/' %}
+{% else %}
+  {% set my_salt_config = '/etc/salt' + other_minion + '/minion.d/' %}
+{% endif %}
+
+{{ my_salt_config }}01_bootstrap_bevy_member.conf:
 {% if salt['config.get']('minion_config_file', False) %}  # this value passed in from bootstrap_bevy_member_here.py
   file.managed:
-    - name: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/01_from_bootstrap_py.conf
     - source: salt://{{ salt['config.get']('minion_config_file') }}
     - makedirs: true
 {% else %}  {# just keep the rest of the State happy #}
@@ -155,9 +160,8 @@ sure_minion_config_file:
 {% endif %}
     - order: 3  {# do this early, before we crash #}
 
-usual_minion_config_file:
+{{ my_salt_config }}02_configure_bevy_member.conf:
   file.managed:
-    - name: {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/02_configure_bevy_member.conf
     - source: salt://bevy_master/files/02_configure_bevy_member.conf.jinja
     - template: jinja
     - makedirs: true

@@ -22,7 +22,7 @@ include:
   - configure_bevy_member  {# master is configured like a member, too #}
   - .local_windows_repository
 
-{% if salt['file.directory_exists']('/vagrant/bevy_srv/salt/pki_cache') %}
+{% if salt['file.directory_exists']('/vagrant/learn-salt/bevy_srv/salt/pki_cache') %}
 restore_keys_from_cache:
   file.recurse:
     - source: salt://pki_cache
