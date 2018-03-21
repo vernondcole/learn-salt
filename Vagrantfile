@@ -285,7 +285,6 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
       puts "Starting #{ARGV[1]} at #{NETWORK}.2.5 as a Salt minion with master=#{settings['bevymaster_url']}...\n."
       end
     quail_config.vm.network "public_network", bridge: interface_guesses
-    quail_config.vm.synced_folder "/srv", "/srv", :owner => "vagrant", :group => "staff"
 
     quail_config.vm.provider "virtualbox" do |v|
         v.name = BEVY + '_quail2'  # ! N.O.T.E.: name must be unique
@@ -310,7 +309,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        # # #  ---
        salt.verbose = false
        salt.bootstrap_options = "-A #{settings['bevymaster_url']} -i quail2 -F -P "
-       salt.masterless = true  # the provisioning script is masterless
+       salt.run_highstate = true
     end
   end
 end
