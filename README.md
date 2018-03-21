@@ -108,7 +108,7 @@ But we test with (as of this writing): Ubuntu 17.10, and MacOS High Sierra, and 
 - Your Bevy_Master machine. As of this writing, we test with Ubuntu 16.04 on a Vagrant VM, 
 and Raspbian Jesse on a Raspberry Pi W0.
 - Your Internet Router.
-Most lessons will be runnable from a large corporate router or a default home router. 
+Most lessons will be runnable from a large corporate router or an inexpensive home router. 
 For some lessons, you will need control over who runs your PXE, DHCP and/or DNS servers. 
 Any home-type router should be suitable for that, 
 but you may spend some time finding the correct "expert" settings screen.
@@ -197,39 +197,45 @@ The Vagrantfile also defines two simple empty Ubuntu 16.04 VMs, named "quail1" a
   
 There is also an Ubuntu 14.04 VM (named "quail14") defined in the Vagrantfile. 
 
+There is a Windows Server 2016 machine named "win16".
+It has an expered license (thank you, Microsoft) and will stop without warning after an hour or two of operation. 
+You can easily restart it with another "vagrant up win16".
+It will provision itself as a Salt minion of the bevymaster.
+
 Finally, there is a VM named "quail2" for quick-and-dirty operation which will be configured as a Salt minion.
 
 Each of these has three virtual network ports:
 
-- One has a pre-defined IP address range used
-for a Vagrant host-only network adapter, 
-which used to connect a virtual directory, 
-as the address Vagrant uses to ssh connect to the machines,
-and for NAT networking from the VM to the world. 
-As supplied, these will be subnets of 172.17.17.0.
+- One has a pre-defined IP address range used for a Vagrant host-only network adapter, 
+which used to connect a to a Vagrant shared directory, 
+for Vagrant to ssh connect to the machine, and for NAT networking. 
+As supplied, these will use small subnets of 172.17.17.0.
 
 - A second has a fixed hard-wired address for a
 [private network](https://www.vagrantup.com/docs/networking/private_network.html) 
-which can be used for intercommunication between the host and its virtual machines 
+which can be used for intercommunication amoung the host and its virtual machines, 
 (and the VMs to each other) but cannot be seen outside the host environment.
-These will be in the 172.17.2.0 network, with the host at 172.17.2.1.
+These will be in the 172.17.2.0 network, with the host at 172.17.2.1,
+and the Bevy Master (if a VM is used) at 172.17.2.2.  
+This network can be changed by [the confguration script](configure_machine/README.md).
 
 - The third is a [bridged network](https://www.vagrantup.com/docs/networking/public_network.html) 
 which makes the VM appear to be on the same LAN segment as its host. 
 The address for this adapter will be assiged by DHCP. You may need to modify the configuration
 parameter `network_mask` to help the scripts discover the actual address.
 This port can be seen by machines on your in-house network.  
-Be aware that, depending on router configuration settings, VMs on your machine may be
-unable to access brother VMs using their bridged ports.
+Be aware that, depending on an employer's router configuration settings, VMs on your machine may be
+unable to access brother VMs using their bridged addresses.
 
 If you wish, you can add more local VMs by editing the Vagrantfile.
 
 Vagrant requires the name of the interface which will be used for a bridged network.
 Since a workstation usually has more than one interface (are you using WiFi or hard wire?)
-this can be trick to determine. Vagrant will ask the user for input.
-There is a messy bunch of Ruby code in the Vagrantfile to try getting the correct name.
-You may want to supply your network adapter name in the Vagrantfile, 
-especially if you are running Windows.
+this can be trick to determine. Vagrant expects to ask the user for input.
+There is some Ruby code in the Vagrantfile to try getting the correct name.
+The configuration script will try to help you select the correct name, which
+will be saved in your configuration pillar file. If you are using MacOS,
+this will not work and we will just guess at the two most usual adapters.
 
 ### Single Source of Truth
 
