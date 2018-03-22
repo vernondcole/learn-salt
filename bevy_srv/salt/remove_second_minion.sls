@@ -6,7 +6,7 @@
 
 systemctl_stop{{ other_minion }}:
   service.dead:
-    - name: salt{{ other_minion }}_minion
+    - name: salt{{ other_minion }}-minion
     - enable: false
     - init_delay: 4
 

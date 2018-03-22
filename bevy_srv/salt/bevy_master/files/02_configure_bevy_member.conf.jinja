@@ -28,7 +28,7 @@ run_second_minion: {{ salt['config.get']('run_second_minion', False) }}
 autosign_file: {{ salt['config.get']('salt_config_directory') }}/pki/master/autosign.minions
 {% endif %}
 {% else %}
-  {% if salt['config.get']('run_second_minion', False) -%}
+  {% if salt['config.get']('run_second_minion', False) %}
 pidfile: /var/run/salt-minion2.pid  # settings for second minion
 pki_dir: {{ salt['config.get']('salt_config_directory') }}/pki/minion2
 sock_dir: /var/run/salt-minion2
