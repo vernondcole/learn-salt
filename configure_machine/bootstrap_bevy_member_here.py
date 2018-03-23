@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
 # encoding: utf-8-
-# vim:softtabstop=4:ts=4:sw=4:expandtab:tw=120
 """
 A utility program to install a SaltStack minion, and optionally, a master with cloud controller.
 
-arguments:  add one or more file_roots or pillar_roots entries.  "[]" are optional.
-  --add-roots=directory1,path/to/directory2  #
-  --add-pillars=[path/to/pillar1,pillar2]
+arguments:  add one or more file_roots and pillar_roots entries.  "[]" are optional, spaces not permitted.
+  --add-roots=[path/to/directory1,path/to/directory2]
+      where each directory is expected to have a ./salt and ./pillar subdirectory
 
 Maintenance command-line switches:
-  --no-sudo = Do not attempt to run with elevated privileges.
+  --no-sudo = Do not attempt to run with elevated privileges, use the present level
   --no-read-settings = Do not read an existing BEVY_SETTINGS_FILE
 """
 import subprocess, os, getpass, json, socket, platform, ipaddress, sys, shutil
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from urllib.request import urlopen
 
 import yaml
@@ -22,13 +21,6 @@ import ifaddr
 # import modules from this directory
 import pwd_hash
 import sudo
-
-argv = [s.strip() for s in sys.argv]
-if '--help' in argv:
-    print(__doc__)
-    exit()
-if '--no-sudo' not in argv:  # "off" switch for testing
-    sudo.run_elevated()  # Run this script using Administrator privileges
 
 # # # # #
 # This program attempts to establish a DRY single source of truth as the file
@@ -73,6 +65,14 @@ minimum_salt_version = MINIMUM_SALT_VERSION.split('.')
 minimum_salt_version[1] = int(minimum_salt_version[1])  # use numeric compare of month field
 this_file = Path(__file__).resolve()  # the absolute path name of this program's source
 
+argv = [s.strip() for s in sys.argv]
+if '--help' in argv:
+    print(__doc__)
+    exit()
+if '--no-sudo' not in argv:  # "off" switch for testing
+    sudo.run_elevated()  # Run this script using Administrator privileges
+
+settings = {}  # global variable
 def read_bevy_settings_file():
     if '--no-read-settings' in argv:
         return {}
@@ -87,21 +87,24 @@ def read_bevy_settings_file():
     return stored_settings
 
 
-def write_bevy_settings_file(settings: dict):
+def write_bevy_settings_file(store_settings: dict):
     bevy_settings_file_name = Path(BEVY_SETTINGS_FILE_NAME)
     # python 3.4
     os.makedirs(str(bevy_settings_file_name.parent), exist_ok=True)
     # python 3.5
     # bevy_settings_file_name.parent.mkdir(parents=True, exist_ok=True)
-
     with bevy_settings_file_name.open('w') as f:
+        # creating a YAML file the hard way ...
         f.write('# this file was created by {}\n'.format(this_file))
         f.write('# Edits here will become the new default values.\n')
-        for name, value in settings.items():
-            if not name.isupper():  # ignore settings for Vagrant as supplied below
-                f.write("{}: '{}'\n".format(name, value))
+        for name, value in store_settings.items():
+            if not name.isupper():  # ignore old settings for Vagrant renewed below
+                if isinstance(value, str):  # single-quote YAML strings
+                    f.write("{}: '{}'\n".format(name, value))
+                else:  # Python repr() everything else
+                    f.write('{}: {!r}\n'.format(name, value))
         f.write('# settings for Vagrant to read...\n')
-        # f'strings' are only available in Python 3.5+
+        #... f'strings' are only available in Python 3.5+ ! ...#
         # f.write(f"SALTCALL_CONFIG_FILE: '{SALTCALL_CONFIG_FILE}'\n")
         # f.write(f"GUEST_MASTER_CONFIG_FILE: '{GUEST_MASTER_CONFIG_FILE}'\n")
         # f.write(f"GUEST_MINION_CONFIG_FILE: '{GUEST_MINION_CONFIG_FILE}'\n")
@@ -114,6 +117,77 @@ def write_bevy_settings_file(settings: dict):
     print('File "{}" written.'.format(bevy_settings_file_name))
     print()
 
+def get_additional_roots(settings):
+    '''
+    set up lists for additional file_roots and pillar_root directories
+    if the command line calls for them using --add-roots
+    DIRTY! -- MODIFIES the contents of argument "settings"
+    '''
+    more_parents = []  # list of additional file_roots directories
+    try:  # pick out the substring after "=" if --add-roots= exists as a CLI argument
+        more = next((arg[12:] for arg in argv if arg.startswith('--add-roots=')), '')
+        if more:  # divide up any comma-separated strings, strip [] & posixify
+            more_parents = more.replace('\\', '/').strip('[').rstrip(']').split(',')
+    except Exception:
+        raise ValueError('Error in "--add-roots=" processing.')
+
+    if len(settings.setdefault('application_roots', [])) + len(more_parents) == 0:
+        return  # quick silent return in default case
+    print()
+    print('Additional application state roots from old settings: {!r}'.format(settings['application_roots']))
+    print('Additional application state roots from new CLI --add-roots: {}'.format(more_parents))
+    default = 'k' if settings['application_roots'] else 'n' if more_parents else 'x'
+    possibilites = 'knax'
+    prompt = possibilites.replace(default, default.upper())
+    resp = 'impossible'
+    while resp not in possibilites:
+        print('Keep old, use New, Append both, or (X) use no eXtra apps.')
+        resp = input('your choice? [{}]:'.format(prompt)) or default
+        resp = resp.lower()
+    if resp == 'n':
+        settings['application_roots'] = more_parents
+    elif resp == 'a':
+        settings['application_roots'] = settings['application_roots'] + more_parents
+    elif resp == 'x':
+        settings['application_roots'] = []
+
+
+def format_additional_roots(settings, virtual):
+    '''
+    create formatted lists of Salt file-roots and pillar-roots directories
+    :param settings: parsed YAML bevy_settings file
+    :param virtual: creating path names for a VM?
+    :return: a list of Salt file-roots and a list of pillar-roots
+    '''
+    def make_the_list(more_parents, condiment):
+        some_roots = []
+        for parent in more_parents:
+            try:
+                phys, virt = parent.split(':')
+            except (ValueError, AttributeError):
+                if virtual:
+                    raise ValueError(
+                        'application root parameter "{}" should have real-path:virtual-name'.format(parent))
+                else:
+                    phys = parent
+                    virt = NotImplemented
+            dir = Path(phys) / 'salt'
+            if dir.is_dir and dir.exists():  # extract the absolute path of any ./salt directory
+                if virtual:  # refer to the Vagrant shared path, not the real one
+                    virt_dir = PurePosixPath('/', virt) / condiment
+                    some_roots.append(str(virt_dir))
+                else:
+                    some_roots.append(str(dir.resolve().as_posix()))
+            else:
+                print('WARNING: cannot find application directory "{}"'.format(dir))
+        return some_roots
+
+    more_parents = settings['application_roots']
+    more_roots = make_the_list(more_parents, 'salt')
+    more_parents.reverse()  # we want pillars in the opposite order
+    more_pillars = make_the_list(more_parents, 'pillar')
+    return more_roots, more_pillars
+
 
 def write_config_file(config_file_name, is_master: bool, virtual=True, windows=False):
     '''
@@ -123,16 +197,18 @@ def write_config_file(config_file_name, is_master: bool, virtual=True, windows=F
     :param conf_file_name:
     '''
     template = """
-# initial configuration file for the bevy member.
+# initial configuration file for a bevy member.
+# file: {0}
+# written by: {1}
 #
-master: {}
+master: {2}
 
 file_roots:    # states are searched in the given order -- first found wins
-  base: {!r}
+  base: {3!r}
 top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt, just use it
 
 pillar_roots:  # all pillars are merged -- the last entry wins
-  base: {!r}
+  base: {4!r}
 pillar_source_merging_strategy: recurse
 
 file_ignore_regex:
@@ -147,17 +223,19 @@ grains:
   roles:
     - bevy_member
 """
-    # note: must use dumb path building here because WindowsPath turns out invalid path strings for Linux
-    bevy_srv_path = '/vagrant' if virtual else str(this_file.parent.parent)
+    bevy_srv_path = PurePosixPath('/vagrant') if virtual else PurePosixPath(this_file.parent.parent.as_posix())
     master = 'localhost' if is_master else settings['bevymaster_url']
-    file_roots = ['/srv/salt'] + more_roots + [bevy_srv_path + '/bevy_srv/salt']
-    pillar_roots = [bevy_srv_path + '/bevy_srv/pillar'] + more_pillars + ['/srv/pillar']
+
+    more_roots, more_pillars = format_additional_roots(settings, virtual)
+
+    file_roots = ['/srv/salt'] + more_roots + [str(bevy_srv_path / 'bevy_srv/salt')]
+    pillar_roots = [str(bevy_srv_path / 'bevy_srv/pillar')] + more_pillars + ['/srv/pillar']
 
     os.makedirs(str(config_file_name.parent), exist_ok=True)  # old Python 3.4 method
     # config_file_name.parent.mkdir(parents=True, exist_ok=True)  # 3.5+
     newline = '\r\n' if windows else '\n'
     with config_file_name.open('w', newline=newline) as config_file:
-        config_file.write(template.format(master, file_roots, pillar_roots))
+        config_file.write(template.format(config_file_name, this_file, master, file_roots, pillar_roots))
 
 
 def salt_state_apply(salt_state, **kwargs):
@@ -496,31 +574,15 @@ def get_linux_password():
         linux_password = f.read().strip()  # 3.4
     return linux_password
 
-# set up global variables for additional file_roots and pillar_root directories
-# if the command line calls for them.
-more_roots = []  # list of additional file_roots directories
-try:
-    more = next((arg[12:] for arg in argv if arg.startswith('--add-roots=')), '')
-    if more:
-        more_roots = more.strip('[').rstrip(']').split(',')
-except Exception:
-    raise ValueError('Error in "--add-roots=" processing.')
-more_pillars = []  # list of additional pillar_roots directories
-try:
-    more = next((arg[14:] for arg in argv if arg.startswith('--add-pillars=')), '')
-    if more:
-        more_pillars = more.strip('[').rstrip(']').split(',')
-except Exception:
-    raise ValueError('Error in "--add-pillars=" processing.')
-
 if __name__ == '__main__':
-    settings = {}
     user_name = getpass.getuser()
 
     if user_name == 'root':
         user_name = os.environ['SUDO_USER']
 
     settings = read_bevy_settings_file()
+    get_additional_roots(settings)
+
     try:
         import pwd  # works on Posix only
         pwd_entry = pwd.getpwnam(user_name)  # look it up the hard way -- we are running SUDO
@@ -543,15 +605,12 @@ if __name__ == '__main__':
     if platform.system() != 'Windows':
         print('or a bevy salt-master (including cloud-master),')
     if on_a_workstation:
-        print('or a Vagrant host, hosting a bevy master.')
-        recommendation = ' (not recommended)'
-    else:
-        recommendation = ''
+        print('or a Vagrant host, possibly hosting a bevy master.')
     master = platform.system() != 'Windows' and affirmative(
         input('Should this machine BE the master? [y/N]:'))
     if not master and on_a_workstation:
         master_host = affirmative(input(
-            'Will the Bevy Master be a VM guest of this machine? [y/N]:'.format(recommendation)))
+            'Will the Bevy Master be a VM guest of this machine? [y/N]:'))
 
     my_directory = Path(os.path.dirname(os.path.abspath(__file__)))
     bevy_root_node = (my_directory / '../bevy_srv').resolve()  # this dir is part of the Salt file_roots dir
@@ -561,6 +620,8 @@ if __name__ == '__main__':
     bevy, settings['my_linux_user'] = request_bevy_username_and_password(master or master_host, user_name)
     settings['bevy'] = bevy
     print('Setting up user "{}" on bevy "{}"'.format(settings['my_linux_user'], bevy))
+
+
 
     # check for use of virtualbox and Vagrant
     # test for Vagrant being already installed
@@ -638,7 +699,11 @@ if __name__ == '__main__':
     else:
         master_id = get_salt_master_id()
         if master_id is None or master_id.startswith('!'):
-            raise ValueError('Something wrong. Salt master should be known at this point.')
+            print('WARNING: Something wrong. Salt master should be known at this point.')
+            if affirmative(input('continue anyway?')):
+                master_id = 'salt'
+            else:
+                exit(1)
         run_second_minion = master_id not in ['localhost', 'salt', '127.0.0.1'] and \
                             not platform.system() == 'Windows'  # TODO: figure out how to run 2nd minion on Windows
     if run_second_minion:

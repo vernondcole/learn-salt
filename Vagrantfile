@@ -106,13 +106,19 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"
     if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "bevymaster"
       if settings['master_vagrant_ip'] != NETWORK + ".2.2"
-        abort "Sorry. Your master_vagrant_ip value of #{settings['master_vagrant_ip']} suggests that the VM is not the correct Master."
+        abort "Sorry. Your master_vagrant_ip setting of '#{settings['master_vagrant_ip']}' suggests that your Bevy Master is not expected to be Virtual here."
         end
       puts "Starting #{ARGV[1]} at #{NETWORK}.2.2..."
       end
     master_config.vm.network "public_network", bridge: interface_guesses, mac: "be0000" + bevy_mac
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
-    master_config.vm.synced_folder "/srv", "/srv", :owner => "vagrant", :group => "staff"
+    master_config.vm.synced_folder "/srv", "/srv", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
+    if settings.has_key?('application_roots')  # additional shares for optional applications directories
+      settings['application_roots'].each do |share|  # formatted real-path:share-path
+        s = share.split(':')
+        master_config.vm.synced_folder s[0], "/#{s[1]}", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
+      end
+    end
 
     if vagrant_command == "ssh"
       master_config.ssh.username = my_linux_user  # if you type "vagrant ssh", use this username
