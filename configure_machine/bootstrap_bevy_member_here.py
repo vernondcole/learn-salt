@@ -144,6 +144,10 @@ def get_additional_roots(settings):
         print('Keep old, use New, Append both, or (X) use no eXtra apps.')
         resp = input('your choice? [{}]:'.format(prompt)) or default
         resp = resp.lower()
+    for i, parent in enumerate(more_parents):  # make relative paths absolute
+        paths = parent.split(';')
+        paths[0] = Path(paths[0]).resolve().as_posix()
+        more_parents[i] = ';'.join(paths)
     if resp == 'n':
         settings['application_roots'] = more_parents
     elif resp == 'a':
@@ -163,11 +167,11 @@ def format_additional_roots(settings, virtual):
         some_roots = []
         for parent in more_parents:
             try:
-                phys, virt = parent.split(':')
+                phys, virt = parent.split(';')
             except (ValueError, AttributeError):
                 if virtual:
                     raise ValueError(
-                        'application root parameter "{}" should have real-path:virtual-name'.format(parent))
+                        'application root parameter "{}" should have real-path;virtual-name'.format(parent))
                 else:
                     phys = parent
                     virt = NotImplemented

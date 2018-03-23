@@ -115,7 +115,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     master_config.vm.synced_folder "/srv", "/srv", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
     if settings.has_key?('application_roots')  # additional shares for optional applications directories
       settings['application_roots'].each do |share|  # formatted real-path:share-path
-        s = share.split(':')
+        s = share.split(';')
         master_config.vm.synced_folder s[0], "/#{s[1]}", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
       end
     end
