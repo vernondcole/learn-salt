@@ -10,5 +10,4 @@
 /srv/salt/win/repo-ng/npp.sls:
   file.managed:
     - source: salt://bevy_master/files/npp.sls.source
-    - mode: 777
 ...
