@@ -61,3 +61,18 @@ is `git commit -m "this is my comment"`.
 If you use a good Integrated Development Environment 
 (like [PyCharm](https://www.jetbrains.com/pycharm/))
 it will handle the git commands for you.
+
+### in a Salt State
+
+You will often use Git to provision your minion systems.
+Read the [Salt Git state docs](https://docs.saltstack.com/en/latest/ref/states/all/salt.states.git.html)
+when you are ready to automate the use of Git.
+
+Loading a directory tree from a Git repo can be as simple as:
+
+```yaml
+foo_app:
+  git.latest:
+    - name: https://mydomain.tld/apps/foo.git
+    - target: /var/www/foo
+```

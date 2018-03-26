@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# run Vagrant using learn-salt definitions
+export VAGRANT_CWD=../learn-salt
+/usr/bin/vagrant "$@"
