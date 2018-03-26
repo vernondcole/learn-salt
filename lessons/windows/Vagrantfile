@@ -1,0 +1,33 @@
+#
+# This Vagrantfile sets up a Windows machine configured to work with the
+#  supplied demo Vagrant-powered Bevy Master.0
+#
+Vagrant.configure(2) do |config|  # the literal "2" is required.
+    #config.vm.box = "Microsoft/EdgeOnWindows10"  # a time-limited demo
+    config.vm.box = "mwrock/Windows2016"  # Windows 2016 server
+    #config.vm.hostname = "windowstest"  # use of this setting causes VM to reboot Windows.
+
+    config.vm.provider "virtualbox" do |v|
+        v.name = 'win16'  # ! N.O.T.E.: name must be unique
+        v.gui = true  # turn on the graphic window
+        v.linked_clone = true
+        v.customize ["modifyvm", :id, "--vram", "18"]  # enough video memory for full screen
+        v.memory = 4096
+        v.cpus = 2
+    end
+#    config.vm.network "private_network", ip: "172.17.2.10"  # N.O.T.E: must be unique.
+    # on your Windows guest - your shared \vagrant folder will be found on `Network --> VBOXSVR`
+
+    config.vm.guest = :windows
+#    config.vm.communicator = "winrm"
+#    config.vm.boot_timeout = 600
+    config.vm.graceful_halt_timeout = 600
+#    config.winrm.password = "Passw0rd!"  # for Windows 10
+#    config.winrm.username = "IEUser"
+
+    config.vm.provision :salt do |salt|
+        salt.minion_id = "win16"
+        salt.log_level = "info"
+        salt.verbose = true
+    end
+end
