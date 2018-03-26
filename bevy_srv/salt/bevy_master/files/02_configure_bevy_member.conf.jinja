@@ -48,7 +48,11 @@ file_roots:    # search this list of directory entries in order
     - /srv/salt         # first, use the normal place (if it exists)
     {%- for entry in salt['pillar.get']('application_roots', []) %}
     {%- set appdir = entry.split(';') %}
+    {%- if appdir|length > 1 %}
+    - /{{ appdir[1] }}/salt
+    {%- else %}
     - {{ appdir[0] }}/salt
+    {%- endif %}
     {%- endfor %}
     - '{{ bevy_root }}/salt'
 top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
@@ -58,7 +62,11 @@ pillar_roots:  # merge definitions from this list of directories
     - '{{ bevy_root }}/pillar'
     {%- for entry in salt['pillar.get']('application_roots', []) %}
     {%- set appdir = entry.split(';') %}
+    {%- if appdir|length > 1 %}
+    - /{{ appdir[1] }}/pillar
+    {%- else %}
     - {{ appdir[0] }}/pillar
+    {%- endif %}
     {%- endfor %}
     - /srv/pillar
 pillar_source_merging_strategy: recurse
