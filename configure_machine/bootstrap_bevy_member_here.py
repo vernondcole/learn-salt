@@ -188,7 +188,6 @@ def format_additional_roots(settings, virtual):
 
     more_parents = settings['application_roots']
     more_roots = make_the_list(more_parents, 'salt')
-    more_parents.reverse()  # we want pillars in the opposite order
     more_pillars = make_the_list(more_parents, 'pillar')
     return more_roots, more_pillars
 
@@ -233,7 +232,7 @@ grains:
     more_roots, more_pillars = format_additional_roots(settings, virtual)
 
     file_roots = ['/srv/salt'] + more_roots + [str(bevy_srv_path / 'bevy_srv/salt')]
-    pillar_roots = [str(bevy_srv_path / 'bevy_srv/pillar')] + more_pillars + ['/srv/pillar']
+    pillar_roots = ['/srv/pillar'] + more_pillars + [str(bevy_srv_path / 'bevy_srv/pillar')]
 
     os.makedirs(str(config_file_name.parent), exist_ok=True)  # old Python 3.4 method
     # config_file_name.parent.mkdir(parents=True, exist_ok=True)  # 3.5+

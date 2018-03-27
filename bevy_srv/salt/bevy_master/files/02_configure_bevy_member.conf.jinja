@@ -59,7 +59,7 @@ top_file_merging_strategy: same  # do not merge the top.sls file from srv/salt
 
 pillar_roots:  # merge definitions from this list of directories
   base:
-    - '{{ bevy_root }}/pillar'
+    - /srv/pillar
     {%- for entry in salt['pillar.get']('application_roots', []) %}
     {%- set appdir = entry.split(';') %}
     {%- if appdir|length > 1 %}
@@ -68,7 +68,7 @@ pillar_roots:  # merge definitions from this list of directories
     - {{ appdir[0] }}/pillar
     {%- endif %}
     {%- endfor %}
-    - /srv/pillar
+    - '{{ bevy_root }}/pillar'
 pillar_source_merging_strategy: recurse
 {% endif %}
 file_ignore_regex:
