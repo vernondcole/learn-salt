@@ -112,7 +112,6 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
       end
     master_config.vm.network "public_network", bridge: interface_guesses, mac: "be0000" + bevy_mac
     master_config.vm.synced_folder ".", "/vagrant", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
-    master_config.vm.synced_folder "/srv", "/srv", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
     if settings.has_key?('application_roots')  # additional shares for optional applications directories
       settings['application_roots'].each do |share|  # formatted real-path:share-path
         s = share.split(';')
@@ -141,8 +140,12 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     script = "mkdir -p /etc/salt/minion.d\n"
     script += "chown -R vagrant:staff /etc/salt/minion.d\n"
     script += "chmod -R 775 /etc/salt/minion.d\n"
+    script += "mkdir -p #{File.dirname(BEVY_SETTINGS_FILE_NAME)}\n"
+    script += "chown -R vagrant:staff #{File.dirname(BEVY_SETTINGS_FILE_NAME)}\n"
+    script += "chmod -R 775 #{File.dirname(BEVY_SETTINGS_FILE_NAME)}\n"
     master_config.vm.provision "shell", inline: script
     master_config.vm.provision "file", source: settings['GUEST_MASTER_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
+    master_config.vm.provision "file", source: BEVY_SETTINGS_FILE_NAME, destination: BEVY_SETTINGS_FILE_NAME
 
     master_config.vm.provision :salt do |salt|
        # # #  --- error in salt bootstrap when using git 11/1/17

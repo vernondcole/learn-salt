@@ -5,25 +5,24 @@
 #     (it will be pulled from the git repo and may be overwritten from it, or pushed to it.)
 #
 #   In practice, this file will only be used by early "salt-call --local" runs.
-#   /srv/pillar/top.sls will be the real thing.
+#   /srv/pillar/top.sls will be the real thing in normal operation.
 #
 # The Bevy Master is expected to be run with a /etc/salt/master.d/??? configuration like:
 # pillar_root:
 #   - /srv/pillar
 #   - /bevy_srv/pillar
-# pillar_source_merging_strategy: recurse    # merge data from all pillar sources
 #
 # make local modifications in /srv/pillar/???
 #
 base:
   '*':
     - core_settings  # all systems share these
-    - 01_bevy_settings  # found in /srv/pillar
 
   'quail*':
     - manual_bevy_settings
 
   bevymaster*:
+    - 01_bevy_settings
     - manual_bevy_settings
 
   'bevy:*':

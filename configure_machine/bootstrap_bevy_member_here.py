@@ -436,9 +436,9 @@ def request_bevy_username_and_password(master: bool, user_name: str):
         except AttributeError:  # older Python3
             user_home_pub = Path('/home/') / getpass.getuser() / '.ssh' / 'id_rsa.pub'
         if master_host:
-            user_key_file = Path(SALT_SRV_ROOT) / 'ssh_keys' / (user_name + '.pub')
+            user_key_file = Path(SALT_SRV_ROOT) / 'ssh_keys' / (my_linux_user + '.pub')
         else:
-            user_key_file = Path(USER_SSH_KEY_FILE_NAME.format(user_name))
+            user_key_file = Path(USER_SSH_KEY_FILE_NAME.format(my_linux_user))
         try:  # named user's default location on this machine?
             print('trying file: "{}"'.format(user_home_pub))
             pub = user_home_pub.open()

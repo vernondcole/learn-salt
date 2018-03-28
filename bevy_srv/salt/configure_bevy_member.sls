@@ -34,7 +34,11 @@ make-dirs-visible:
         {{ message }}
         vagrant_sdb_data:
           driver: sqlite3
+          {%- if grains['os'] == 'Windows' %}
+          database: /srv/vagrant.sqlite
+          {%- else %}
           database: /var/cache/salt/vagrant.sqlite
+          {%- endif %}
           table: sdb
           create_table: True
 

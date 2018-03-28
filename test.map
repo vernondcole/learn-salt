@@ -6,10 +6,8 @@
 #
 # Reminder: Vagrant and saltify profiles
 #   can only be used for one single node.
-q1:  # from Vagrant profile
-  - x1  # makes node x1
 
-q16:  # from Vagrant profile
+vm16:  # from Vagrant profile
   - x16  # makes node x16
 
 hw_demo:  # from saltify profile

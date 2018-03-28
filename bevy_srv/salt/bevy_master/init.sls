@@ -18,10 +18,10 @@ update_the_grains:
 
 include:
   - ensure_user_privs
-  - sdb
   - configure_bevy_member  {# master is configured like a member, too #}
+  {%- if not salt['pillar.get']('doing_bootstrap', False) %}
   - .local_windows_repository
-
+  {% else %}
 {% if salt['file.directory_exists']('/vagrant/learn-salt/bevy_srv/salt/pki_cache') %}
 restore_keys_from_cache:
   file.recurse:
@@ -57,8 +57,8 @@ clean_up_own_pki:
       - test -e {{ salt['config.get']('salt_config_directory') }}/pki/master/minions/bevymaster
     - require:
       - accept-own-key
-{% endif %}
-
+{% endif %} {# pki_cache exists not #}
+{% endif %} {# doing_bootstrap #}
 pip2-installed:  # TODO: what about pip3?
   pkg.installed:
     - names:

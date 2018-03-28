@@ -14,18 +14,14 @@ ssh_public_key:
     - source: salt://ssh_keys/{{ my_user }}.pub
     - makedirs: True
     - replace: False
-
 {% else %}  {# not Windows #}
 {% set home = '/Users/' if grains['os'] == "MacOS" else '/home/' %}
 {{ home }}{{ my_user }}/.ssh:
   file.directory:
     - user: {{ my_user }}
-    {% if grains['os'] != "Windows" %}
     - group: {{ my_user }}
     - dir_mode: 755
     - makedirs: True
-    {% endif %}
-
 ssh_public_key:
   ssh_auth.present:
     - user: {{ my_user }}
@@ -42,5 +38,5 @@ ssh_public_key:
   file.append:
     - text: "UMASK=002  # create files as group-readable by default ## added by Salt"
     - makedirs: true
-{% endif %}
+{% endif %} {# Windows not #}
 ...

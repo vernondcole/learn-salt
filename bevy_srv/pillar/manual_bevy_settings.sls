@@ -17,9 +17,7 @@ wol_test_machine_ip: 192.168.88.8  # the ip address of the minion machine
 wol_test_mac: '00-1a-4b-7c-2a-b2'  # mac address of minion machine
 wol_test_sender_id: bevymaster  # Salt node id of WoL transmitter
 
-bevy_host_id: 'vc-ddell'  # Salt node id of Vagrant host machine
 bevy_dir: '/projects/learn-salt'  # path to learn-salt directory tree
-vagrant_bridge_target_network: '192.168.88.0/24'
 #
 
 # the minion ID's to be put in the master's AUTOSIGN_FILE
