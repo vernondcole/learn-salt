@@ -2,7 +2,8 @@
      <salt_config_directory>/minion.d/02_configure_bevy_member.conf and .../master.d/...
      -#}
 # {{ pillar['salt_managed_message'] }}
-# created from template bevy_master/files/02_configure_bevy_member.conf.jinja
+# created from template bevy_master/files/02_configure_bevy_member.conf.jinja (0.1)
+
 
 # these settings are specific to the running Salt master or stand-alone minion
 
@@ -40,7 +41,7 @@ worker_threads: 2  {# sufficient for test systems #}
 
 mine_interval: 5   # this is a test system, so run the mine every five minutes
 
-{% if is_master %}
+{% if is_master or salt['file.directory_exists']('/srv/salt') %}
 # for master we need to tell Salt where to find its files
 #
 file_roots:    # search this list of directory entries in order
@@ -48,7 +49,7 @@ file_roots:    # search this list of directory entries in order
     - /srv/salt         # first, use the normal place (if it exists)
     {%- for entry in salt['pillar.get']('application_roots', []) %}
     {%- set appdir = entry.split(';') %}
-    {%- if appdir|length > 1 %}
+    {%- if appdir|length > 1 and salt['grains.get']('virtual', 'physical') == 'VirtualBox' %}
     - /{{ appdir[1] }}/salt
     {%- else %}
     - {{ appdir[0] }}/salt
@@ -62,7 +63,7 @@ pillar_roots:  # merge definitions from this list of directories
     - /srv/pillar
     {%- for entry in salt['pillar.get']('application_roots', []) %}
     {%- set appdir = entry.split(';') %}
-    {%- if appdir|length > 1 %}
+    {%- if appdir|length > 1 and salt['grains.get']('virtual', 'physical') == 'VirtualBox' %}
     - /{{ appdir[1] }}/pillar
     {%- else %}
     - {{ appdir[0] }}/pillar
