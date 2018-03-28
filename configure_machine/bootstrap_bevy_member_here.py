@@ -715,16 +715,6 @@ if __name__ == '__main__':
         run_second_minion = affirmative(input('Do you wish to run a second minion? [y/N]:'))
     two = '2' if run_second_minion else ''
 
-    # if there is no top.sls, copy ours to make a start
-    if not os.path.exists(SALT_SRV_ROOT + '/top.sls'):
-        print('Creating a new default {}/top.sls'.format(SALT_SRV_ROOT))
-        os.makedirs(SALT_SRV_ROOT, exist_ok=True)  # 3.4
-        shutil.copy('../bevy_srv/salt/top.sls', SALT_SRV_ROOT)
-    if not os.path.exists(SALT_PILLAR_ROOT + '/top.sls'):
-        print('Creating a new default {}/top.sls'.format(SALT_PILLAR_ROOT))
-        os.makedirs(SALT_PILLAR_ROOT, exist_ok=True)  # 3.4
-        shutil.copy('../bevy_srv/pillar/top.sls', SALT_PILLAR_ROOT)
-
     master_address = choose_master_address(settings.get('bevymaster_url', master_id))
     settings['bevymaster_url'] = master_address
 
