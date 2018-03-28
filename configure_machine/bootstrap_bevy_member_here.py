@@ -754,7 +754,7 @@ if __name__ == '__main__':
                          bevymaster_url=master_address,
                          run_second_minion=run_second_minion,
                          vbox_install=settings.get('vbox_install', False),
-                         vagranthost=settings['vagranthost'],
+                         vagranthost=settings.get('vagranthost', False),
                          runas=settings.get('runas', ''),
                          cwd=settings.get('cwd', ''),
                          doing_bootstrap=True,  # initialize environment
@@ -792,7 +792,7 @@ if __name__ == '__main__':
                          run_second_minion=run_second_minion,
                          vbox_install=settings.get('vbox_install', False),
                          my_linux_user=settings['my_linux_user'],
-                         vagranthost=settings['vagranthost'],
+                         vagranthost=settings.get('vagranthost', False),
                          runas=settings.get('runas', ''),
                          cwd=settings.get('cwd', ''),
                          )
