@@ -617,6 +617,15 @@ if __name__ == '__main__':
         master_host = affirmative(input(
             'Will the Bevy Master be a VM guest of this machine? [y/N]:'))
 
+    node_name = 'bevymaster' if master else platform.node().split('.')[0]  # default to workstation ID
+    if not master:
+        while Ellipsis:
+            default = settings.get('id', node_name)  # your workstation's hostname
+            name = input("What will be the Salt Node Id for this machine? [{}]:".format(default)) or default
+            if name == default or affirmative(input('Use node name "{}"? [Y/n]:'.format(name)), True):
+                settings['id'] = name
+                node_name = name
+                break
     my_directory = Path(os.path.dirname(os.path.abspath(__file__)))
     bevy_root_node = (my_directory / '../bevy_srv').resolve()  # this dir is part of the Salt file_roots dir
     if not bevy_root_node.is_dir():
@@ -624,9 +633,7 @@ if __name__ == '__main__':
 
     bevy, settings['my_linux_user'] = request_bevy_username_and_password(master or master_host, user_name)
     settings['bevy'] = bevy
-    print('Setting up user "{}" on bevy "{}"'.format(settings['my_linux_user'], bevy))
-
-
+    print('Setting up user "{}" on bevy "{}" node "{}"'.format(settings['my_linux_user'], bevy, node_name))
 
     # check for use of virtualbox and Vagrant
     # test for Vagrant being already installed
@@ -637,7 +644,7 @@ if __name__ == '__main__':
     while on_a_workstation:  # if on a workstation, repeat until user says okay
         settings['vbox_install'] = False
         vhost = settings.setdefault('vagranthost', 'none')  # node ID of Vagrant host machine
-        my_machine = platform.node().split('.')[0]
+        my_machine = node_name
         default_yes = vhost == my_machine
         default_prompt = '[Y/n]' if default_yes else '[y/N]'
         isvagranthost = master_host or affirmative(input(
@@ -645,10 +652,7 @@ if __name__ == '__main__':
             .format(default_prompt)),
             default_yes)
         if isvagranthost:
-            if master:
-                settings['vagranthost'] = 'bevymaster'
-            else:
-                settings['vagranthost'] = my_machine
+            settings['vagranthost'] = node_name
             settings['vbox_install'] = False if vagrant_present else affirmative(input(
                 'Do you wish to install VirtualBox and Vagrant? [y/N]:'))
         elif master:
@@ -784,8 +788,8 @@ if __name__ == '__main__':
             my_master_url = input("Try again. Type the name or address of this machine's bevy master?:")
 
         print('\n\n. . . . . . . . . .\n')
-        node_name = platform.node().split('.')[0]  # your workstation's hostname
         salt_state_apply('configure_bevy_member',
+                         id=node_name,
                          config_dir=str(Path(SALTCALL_CONFIG_FILE).resolve().parent), # for local
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
