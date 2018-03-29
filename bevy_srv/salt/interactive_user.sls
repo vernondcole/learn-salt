@@ -1,8 +1,13 @@
 ---
 # salt state file to define an interactive user, used in development.
 #
-{% set make_uid = salt['config.get']('my_linux_uid', -2) | int %}  {# does not force uid if blank #}
-{% set make_gid = salt['config.get']('my_linux_gid', -2) | int %}
+{% if salt['grains.get']('virtual', 'physical') == 'VirtualBox' %}
+  {% set make_uid = salt['config.get']('my_linux_uid', -2) | int %}  {# does not force uid if blank #}
+  {% set make_gid = salt['config.get']('my_linux_gid', -2) | int %}
+{% else %}
+  {% set make_uid = -3 %}
+  {% set make_gid = -3 %}
+{% endif %}
 {% set my_user = pillar['my_linux_user'] %}
 {% set home = 'C:/Users/' if grains['os'] == "Windows" else '/Users/' if grains['os'] == 'MacOS' else '/home/' %}
 {% set users_group = 'Users' if grains['os'] == "Windows" else 'users' %}
