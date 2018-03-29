@@ -644,8 +644,7 @@ if __name__ == '__main__':
     while on_a_workstation:  # if on a workstation, repeat until user says okay
         settings['vbox_install'] = False
         vhost = settings.setdefault('vagranthost', 'none')  # node ID of Vagrant host machine
-        my_machine = node_name
-        default_yes = vhost == my_machine
+        default_yes = vhost == node_name
         default_prompt = '[Y/n]' if default_yes else '[y/N]'
         isvagranthost = master_host or affirmative(input(
             'Will this machine be the Host for other Vagrant virtual machines? {}:'
@@ -660,13 +659,13 @@ if __name__ == '__main__':
                   .format(settings['vagranthost']))
             settings['vagranthost'] = input('(Type "none" if none.):') or settings['vagranthost']
             if settings['vagranthost'] and settings['vagranthost'] != "none":
-                try:
+                try:  # if the entry was an IP address, the user messed up. Test for that.
                     socket.inet_aton(settings['vagranthost'])  # an exception is expected and is correct
                     print('Please enter a node ID, not an IP address.')
                     continue  # user committed an entry error ... retry
                 except OSError:
                     pass  # entry was not an IP address.  Good.
-        if settings['vagranthost'] and settings['vagranthost'] != "none":
+        if isvagranthost and settings['vagranthost'] and settings['vagranthost'] != "none":
             runas = settings.get('runas') or settings['my_linux_user']
             resp = input(
                 'What user on {} will own the Vagrantbox files?'
@@ -693,6 +692,7 @@ if __name__ == '__main__':
             print('No Vagrant Box will be used.')
         if affirmative(input('Correct? [Y/n]:'), default=True):
             break
+
     if isvagranthost:
         settings['vagrant_prefix'], settings['vagrant_network'] = choose_vagrant_network()
         choice = choose_bridge_interface()

@@ -30,6 +30,7 @@ make-dirs-visible:
 
 {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/vagrant_sdb.conf:
   file.managed:
+    - makedirs: True
     - contents: |
         {{ message }}
         vagrant_sdb_data:
