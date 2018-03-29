@@ -280,6 +280,42 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     end
   end
 
+ # . . . . . . . . . . . . Define machine win12 . . . . . . . . . . . . . .
+ # . this machine has salt installed .
+  config.vm.define "win12", autostart: false do |quail_config|
+    quail_config.vm.box = "devopsguys/Windows2012R2Eval"
+
+    quail_config.vm.network "public_network", bridge: interface_guesses
+    quail_config.vm.network "private_network", ip: NETWORK + ".2.12"
+    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "win12"
+      puts "Starting #{ARGV[1]} as a Salt minion of #{settings['bevymaster_url']}."
+      end
+
+    quail_config.vm.provider "virtualbox" do |v|
+        v.name = BEVY + '_win12'  # ! N.O.T.E.: name must be unique
+        v.gui = true  # turn on the graphic window
+        v.linked_clone = true
+        v.customize ["modifyvm", :id, "--vram", "27"]  # enough video memory for full screen
+        v.memory = 4096
+        v.cpus = 2
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.128/27"]  # do not use 10.0 network for NAT
+    end
+    quail_config.vm.guest = :windows
+    quail_config.vm.boot_timeout = 300
+    quail_config.vm.graceful_halt_timeout = 60
+    script = "new-item C:\\salt\\conf\\minion.d -itemtype directory\r\n"
+    script += "'master: #{settings['bevymaster_url']}' > C:\\salt\\conf\\minion.d\\00_vagrant_master_address.conf\r\n"
+    quail_config.vm.provision "shell", inline: script
+    quail_config.vm.provision "file", source: settings['WINDOWS_GUEST_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
+    quail_config.vm.provision :salt do |salt|  # salt_cloud cannot push Windows salt
+        salt.minion_id = "win12"
+        salt.log_level = "info"
+        salt.verbose = true
+        salt.colorize = true
+        salt.run_highstate = true
+    end
+  end
+
 # . . . . . . .  Define quail2 with Salt minion installed . . . . . . . . . . . . . .
 # . this machine has Salt installed but no states run or defined.
 # . Its master is "bevymaster".
@@ -297,7 +333,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.memory = 4000       # limit memory for the virtual box
         v.cpus = 2
         v.linked_clone = true # make a soft copy of the base Vagrant box
-        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.96/27"]  # do not use 10.0 network for NAT
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.160/27"]  # do not use 10.0 network for NAT
     end
     quail_config.vm.provider vmware do |v|
         v.vmx["memsize"] = "5000"
