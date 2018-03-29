@@ -258,8 +258,10 @@ def salt_state_apply(salt_state, **kwargs):
     file_root = kwargs.pop('file_root', '')
     pillar_root = kwargs.pop('pillar_root', '')
     config_dir = kwargs.pop('config_dir', '')
+    id = kwargs.pop('id', '')
 
     command_args = {'salt_state': salt_state,
+                    'id': '--id={}'.format(id) if id else "",
                     'file_root': '--file-root={}'.format(file_root) if file_root else "",
                     'pillar_root': '--pillar-root={}'.format(pillar_root) if pillar_root else "",
                     'config_dir': '--config-dir={}'.format(config_dir) if config_dir else '',
@@ -747,6 +749,7 @@ if __name__ == '__main__':
     if master:
         print('\n\n. . . . . . . . . .\n')
         salt_state_apply('',  # blank name means: apply highstate
+                         id='bevymaster',
                          config_dir=str(Path(SALTCALL_CONFIG_FILE).resolve().parent),
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
