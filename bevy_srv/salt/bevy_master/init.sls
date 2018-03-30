@@ -128,18 +128,6 @@ salt-master-autosign-file:
     - require:
       - wait_until_end
 
-/srv/salt/README.txt:
-  file.managed:
-    - makedirs: true
-    - source: salt://bevy_master/files/README.notice.jinja
-    - template: jinja
-
-/srv/pillar/README.txt:
-  file.managed:
-    - makedirs: true
-    - source: salt://bevy_master/files/README.notice.jinja
-    - template: jinja
-
 /srv/salt/top.sls:
   file.managed:  # make the initial copy of top.sls
     - makedirs: true
@@ -190,7 +178,7 @@ salt_cloud_profiles_d:
 
 {% if salt['grains.get']('os_family') == 'MacOS' %}
 {% set salt_master_service_name = 'com.saltstack.salt.master' %}
-# salt-master is a user agent on OS-xkcd.py -- not controlled by SaltStack service.* commands
+# salt-master is a user agent on MacOS -- not controlled by SaltStack service.* commands
 
 # !!! N O T E: salt master is not supported on a Mac, but is documented to work
 

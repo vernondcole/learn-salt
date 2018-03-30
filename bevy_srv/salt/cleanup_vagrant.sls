@@ -15,8 +15,9 @@ ensure-virt-what:
   {% if grains['os_family'] == 'Debian' %}
     - require:
       - pkg.autoremove
-pkg.autoremove:
+autoremove:
   module.run:
+    - name: pkg.autoremove
     - order: last
   {% endif %}
 {% endif %}
