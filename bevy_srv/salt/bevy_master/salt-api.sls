@@ -17,13 +17,14 @@ cherrypy:
       - pyOpenSSL
       - ws4py
 
-tls.create_self_signed_cert:
+create_self_signed_cert:
   module.run:
-    - kwargs: {
-      O: {{ salt['pillar.get']('salt-api:tls_organization') }}
-      L: {{ salt['pillar.get']('salt-api:tls_location') }}
-      emailAddress: {{ salt['pillar.get']('salt-api:tls_emailAddress') }}
-      }
+    - tls.create_self_signed_cert:
+      - kwargs: {
+          O: {{ salt['pillar.get']('salt-api:tls_organization') }}
+          L: {{ salt['pillar.get']('salt-api:tls_location') }}
+          emailAddress: {{ salt['pillar.get']('salt-api:tls_emailAddress') }}
+          }
 
 {{ salt['config.get']('salt_config_directory') }}/master.d/api.conf:
   file.managed:

@@ -175,7 +175,7 @@ def format_additional_roots(settings, virtual):
                 else:
                     phys = parent
                     virt = NotImplemented
-            dir = Path(phys) / 'salt'
+            dir = Path(phys) / condiment
             if dir.is_dir and dir.exists():  # extract the absolute path of any ./salt directory
                 if virtual:  # refer to the Vagrant shared path, not the real one
                     virt_dir = PurePosixPath('/', virt) / condiment
@@ -258,8 +258,10 @@ def salt_state_apply(salt_state, **kwargs):
     file_root = kwargs.pop('file_root', '')
     pillar_root = kwargs.pop('pillar_root', '')
     config_dir = kwargs.pop('config_dir', '')
+    id = kwargs.pop('id', '')
 
     command_args = {'salt_state': salt_state,
+                    'id': '--id={}'.format(id) if id else "",
                     'file_root': '--file-root={}'.format(file_root) if file_root else "",
                     'pillar_root': '--pillar-root={}'.format(pillar_root) if pillar_root else "",
                     'config_dir': '--config-dir={}'.format(config_dir) if config_dir else '',
@@ -615,6 +617,15 @@ if __name__ == '__main__':
         master_host = affirmative(input(
             'Will the Bevy Master be a VM guest of this machine? [y/N]:'))
 
+    node_name = 'bevymaster' if master else platform.node().split('.')[0]  # default to workstation ID
+    if not master:
+        while Ellipsis:
+            default = settings.get('id', node_name)  # your workstation's hostname
+            name = input("What will be the Salt Node Id for this machine? [{}]:".format(default)) or default
+            if name == default or affirmative(input('Use node name "{}"? [Y/n]:'.format(name)), True):
+                settings['id'] = name
+                node_name = name
+                break
     my_directory = Path(os.path.dirname(os.path.abspath(__file__)))
     bevy_root_node = (my_directory / '../bevy_srv').resolve()  # this dir is part of the Salt file_roots dir
     if not bevy_root_node.is_dir():
@@ -622,9 +633,7 @@ if __name__ == '__main__':
 
     bevy, settings['my_linux_user'] = request_bevy_username_and_password(master or master_host, user_name)
     settings['bevy'] = bevy
-    print('Setting up user "{}" on bevy "{}"'.format(settings['my_linux_user'], bevy))
-
-
+    print('Setting up user "{}" on bevy "{}" node "{}"'.format(settings['my_linux_user'], bevy, node_name))
 
     # check for use of virtualbox and Vagrant
     # test for Vagrant being already installed
@@ -635,18 +644,14 @@ if __name__ == '__main__':
     while on_a_workstation:  # if on a workstation, repeat until user says okay
         settings['vbox_install'] = False
         vhost = settings.setdefault('vagranthost', 'none')  # node ID of Vagrant host machine
-        my_machine = platform.node().split('.')[0]
-        default_yes = vhost == my_machine
+        default_yes = vhost == node_name
         default_prompt = '[Y/n]' if default_yes else '[y/N]'
         isvagranthost = master_host or affirmative(input(
             'Will this machine be the Host for other Vagrant virtual machines? {}:'
             .format(default_prompt)),
             default_yes)
         if isvagranthost:
-            if master:
-                settings['vagranthost'] = 'bevymaster'
-            else:
-                settings['vagranthost'] = my_machine
+            settings['vagranthost'] = node_name
             settings['vbox_install'] = False if vagrant_present else affirmative(input(
                 'Do you wish to install VirtualBox and Vagrant? [y/N]:'))
         elif master:
@@ -654,13 +659,13 @@ if __name__ == '__main__':
                   .format(settings['vagranthost']))
             settings['vagranthost'] = input('(Type "none" if none.):') or settings['vagranthost']
             if settings['vagranthost'] and settings['vagranthost'] != "none":
-                try:
+                try:  # if the entry was an IP address, the user messed up. Test for that.
                     socket.inet_aton(settings['vagranthost'])  # an exception is expected and is correct
                     print('Please enter a node ID, not an IP address.')
                     continue  # user committed an entry error ... retry
                 except OSError:
                     pass  # entry was not an IP address.  Good.
-        if settings['vagranthost'] and settings['vagranthost'] != "none":
+        if isvagranthost and settings['vagranthost'] and settings['vagranthost'] != "none":
             runas = settings.get('runas') or settings['my_linux_user']
             resp = input(
                 'What user on {} will own the Vagrantbox files?'
@@ -687,6 +692,7 @@ if __name__ == '__main__':
             print('No Vagrant Box will be used.')
         if affirmative(input('Correct? [Y/n]:'), default=True):
             break
+
     if isvagranthost:
         settings['vagrant_prefix'], settings['vagrant_network'] = choose_vagrant_network()
         choice = choose_bridge_interface()
@@ -714,16 +720,6 @@ if __name__ == '__main__':
         print('You may continue to use that master, and add a second master for your bevy.')
         run_second_minion = affirmative(input('Do you wish to run a second minion? [y/N]:'))
     two = '2' if run_second_minion else ''
-
-    # if there is no top.sls, copy ours to make a start
-    if not os.path.exists(SALT_SRV_ROOT + '/top.sls'):
-        print('Creating a new default {}/top.sls'.format(SALT_SRV_ROOT))
-        os.makedirs(SALT_SRV_ROOT, exist_ok=True)  # 3.4
-        shutil.copy('../bevy_srv/salt/top.sls', SALT_SRV_ROOT)
-    if not os.path.exists(SALT_PILLAR_ROOT + '/top.sls'):
-        print('Creating a new default {}/top.sls'.format(SALT_PILLAR_ROOT))
-        os.makedirs(SALT_PILLAR_ROOT, exist_ok=True)  # 3.4
-        shutil.copy('../bevy_srv/pillar/top.sls', SALT_PILLAR_ROOT)
 
     master_address = choose_master_address(settings.get('bevymaster_url', master_id))
     settings['bevymaster_url'] = master_address
@@ -757,14 +753,15 @@ if __name__ == '__main__':
     if master:
         print('\n\n. . . . . . . . . .\n')
         salt_state_apply('',  # blank name means: apply highstate
+                         id='bevymaster',
                          config_dir=str(Path(SALTCALL_CONFIG_FILE).resolve().parent),
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
                          node_name='bevymaster',
                          bevymaster_url=master_address,
                          run_second_minion=run_second_minion,
-                         vbox_install=settings['vbox_install'],
-                         vagranthost=settings['vagranthost'],
+                         vbox_install=settings.get('vbox_install', False),
+                         vagranthost=settings.get('vagranthost', False),
                          runas=settings.get('runas', ''),
                          cwd=settings.get('cwd', ''),
                          doing_bootstrap=True,  # initialize environment
@@ -791,8 +788,8 @@ if __name__ == '__main__':
             my_master_url = input("Try again. Type the name or address of this machine's bevy master?:")
 
         print('\n\n. . . . . . . . . .\n')
-        node_name = platform.node().split('.')[0]  # your workstation's hostname
         salt_state_apply('configure_bevy_member',
+                         id=node_name,
                          config_dir=str(Path(SALTCALL_CONFIG_FILE).resolve().parent), # for local
                          bevy_root=str(bevy_root_node),
                          bevy=bevy,
@@ -800,9 +797,9 @@ if __name__ == '__main__':
                          my_master_url=my_master_url,
                          node_name=node_name,
                          run_second_minion=run_second_minion,
-                         vbox_install=settings['vbox_install'],
+                         vbox_install=settings.get('vbox_install', False),
                          my_linux_user=settings['my_linux_user'],
-                         vagranthost=settings['vagranthost'],
+                         vagranthost=settings.get('vagranthost', False),
                          runas=settings.get('runas', ''),
                          cwd=settings.get('cwd', ''),
                          )

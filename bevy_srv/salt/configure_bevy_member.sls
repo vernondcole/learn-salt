@@ -30,6 +30,7 @@ make-dirs-visible:
 
 {{ salt['config.get']('salt_config_directory') }}{{ other_minion }}/minion.d/vagrant_sdb.conf:
   file.managed:
+    - makedirs: True
     - contents: |
         {{ message }}
         vagrant_sdb_data:
@@ -218,7 +219,7 @@ systemctl_reload_{{ other_minion }}:
     - require:
       - file: edit_salt-minion{{ other_minion }}_service
 
-add_salt{{ other_minion }}_call_command:
+add_salt{{ other_minion }}_command:
   file.append:
     - name: /etc/bash.bashrc
     - text:
@@ -229,16 +230,16 @@ add_salt{{ other_minion }}_call_command:
       - 'printf "\\n"'
       - 'printf " * To use the system Salt master, use the \\\"sudo salt-call\\\" command as usual.\\n"'
       - 'printf "\\n"'
-      - 'printf " * For salt-call to the Bevy master, use the \\\"salt{{ other_minion }}\\\" command.  For example:\\n"'
-      - 'printf "     salt{{ other_minion }} state.apply saltmine-dump\\n"'
+      - 'printf " * For salt-call to your Bevy master, use the \\\"salt{{ other_minion }}\\\" command.\\n"'
+      - 'printf "  For example:\\n"'
+      - 'printf "     salt{{ other_minion }} grains.get virtual\\n"'
+      - 'printf "  Or, if you wanted to stop all this, you would use:\\n"'
+      - 'printf "     salt{{ other_minion }} state.apply remove_second_minion\\n"'
       - 'printf "\\n"'
-      - 'printf " * To control the second minion,  use (for example):\\n"'
+      - 'printf " * To operate the second minion daemon,  use (for example):\\n"'
       - 'printf "     sudo systemctl status salt{{ other_minion }}-minion\\n"'
-      - 'printf "\\n"'
-      - 'printf " * Normal \\\"sudo salt xxx\\\" commands are for the original Salt Master.\\n"'
       - 'printf ".   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .\\n"'
       - '# ^ ^ ^ ^ ^ ^  added by Salt  ^ ^ ^ ^ ^ ^ ( -- Do not edit or remove this line -- )'
-
 
 /etc/profile:
   file.append:
