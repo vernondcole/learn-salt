@@ -43,9 +43,7 @@ BEVY_SETTINGS_FILE_NAME = '/srv/pillar/01_bevy_settings.sls'
 
 MINIMUM_SALT_VERSION = "2018.3.0"  # ... as a string... the month will be integerized below
 SALT_BOOTSTRAP_URL = "http://bootstrap.saltstack.com/stable/bootstrap-salt.sh"
-# SALT_DOWNLOAD_SOURCE = " -g https://github.com/vernondcole/salt git saltify-wol-fix-ping"
-SALT_DOWNLOAD_SOURCE = "git v2018.3.0rc1"
-# TODO: use release version when Salt "Oxygen" version is released
+SALT_DOWNLOAD_SOURCE = "stable"
 
 SALT_SRV_ROOT = '/srv/salt'
 SALT_PILLAR_ROOT = '/srv/pillar'

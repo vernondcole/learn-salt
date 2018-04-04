@@ -11,7 +11,7 @@ now ... on to what you really came here for ...
 
 #### Salt Installer Sources
 
-This project requires the Oxygen (2018.3?) version of Salt, which has the modules needed to run Vagrant machines,
+This project requires the "Oxygen" (2018.3) or later version of Salt, which has the modules needed to run Vagrant machines,
 and extended features for the `saltify` driver.
 
 - Windows
@@ -21,11 +21,10 @@ and extended features for the `saltify` driver.
 - Linux
    - Installation is automatic when running the `join-bevy.sh` (or `bootstrap_bevy_member_here.py`) script.
    - [or by salt_bootstrap](https://docs.saltstack.com/en/latest/topics/tutorials/salt_bootstrap.html#salt-bootstrap)
-    ```(bash)  TODO: simplify this code when Oxygen is released
-    # Oxygen release candidate
+    ```(bash)
     wget  -O bootstrap-salt.sh https://bootstrap.saltstack.com
     # that ^ is a capitol "o", not a zero
-    sudo sh bootstrap-salt.sh git v2018.3
+    sudo sh bootstrap-salt.sh
     ```
 
 #### Installation Prerequisites 

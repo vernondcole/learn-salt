@@ -148,9 +148,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     master_config.vm.provision "file", source: BEVY_SETTINGS_FILE_NAME, destination: BEVY_SETTINGS_FILE_NAME
 
     master_config.vm.provision :salt do |salt|
-       # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "git v2018.3.0rc1"  # TODO: use "stable" when OXYGEN is released
-       # # #  ---
+       # salt.install_type = "stable 2018.3.0"
        salt.verbose = true
        salt.log_level = "info"
        salt.colorize = true
@@ -349,9 +347,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.provision "shell", inline: script
     quail_config.vm.provision "file", source: settings['GUEST_MINION_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
     quail_config.vm.provision :salt do |salt|
-       # # #  --- error in salt bootstrap when using git 11/1/17
-       salt.install_type = "-f git v2018.3.0rc1"  # TODO: use "stable" when OXYGEN is released
-       # # #  ---
+       # salt.install_type = "stable 2018.3.0"
        salt.verbose = false
        salt.bootstrap_options = "-A #{settings['bevymaster_url']} -i quail2 -F -P "
        salt.run_highstate = true

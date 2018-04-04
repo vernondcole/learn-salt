@@ -188,11 +188,6 @@ So that salt-cloud can create minions on your workstation using Vagrant,
 your workstation must also be running a minion. Salt-cloud will instruct the 
 salt-minion on your workstation to run `./vagrant up`, etc, when needed.
 
-** NOTE: the released "Nitrogen" version of Salt does not have a Vagrant
- driver for salt-cloud. The bootstrap_bevy_member_here.py script pulls
- an "Oxygen" release candidate. A MacOS workstation will need to wait until 
- Salt "Oxygen" is released.  # TODO: fix this note when Oxygen is released.
-
 - on Ubuntu (or Debian)
 
 ```bash
