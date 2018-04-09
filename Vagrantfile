@@ -302,7 +302,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.128/27"]  # do not use 10.0 network for NAT
     end
     quail_config.vm.guest = :windows
-    quail_config.vm.boot_timeout = 300
+    quail_config.vm.boot_timeout = 600
     quail_config.vm.graceful_halt_timeout = 60
     script = "new-item C:\\salt\\conf\\minion.d -itemtype directory\r\n"
     script += "'master: #{settings['bevymaster_url']}' > C:\\salt\\conf\\minion.d\\00_vagrant_master_address.conf\r\n"
@@ -310,10 +310,10 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.provision "file", source: settings['WINDOWS_GUEST_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
     quail_config.vm.provision :salt do |salt|  # salt_cloud cannot push Windows salt
         salt.minion_id = "win12"
-        salt.log_level = "info"
-        salt.verbose = true
+        #salt.log_level = "info"
+        salt.verbose = false
         salt.colorize = true
-        salt.run_highstate = true
+        #salt.run_highstate = true
     end
   end
 
