@@ -25,9 +25,11 @@
 
 winrepo.update_git_repos:
   salt.runner
+ -- end TODO: broken #}
 
+{# genrepo is only needed for Windows minions before Salt version 2015.8 -- do not use
 winrepo.genrepo:
   salt.runner:
     - require:
       - winrepo.update_git_repos
- -- end TODO: broken #}
+-- end old Windows minions #}
