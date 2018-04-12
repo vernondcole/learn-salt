@@ -11,7 +11,7 @@ See [the Lesson index](lessons/index.md).
 
 ### Installation
 
-Install [git](https://git-scm.com/downloads). If on Linux, use your package manager. 
+* Install [git](https://git-scm.com/downloads). If on Linux, use your package manager. 
 If on Windows, please select the option to 
 "`Use Git and optional Unix tools from the Windows Command Prompt`". It will make your life
 easier. Many lessons assume that these utilities are present, and the conflicts with similarly
@@ -19,14 +19,18 @@ named DOS commands are rare.  Also select the option to "checkout as-is, commit 
 git does not foul up any Windows-friendly file's line endings. Python (and Salt) do not care.
 
 
-Clone [1] [this git repository](https://github.com/vernondcole/learn-salt) onto your target environment --
+* Clone [1] [this git repository](https://github.com/vernondcole/learn-salt) onto your target environment --
 which should be the workstation where you plan to do the lessons. You will control your bevy
 from this place.
 
-Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really have to put it there. 
+    Place it in the `/projects/learn-salt` directory[2]. Or not -- you don't really have to put it there. 
 All lessons should work if you put it somewhere else, like `/home/myusername/learn` or wherever. 
 Examples will be configured and tested to operate from any random directory you like.  
 But, for simplicity sake, all examples will be given as if they were in `/projects/learn-salt`.
+
+
+* Proceed with the instructions in [the installation lesson](lessons/installation/install.md).
+    * \[Short version: type `bash join-bevy.sh`, or on Windows just type `join-bevy`.\]
 
 Before editing any files in this project,
 please switch to a new branch in `git`.
@@ -35,12 +39,10 @@ please switch to a new branch in `git`.
 git branch my_edits
 git checkout my_edits
 ```
-If you need to return to the original text, you can use `git`
-to restore it.
-`git checkout master`
 
-Proceed with the instructions in [the installation lesson](lessons/installation/install.md).
-- \[Short version: type `bash join-bevy.sh`, or on Windows just type `join-bevy`.\]
+If you need to return to the original text, you can use `git` to restore it.
+
+```git checkout master```
 
 [1]: see [how to git stuff](lessons/git/how_to_git_stuff.md) if you don't understand what "clone" means.
 
@@ -197,10 +199,9 @@ The Vagrantfile also defines two simple empty Ubuntu 16.04 VMs, named "quail1" a
   
 There is also an Ubuntu 14.04 VM (named "quail14") defined in the Vagrantfile. 
 
-There is a Windows Server 2016 machine named "win16".
-It has an expered license (thank you, Microsoft) and will stop without warning after an hour or two of operation. 
-You can easily restart it with another "vagrant up win16".
-It will provision itself as a Salt minion of the bevymaster.
+There is a Windows Server 2016 machine named "win16",
+and a Windows 10 virtual machine named "win10".
+Each will provision itself as a Salt minion of the bevymaster.
 
 Finally, there is a VM named "quail2" for quick-and-dirty operation which will be configured as a Salt minion.
 
@@ -221,10 +222,9 @@ This network can be changed by [the confguration script](configure_machine/READM
 
 - The third is a [bridged network](https://www.vagrantup.com/docs/networking/public_network.html) 
 which makes the VM appear to be on the same LAN segment as its host. 
-The address for this adapter will be assiged by DHCP. You may need to modify the configuration
-parameter `network_mask` to help the scripts discover the actual address.
-This port can be seen by machines on your in-house network.  
-Be aware that, depending on an employer's router configuration settings, VMs on your machine may be
+The address for this adapter will be assiged by DHCP.
+This port can be seen by other machines on your in-house network.  
+Be aware that, depending on your IP router configuration settings, VMs on your machine may be
 unable to access brother VMs using their bridged addresses.
 
 If you wish, you can add more local VMs by editing the Vagrantfile.
