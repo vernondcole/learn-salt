@@ -77,6 +77,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     vmware = "vmware_workstation"
   end
   # . . . . . . . . . . . . Define machine QUAIL1 . . . . . . . . . . . . . .
+  # This machine has no Salt provisioning at all. Salt-cloud can provision it.
   config.vm.define "quail1", primary: true do |quail_config|  # this will be the default machine
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail1" # + DOMAIN
@@ -99,13 +100,53 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 	end
   end
 
-  # . . . . . . .  Define the BEVYMASTER . . . . . . . . . . . . . . . .
+# . . . . . . .  Define quail2 with Salt minion installed . . . . . . . . . . . . . .
+# . this machine bootstraps Salt but no states are run or defined.
+# . Its master is "bevymaster".
+  config.vm.define "quail2", autostart: false do |quail_config|
+    quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
+    quail_config.vm.hostname = "quail2" # + DOMAIN
+    quail_config.vm.network "private_network", ip: NETWORK + ".2.5"
+    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "quail2"
+      puts "Starting #{ARGV[1]} at #{NETWORK}.2.5 as a Salt minion with master=#{settings['bevymaster_url']}...\n."
+      end
+    quail_config.vm.network "public_network", bridge: interface_guesses
+
+    quail_config.vm.provider "virtualbox" do |v|
+        v.name = BEVY + '_quail2'  # ! N.O.T.E.: name must be unique
+        v.memory = 4000       # limit memory for the virtual box
+        v.cpus = 2
+        v.linked_clone = true # make a soft copy of the base Vagrant box
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.160/27"]  # do not use 10.0 network for NAT
+    end
+    quail_config.vm.provider vmware do |v|
+        v.vmx["memsize"] = "5000"
+        v.vmx["numvcpus"] = "2"
+    end
+
+    script = "mkdir -p /etc/salt/minion.d\n"
+    script += "chown -R vagrant:staff /etc/salt/minion.d\n"
+    script += "chmod -R 775 /etc/salt/minion.d\n"
+    quail_config.vm.provision "shell", inline: script
+    quail_config.vm.provision "file", source: settings['GUEST_MINION_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
+    quail_config.vm.provision :salt do |salt|
+       # salt.install_type = "stable 2018.3.0"
+       salt.verbose = false
+       salt.bootstrap_options = "-A #{settings['bevymaster_url']} -i quail2 -F -P "
+       salt.run_highstate = true
+    end
+  end
+
+# . . . . . . .  Define the BEVYMASTER . . . . . . . . . . . . . . . .
+# This is the Vagrant version of a Bevy Salt-master.
+# You cannot run it if you are using an external bevymaster.
   config.vm.define "bevymaster", autostart: false do |master_config|
     master_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     master_config.vm.hostname = "bevymaster"
     master_config.vm.network "private_network", ip: NETWORK + ".2.2"
     if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "bevymaster"
       if settings['master_vagrant_ip'] != NETWORK + ".2.2"
+        # prevent running a Vagrant bevy master if another is in use.
         abort "Sorry. Your master_vagrant_ip setting of '#{settings['master_vagrant_ip']}' suggests that your Bevy Master is not expected to be Virtual here."
         end
       puts "Starting #{ARGV[1]} at #{NETWORK}.2.2..."
@@ -197,8 +238,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
        end
   end
 
-
-  # . . . . . . . . . . . . Define machine QUAIL16 . . . . . . . . . . . . . . 
+  # . . . . . . . . . . . . Define machine QUAIL16 . . . . . . . . . . . . . .
+  # This Ubuntu 16.04 machine is designed to be run by salt-cloud
   config.vm.define "quail16", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail16" # + DOMAIN
@@ -222,7 +263,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   end
 
 
- # . . . . . . . . . . . . Define machine QUAIL14 . . . . . . . . . . . . . . 
+# . . . . . . . . . . . . Define machine QUAIL14 . . . . . . . . . . . . . .
+# This Ubuntu 14.04 machine is designed to be run by salt-cloud
   config.vm.define "quail14", autostart: false do |quail_config|
     quail_config.vm.box = "boxesio/trusty64-standard"  # a public VMware & Virtualbox box
     quail_config.vm.hostname = "quail14" # + DOMAIN
@@ -245,10 +287,45 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
 	end
   end
 
+ # . . . . . . . . . . . . Define machine win10 . . . . . . . . . . . . . .
+ # . this Windows 10 machine bootstraps Salt and connects to bevy master.
+  config.vm.define "win10", autostart: false do |quail_config|
+    quail_config.vm.box = "Microsoft/EdgeOnWindows10"
+    quail_config.vm.network "public_network", bridge: interface_guesses
+    quail_config.vm.network "private_network", ip: NETWORK + ".2.10"
+    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "win10"
+      puts "Starting #{ARGV[1]} as a Salt minion of #{settings['bevymaster_url']}."
+      end
+    quail_config.vm.provider "virtualbox" do |v|
+        v.name = BEVY + '_win10'  # ! N.O.T.E.: name must be unique
+        v.gui = true  # turn on the graphic window
+        v.linked_clone = true
+        v.customize ["modifyvm", :id, "--vram", "27"]  # enough video memory for full screen
+        v.memory = 4096
+        v.cpus = 2
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.192/27"]  # do not use 10.0 network for NAT
+    end
+    quail_config.vm.guest = :windows
+    quail_config.vm.boot_timeout = 600
+    quail_config.vm.graceful_halt_timeout = 60
+    script = "new-item C:\\salt\\conf\\minion.d -itemtype directory\r\n"
+    script += "'master: #{settings['bevymaster_url']}' > C:\\salt\\conf\\minion.d\\00_vagrant_master_address.conf\r\n"
+    quail_config.vm.provision "shell", inline: script
+    quail_config.vm.provision "file", source: settings['WINDOWS_GUEST_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
+    quail_config.vm.provision :salt do |salt|  # salt_cloud cannot push Windows salt
+        salt.minion_id = "win12"
+        #salt.log_level = "info"
+        salt.verbose = false
+        salt.colorize = true
+        #salt.run_highstate = true
+    end
+  end
+
  # . . . . . . . . . . . . Define machine win16 . . . . . . . . . . . . . .
- # . this machine has salt installed .
+ # . this machine installs Salt on a Windows 2016 Server and runs highstate.
   config.vm.define "win16", autostart: false do |quail_config|
-    quail_config.vm.box = "mwrock/Windows2016"  # Windows 2016 server
+    quail_config.vm.box = "gusztavvargadr/w16s" # Windows Server 2016 standard
+    # or "mwrock/Windows2016"
     # quail_config.vm.hostname = "windowstest"  # use of this setting causes VM to reboot Windows.
 
     quail_config.vm.network "public_network", bridge: interface_guesses
@@ -264,6 +341,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         v.customize ["modifyvm", :id, "--vram", "27"]  # enough video memory for full screen
         v.memory = 4096
         v.cpus = 2
+        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.224/27"]  # do not use 10.0 network for NAT
     end
     quail_config.vm.guest = :windows
     quail_config.vm.boot_timeout = 300
@@ -282,7 +360,7 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   end
 
  # . . . . . . . . . . . . Define machine win12 . . . . . . . . . . . . . .
- # . this machine has salt installed .
+ # . this machine bootstraps a salt minion on Windows Server 2012.
   config.vm.define "win12", autostart: false do |quail_config|
     quail_config.vm.box = "devopsguys/Windows2012R2Eval"
 
@@ -307,6 +385,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     script = "new-item C:\\salt\\conf\\minion.d -itemtype directory\r\n"
     script += "'master: #{settings['bevymaster_url']}' > C:\\salt\\conf\\minion.d\\00_vagrant_master_address.conf\r\n"
     quail_config.vm.provision "shell", inline: script
+    script = "route delete 0.0.0.0 #{NETWORK}.2.1\r\n"  # do not try to route through host-only network
+    quail_config.vm.provision "shell", inline: script
     quail_config.vm.provision "file", source: settings['WINDOWS_GUEST_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
     quail_config.vm.provision :salt do |salt|  # salt_cloud cannot push Windows salt
         salt.minion_id = "win12"
@@ -314,43 +394,6 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
         salt.verbose = false
         salt.colorize = true
         #salt.run_highstate = true
-    end
-  end
-
-# . . . . . . .  Define quail2 with Salt minion installed . . . . . . . . . . . . . .
-# . this machine has Salt installed but no states run or defined.
-# . Its master is "bevymaster".
-  config.vm.define "quail2", autostart: false do |quail_config|
-    quail_config.vm.box = "boxesio/xenial64-standard"  # a public VMware & Virtualbox box
-    quail_config.vm.hostname = "quail2" # + DOMAIN
-    quail_config.vm.network "private_network", ip: NETWORK + ".2.5"
-    if ARGV.length > 1 and ARGV[0] == "up" and ARGV[1] == "quail2"
-      puts "Starting #{ARGV[1]} at #{NETWORK}.2.5 as a Salt minion with master=#{settings['bevymaster_url']}...\n."
-      end
-    quail_config.vm.network "public_network", bridge: interface_guesses
-
-    quail_config.vm.provider "virtualbox" do |v|
-        v.name = BEVY + '_quail2'  # ! N.O.T.E.: name must be unique
-        v.memory = 4000       # limit memory for the virtual box
-        v.cpus = 2
-        v.linked_clone = true # make a soft copy of the base Vagrant box
-        v.customize ["modifyvm", :id, "--natnet1", NETWORK + ".17.160/27"]  # do not use 10.0 network for NAT
-    end
-    quail_config.vm.provider vmware do |v|
-        v.vmx["memsize"] = "5000"
-        v.vmx["numvcpus"] = "2"
-    end
-
-    script = "mkdir -p /etc/salt/minion.d\n"
-    script += "chown -R vagrant:staff /etc/salt/minion.d\n"
-    script += "chmod -R 775 /etc/salt/minion.d\n"
-    quail_config.vm.provision "shell", inline: script
-    quail_config.vm.provision "file", source: settings['GUEST_MINION_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
-    quail_config.vm.provision :salt do |salt|
-       # salt.install_type = "stable 2018.3.0"
-       salt.verbose = false
-       salt.bootstrap_options = "-A #{settings['bevymaster_url']} -i quail2 -F -P "
-       salt.run_highstate = true
     end
   end
 end

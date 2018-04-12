@@ -1,17 +1,17 @@
 #### Microsoft Windows ® in a Virtual Machine
 
-The Vagrantfile in this directory specifies a Windows 10 ®
-box supplied by Microsoft. It runs a trial version of win10
+The big Vagrantfile defines three Windows® machines.
+`win10` is a Windows 10® which runs a trial version of win10
 good for a few months.  
 
-Click on your interactive VirtualBox GUI icon to start it.
-You can use the GUI to monitor and modify your VM operation.
+You can use the interactive VirtualBox GUI icon to monitor and modify your VM operation.
 
 ```bash
 # typing on your VM Host machine
-cd /projects/learn-salt/lessons/windows
-vagrant up
+cd /projects/learn-salt
+vagrant up win10
 ```
+
 If you see Windows starting in the GUI's `Preview` window,
 but don't see a Windows GUI window on your screen, 
 then click on the green right-arrow (➡) icon. You should be
@@ -25,38 +25,12 @@ enabled as a private network.
 - after a while, you will see a network node named "VBOXSVR"
 - click on "VBOXSVR"
 
-Congratulations! You have located the VirtualBox shared directory which contains
-this file, and your other Windows lessons material. The contents of this virtual
-directory are actually on your host computer disk. 
+Congratulations! You have located the VirtualBox shared directory.
+The contents of this virtual directory are actually on your host computer disk.
 
 - click on the `Salt install Windows shortcut` icon and you can skip the first 
 two steps below.
  
-##### Loading Salt using your virtual Windows desktop.
-
-You can use the GUI desktop on your Windows VM to install Salt on it.
-
-- Click on the `e` icon to start your `Edge` browser.
-- Go to https://docs.saltstack.com/en/latest/topics/installation/windows.html
-(or search for `saltstack windows download`)
-- download the appropriate installation package (probably `Python3 AMD64`).
-- run the installer and agree to the license terms
-- in `Master IP or Host Name` enter your Bevy Master IP address.
-(for the demo bevymaster, use `172.17.2.2`.)
-- in `Minion Name` enter your desired Salt Id. Perhaps `x_win10`.
-- click the `Install` button.
-
-After the smoke clears, go back to the Bevy Master and accept your new minion.
-
-`sudo salt-key -a <Salt ID>`
-
-For example: `sudo salt-key -a x_win10`
-
-Proceed to send commands to your new Salt minion and its friends.
-
-`sudo salt \* test.version`
-
-`sudo salt x_win10 system.shutdown "Shutting down in five minutes" "5"`
 
 ##### Using salt-cloud to start Windows.
 
@@ -88,16 +62,7 @@ have a public key) on target servers. You will need to copy your
 private ssh key (`~/.ssh/id_rsa`) to 'C:\Users\User\.ssh`. 
 
 It may be most convenient to use the VirtualBox GUI to create a shared
-directory of your host's user home. You can find it on the VM's 'VBOXSVR'
-share as seen above. You can copy your private key, or git can clone
+directory of your host's user home. You can find it on the VM's 'VBOXSVR' share.
+You can copy your private key, or git can clone
 a repo, from that share, 
 or you can open your project there with Visual Studio.
-
-##### or a VMware version
-
-If you are a VMWare user, you can also import a VM from
-[Microsoft](https://developer.microsoft.com/en-us/windows/downloads/virtual-machines).
-Use the pull-down menu on your VMWare Fusion window and select 
-`Virtual Machine --> Reinstall VMWare Tools` to enable shared directorits
-on your virtual Windows machine.
-
