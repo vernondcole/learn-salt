@@ -76,6 +76,11 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
   else
     vmware = "vmware_workstation"
   end
+
+  if settings.has_key?('project_roots') and settings['project_roots'] != 'none'
+    config.vm.synced_folder settings['project_roots'], "/projects", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
+    end
+
   # . . . . . . . . . . . . Define machine QUAIL1 . . . . . . . . . . . . . .
   # This machine has no Salt provisioning at all. Salt-cloud can provision it.
   config.vm.define "quail1", primary: true do |quail_config|  # this will be the default machine

@@ -570,6 +570,20 @@ def choose_bridge_interface():
                 print('Bad choice.')
 
 
+def get_projects_directory():
+    while Ellipsis:
+        try:
+            default = settings.get('projects_root', str(this_file.parents[2]))
+        except (IndexError, AttributeError):
+            default = '/projects'
+        print('We can set up a Vagrant share "/projects" to find all of your working directories.')
+        print('Use "none" to disable this feature.')
+        resp = input('What is the root directory for your projects directories? [{}]'.format(default))
+        resp = resp or default
+        if os.path.isdir(resp) or resp.lower() == 'none':
+            return resp
+
+
 def get_linux_password():
     ''' retrieve stored bevy ssl password hash '''
     # 3.5 linux_password = pwd_hash.hashpath.read_text().strip()
@@ -695,6 +709,7 @@ if __name__ == '__main__':
         settings['vagrant_prefix'], settings['vagrant_network'] = choose_vagrant_network()
         choice = choose_bridge_interface()
         settings['vagrant_interface_guess'] = choice['name']
+        settings['projects_root'] = get_projects_directory()
 
     settings.setdefault('fqdn_pattern',  DEFAULT_FQDN_PATTERN)
 
