@@ -6,6 +6,7 @@ A utility program to install a SaltStack minion, and optionally, a master with c
 arguments:  add one or more file_roots and pillar_roots entries.  "[]" are optional, spaces not permitted.
   --add-roots=[path/to/directory1,path/to/directory2]
       where each directory is expected to have a ./salt and ./pillar subdirectory
+      These entries will be mapped as Vagrant shared directories, and included in the file_roots configuration.
 
 Maintenance command-line switches:
   --no-sudo = Do not attempt to run with elevated privileges, use the present level
@@ -26,8 +27,8 @@ import sudo
 # This program attempts to establish a DRY single source of truth as the file
 BEVY_SETTINGS_FILE_NAME = '/srv/pillar/01_bevy_settings.sls'
 # That should actually work in many (but not all) cases. It can be extended to more cases.
-# We will attempt to keep the /srv directory mapped to local Vagrant VMs as "/srv" so the settings will be
-# seen in both environments. Normal minions will receive their settings from the Bevy Master.
+#
+# Normal minions will receive their settings from the Bevy Master.
 # If the Bevy Master is a stand-alone server, it might be a "good idea" to connect its /srv directory to
 # the /srv directory on your Workstation using a deployment engine such as PyCharm's.
 #
@@ -41,7 +42,7 @@ BEVY_SETTINGS_FILE_NAME = '/srv/pillar/01_bevy_settings.sls'
 # we are running three or more minions, but that situation would be really weird.
 # # # # #
 
-MINIMUM_SALT_VERSION = "2018.3.0"  # ... as a string... the month will be integerized below
+MINIMUM_SALT_VERSION = "2018.3.0"  # ... as a string... the month will be converted to an integer below
 SALT_BOOTSTRAP_URL = "http://bootstrap.saltstack.com/stable/bootstrap-salt.sh"
 SALT_DOWNLOAD_SOURCE = "stable"
 

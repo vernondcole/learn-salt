@@ -71,3 +71,42 @@ and [Ubuntu Server](https://www.ubuntu.com/server) are known to work.
 - Chose a minion node-id name for your new minion.
 
 - Run the installer and supply the Bevy Master address and node-id when requested.
+
+## Settings and Selections.
+
+The configuration script will store your basic configuration settings in `/srv/pillar/01_settings.sls`.
+you will have the option of changing them by re-running the config script 
+or by editing the file.
+
+Additional settings for less frequently used items such as PXE boot parameters 
+are supplied in `/srv/pillar/manual_bevy_settings.sls`.
+
+#### Additional Bevy Components
+
+A bevy configuration is not mearly a learning tool.
+In was originally developed as a test bed for a complex network of backend servers,
+and continues in that role.
+Therefore, the bevy master is designed to have additional components 
+(the servers which comprise an actual useful processing network)
+connected to it for it to control.
+
+A small example of such an addition is supplied as 
+[black_knight](../lessons/advanced_bevy_master/connecting_a_practical_repo.md).
+
+The [configuration Python script](./bootstrap_bevy_member_here.py) supports two
+different configuration options supporting additional components.
+
+* `settings['projects_root']` identifies a single directory under which many source trees
+(git repos) might be found. If defined, it will be a Vagrant shared directory
+named `/projects` on all VMs defined in `learn-salt/Vagrantfile`.
+
+* `settings['application_roots']` is more complex and is used for configuration.
+It is designed to be used mostly by the salt master.
+
+    It is a list of application repos each of which provides a portion of the complete bevy.
+The list is composed of pairs of strings, with the actual directory path
+(on the host machine), a semi-colon (';') charactor, and the Vagrant share
+path (on a guest machine) where it will be mapped.
+
+    Each application roots directory must contain a `./salt` and `./pillar` sub-directory
+which will be included in the bevy master's`file_roots` and `pillar_roots` configuration.
