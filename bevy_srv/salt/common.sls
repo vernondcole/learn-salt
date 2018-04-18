@@ -15,12 +15,18 @@ windows_packages:
     - pkgs:
       - npp
       - git
-windows_pip:
+
+windows_pygit2:
   pip.installed:
     - name: pygit2
-    - cwd: c:\salt\bin\scripts
+    - cwd: 'c:\salt\bin\Scripts\'
     - bin_env: '.\pip.exe'
     - reload_modules: True
+windows_pygit2_failure_workaround:
+   cmd.run:
+     - name: 'c:\salt\bin\python -m pip install pygit2'
+     - onfail:
+       - pip: windows_pygit2
 
 {# Note: .sls files are interpreted on the Minion, so the environment variables are local to it #}
 {{ salt['environ.get']('SystemRoot') }}/edit.bat:  {# very dirty way to create an "edit" command for all users #}
