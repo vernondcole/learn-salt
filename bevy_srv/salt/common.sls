@@ -47,6 +47,7 @@ debian_packages:
       - htop
       - mtr
       - nano
+      - python-pip
       - tree
 {% endif %}
 
