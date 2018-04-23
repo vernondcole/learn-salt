@@ -1,5 +1,6 @@
 ---
 # salt state file to restart the minion
+{% set other_minion = salt['pillar.get']('other_minion', '') %}
 
 restart-the-minion_setup:
   file.managed:

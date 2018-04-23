@@ -649,13 +649,9 @@ if __name__ == '__main__':
     print('Setting up user "{}" on bevy "{}" node "{}"'.format(settings['my_linux_user'], bevy, node_name))
 
     # check for use of virtualbox and Vagrant
-    # test for Vagrant being already installed
-    rtn = subprocess.call('vagrant -v', shell=True) if on_a_workstation else NotImplemented
-    vagrant_present = rtn == 0
-
     isvagranthost = False
     while on_a_workstation:  # if on a workstation, repeat until user says okay
-        settings['vbox_install'] = False
+        vbox_install = False
         vhost = settings.setdefault('vagranthost', 'none')  # node ID of Vagrant host machine
         default_yes = vhost == node_name
         default_prompt = '[Y/n]' if default_yes else '[y/N]'
@@ -664,9 +660,30 @@ if __name__ == '__main__':
             .format(default_prompt)),
             default_yes)
         if isvagranthost:
+            # test for Vagrant being already installed
+            rtn = subprocess.call('vagrant -v', shell=True)
+            vagrant_present = rtn == 0
             settings['vagranthost'] = node_name
-            settings['vbox_install'] = False if vagrant_present else affirmative(input(
+            vbox_install = False if vagrant_present else affirmative(input(
                 'Do you wish to install VirtualBox and Vagrant? [y/N]:'))
+            if vbox_install:
+                import webbrowser
+                debian = False
+                try:
+                    if 'ID_LIKE=debian' in Path('/etc/os-release').read_text():
+                        debian = True
+                except Exception:
+                    pass
+                if debian:
+                    subprocess.call('apt install virtualbox', shell=True)
+                else:
+                    webbrowser.open('https://www.virtualbox.org/wiki/Downloads')
+
+                webbrowser.open("https://www.vagrantup.com/downloads.html")
+
+                rtn = subprocess.call('vagrant -v', shell=True)
+                vagrant_present = rtn == 0
+
         elif master:
             print('What is/will be the Salt node id of the Vagrant host machine? [{}]'
                   .format(settings['vagranthost']))
@@ -685,7 +702,7 @@ if __name__ == '__main__':
                 ' [{}]:'.format(settings['vagranthost'], runas))
             settings['runas'] = resp or runas
 
-            parent = settings.get('cwd') or os.path.abspath('..')
+            parent = settings.get('cwd') or os.path.abspath('.')
             resp = input(
                 'What is the full path to the Vagrantfile on {}?'
                 '[{}]:'.format(settings['vagranthost'], parent))
@@ -699,8 +716,7 @@ if __name__ == '__main__':
             if vagrant_present:
                 print('Vagrant is already present on this machine.')
             else:
-                print('VirtualBox and Vagrant {} be installed'.format(
-                    'will' if settings['vbox_install'] else 'will not'))
+                print('CAUTION: Vagrant is not yet installed on this machine.')
         else:
             print('No Vagrant Box will be used.')
         if affirmative(input('Correct? [Y/n]:'), default=True):
