@@ -83,8 +83,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     vmware = "vmware_workstation"
   end
 
-  if settings.has_key?('project_roots') and settings['project_roots'] != 'none'
-    config.vm.synced_folder settings['project_roots'], "/projects", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
+  if settings.has_key?('projects_root') and settings['projects_root'] != 'none'
+    config.vm.synced_folder settings['projects_root'], "/projects", :owner => "vagrant", :group => "staff", :mount_options => ["umask=0002"]
     end
 
   # . . . . . . . . . . . . Define machine QUAIL1 . . . . . . . . . . . . . .
