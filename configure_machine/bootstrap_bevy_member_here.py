@@ -604,8 +604,10 @@ if __name__ == '__main__':
     try:
         import pwd  # works on Posix only
         pwd_entry = pwd.getpwnam(user_name)  # look it up the hard way -- we are running SUDO
-        settings.setdefault('my_linux_uid', pwd_entry[2])  # useful for network shared files
-        settings.setdefault('my_linux_gid', pwd_entry[3])
+        if pwd_entry[2] > 2000:  # skip uid numbers too close to automatically assigned values
+            settings.setdefault('my_linux_uid', pwd_entry[2])  # useful for network shared files
+        if pwd_entry[3] > 2000:
+            settings.setdefault('my_linux_gid', pwd_entry[3])
     except (ImportError, IndexError, AttributeError):
         settings.setdefault('my_linux_uid', '')
         settings.setdefault('my_linux_gid', '')
