@@ -140,7 +140,7 @@ def get_additional_roots(settings):
     prompt = possibilites.replace(default, default.upper())
     resp = 'impossible'
     while resp not in possibilites:
-        print('Keep old, use New, Append both, or (X) use no eXtra apps.')
+        print('(K)Keep old, use (N)New, (A)Append both, or (X) use no eXtra apps.')
         resp = input('your choice? [{}]:'.format(prompt)) or default
         resp = resp.lower()
     for i, parent in enumerate(more_parents):  # make relative paths absolute
