@@ -7,15 +7,9 @@ IIS-WebServerRole:
   win_servermanager.installed:
     - recurse: True
     - name: Web-Server
-
-# Install multiple features, exclude the Web-Service
-install_multiple_features:
+# add some tools
+install_IIS_2:
   win_servermanager.installed:
     - recurse: True
-    - features:
-      - RemoteAccess
-      - XPS-Viewer
-      - SNMP-Service
-    - exclude:
-      - Web-Service
+    - name:  'Web-Net-Ext45,Web-Scripting-Tools'
 ...
