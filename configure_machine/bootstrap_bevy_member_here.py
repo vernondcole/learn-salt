@@ -191,7 +191,7 @@ def format_additional_roots(settings, virtual):
     return more_roots, more_pillars
 
 
-def write_config_file(config_file_name, is_master: bool, virtual=True, windows=False):
+def write_config_file(config_file_name, is_master: bool, virtual=True, windows=False, master_host=False):
     '''
     writes a copy of the template, below, into a file in this /srv/salt directory
     substituting the actual path to the ../bevy_srv salt and pillar subdirectories,
@@ -226,7 +226,9 @@ grains:
     - bevy_member
 """
     bevy_srv_path = PurePosixPath('/vagrant') if virtual else PurePosixPath(this_file.parent.parent.as_posix())
-    master = 'localhost' if is_master else settings['bevymaster_url']
+    master_url = settings.get('master_vagrant_ip', '') \
+        if master_host else settings.get('bevymaster_url', '')
+    master = 'localhost' if is_master else master_url
 
     more_roots, more_pillars = format_additional_roots(settings, virtual)
 
@@ -771,12 +773,12 @@ if __name__ == '__main__':
 
     if master_host:
         settings.setdefault('master_vagrant_ip', settings['vagrant_prefix'] + '.2.2')
-        write_config_file(Path(SALT_SRV_ROOT) / GUEST_MASTER_CONFIG_FILE, is_master=True, virtual=True)
+        write_config_file(Path(SALT_SRV_ROOT) / GUEST_MASTER_CONFIG_FILE, is_master=True, virtual=True, master_host=master_host)
 
-    write_config_file(Path(SALTCALL_CONFIG_FILE), master, virtual=False, windows=platform.system()=='Windows')
+    write_config_file(Path(SALTCALL_CONFIG_FILE), master, virtual=False, windows=platform.system()=='Windows', master_host=master_host)
     if isvagranthost or master_host:
-        write_config_file(Path(GUEST_MINION_CONFIG_FILE), is_master=False, virtual=True)
-        write_config_file(Path(WINDOWS_GUEST_CONFIG_FILE), is_master=False, virtual=True, windows=True)
+        write_config_file(Path(GUEST_MINION_CONFIG_FILE), is_master=False, virtual=True, master_host=master_host)
+        write_config_file(Path(WINDOWS_GUEST_CONFIG_FILE), is_master=False, virtual=True, windows=True, master_host=master_host)
 
     settings.setdefault('force_linux_user_password', True)
     settings['linux_password_hash'] = get_linux_password()

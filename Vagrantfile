@@ -395,8 +395,8 @@ Vagrant.configure(2) do |config|  # the literal "2" is required.
     quail_config.vm.graceful_halt_timeout = 60
 
     script = "new-item C:\\salt\\conf\\minion.d -itemtype directory\r\n"
-    script += "'master: #{settings['bevymaster_url']}' > C:\\salt\\conf\\minion.d\\00_vagrant_master_address.conf\r\n"
-    script += "route delete 0.0.0.0 #{NETWORK}.2.1\r\n"  # do not try to route through host-only network
+    script += "echo 'master: #{settings['bevymaster_url']}' > C:\\salt\\conf\\minion.d\\00_vagrant_master_address.conf\r\n"
+    # script += "route delete 0.0.0.0 #{NETWORK}.2.1\r\n"  # do not try to route through host-only network
     quail_config.vm.provision "shell", inline: script
     quail_config.vm.provision "file", source: settings['WINDOWS_GUEST_CONFIG_FILE'], destination: "/etc/salt/minion.d/00_vagrant_boot.conf"
     quail_config.vm.provision :salt do |salt|  # salt_cloud cannot push Windows salt
