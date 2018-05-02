@@ -97,7 +97,7 @@ If your sending computer's Salt node name were `pizero`...
 sudo salt pizero network.wol 00-1a-4b-7c-2a-b2
 ```
 
-Edit the three `wol_test_` settings in bevy_srv/pillar/bevy_settings.sls in
+Edit the three `wol_test_` settings in bevy_srv/pillar/manual_bevy_settings.sls in
 order to run WoL from a salt state.
 
 ```(bash)
@@ -154,12 +154,12 @@ and are located in a similar directory tree to their LTS counterparts. Just chan
 release name in your directory search, for example, substitute "artful" for "xenial"
 and find a 17.10 release in [http://archive.ubuntu.com/ubuntu/dists/artful/main/installer-amd64/current/images/netboot/](http://archive.ubuntu.com/ubuntu/dists/artful/main/installer-amd64/current/images/netboot/netboot.tar.gz)
 
-Edit your the URL for the netboot file in your `pillar/bevy_settings.sls` file setting `pxe_netboot_download_url`.
+Edit your the URL for the netboot file in your `pillar/manual_bevy_settings.sls` file setting `pxe_netboot_download_url`.
 The initial unpacking of the tarball will be in your pxe server's /opt directory tree.
 
 #### Installation and use of the PXE host
 
-Setup pillar/bevy_settings.sls as documented above.
+Setup pillar/manual_bevy_settings.sls as documented above.
 
 ```(bash)
 # on the intended PXE host computer
@@ -220,13 +220,13 @@ tftp server computer. The idea is to run a command to provision the new system.
 The example script runs a `salt-cloud` command to force a Salt minion onto it, and
 connect it to the bevy_master.
 
-`pxe_config_file` and `next_command` options can be send with the `execute` query, or
+`pxe_config_file` and `next_command` options can be sent with the `execute` query, or
 stored by the `store` query. `store`d commands will be run when the `execute` query runs.
  
 
 #### Controlling what happens during and after OS installation on each machine.
 
-The control is tucked into a small place in `pillar/bevy_settings.sls`.
+The control is tucked into a small place in `pillar/manual_bevy_settings.sls`.
 
 ```
 # This is a list of dicts of machines to be PXE booted.
