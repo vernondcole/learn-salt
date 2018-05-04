@@ -68,8 +68,6 @@ argv = [s.strip() for s in sys.argv]
 if '--help' in argv:
     print(__doc__)
     exit()
-if '--no-sudo' not in argv:  # "off" switch for testing
-    sudo.run_elevated()  # Run this script using Administrator privileges
 
 settings = {}  # global variable
 def read_bevy_settings_file():
@@ -88,33 +86,37 @@ def read_bevy_settings_file():
 
 def write_bevy_settings_file(store_settings: dict):
     bevy_settings_file_name = Path(BEVY_SETTINGS_FILE_NAME)
-    # python 3.4
-    os.makedirs(str(bevy_settings_file_name.parent), exist_ok=True)
-    # python 3.5
-    # bevy_settings_file_name.parent.mkdir(parents=True, exist_ok=True)
-    with bevy_settings_file_name.open('w') as f:
-        # creating a YAML file the hard way ...
-        f.write('# this file was created by {}\n'.format(this_file))
-        f.write('# Edits here will become the new default values.\n')
-        for name, value in store_settings.items():
-            if not name.isupper():  # ignore old settings for Vagrant renewed below
-                if isinstance(value, str):  # single-quote YAML strings
-                    f.write("{}: '{}'\n".format(name, value))
-                else:  # Python repr() everything else
-                    f.write('{}: {!r}\n'.format(name, value))
-        f.write('# settings for Vagrant to read...\n')
-        #... f'strings' are only available in Python 3.5+ ! ...#
-        # f.write(f"SALTCALL_CONFIG_FILE: '{SALTCALL_CONFIG_FILE}'\n")
-        # f.write(f"GUEST_MASTER_CONFIG_FILE: '{GUEST_MASTER_CONFIG_FILE}'\n")
-        # f.write(f"GUEST_MINION_CONFIG_FILE: '{GUEST_MINION_CONFIG_FILE}'\n")
-        # f.write(f"WINDOWS_GUEST_CONFIG_FILE: '{WINDOWS_GUEST_CONFIG_FILE}'\n")
-        f.write("SALTCALL_CONFIG_FILE: '{}'\n".format(SALTCALL_CONFIG_FILE))
-        f.write("GUEST_MASTER_CONFIG_FILE: '{}'\n".format(GUEST_MASTER_CONFIG_FILE))
-        f.write("GUEST_MINION_CONFIG_FILE: '{}'\n".format(GUEST_MINION_CONFIG_FILE))
-        f.write("WINDOWS_GUEST_CONFIG_FILE: '{}'\n".format(WINDOWS_GUEST_CONFIG_FILE))
+    try:
+        # python 3.4
+        os.makedirs(str(bevy_settings_file_name.parent), exist_ok=True)
+        # python 3.5
+        # bevy_settings_file_name.parent.mkdir(parents=True, exist_ok=True)
+        with bevy_settings_file_name.open('w') as f:
+            # creating a YAML file the hard way ...
+            f.write('# this file was created by {}\n'.format(this_file))
+            f.write('# Edits here will become the new default values.\n')
+            for name, value in store_settings.items():
+                if not name.isupper():  # ignore old settings for Vagrant renewed below
+                    if isinstance(value, str):  # single-quote YAML strings
+                        f.write("{}: '{}'\n".format(name, value))
+                    else:  # Python repr() everything else
+                        f.write('{}: {!r}\n'.format(name, value))
+            f.write('# settings for Vagrant to read...\n')
+            #... f'strings' are only available in Python 3.5+ ! ...#
+            # f.write(f"SALTCALL_CONFIG_FILE: '{SALTCALL_CONFIG_FILE}'\n")
+            # f.write(f"GUEST_MASTER_CONFIG_FILE: '{GUEST_MASTER_CONFIG_FILE}'\n")
+            # f.write(f"GUEST_MINION_CONFIG_FILE: '{GUEST_MINION_CONFIG_FILE}'\n")
+            # f.write(f"WINDOWS_GUEST_CONFIG_FILE: '{WINDOWS_GUEST_CONFIG_FILE}'\n")
+            f.write("SALTCALL_CONFIG_FILE: '{}'\n".format(SALTCALL_CONFIG_FILE))
+            f.write("GUEST_MASTER_CONFIG_FILE: '{}'\n".format(GUEST_MASTER_CONFIG_FILE))
+            f.write("GUEST_MINION_CONFIG_FILE: '{}'\n".format(GUEST_MINION_CONFIG_FILE))
+            f.write("WINDOWS_GUEST_CONFIG_FILE: '{}'\n".format(WINDOWS_GUEST_CONFIG_FILE))
 
-    print('File "{}" written.'.format(bevy_settings_file_name))
-    print()
+        print('File "{}" written.'.format(bevy_settings_file_name))
+        print()
+    except PermissionError:
+        print('Sorry. Permission error trying to write {}'.format(bevy_settings_file_name))
+
 
 def get_additional_roots(settings):
     '''
@@ -191,7 +193,7 @@ def format_additional_roots(settings, virtual):
     return more_roots, more_pillars
 
 
-def write_config_file(config_file_name, is_master: bool, virtual=True, windows=False):
+def write_config_file(config_file_name, is_master: bool, virtual=True, windows=False, master_host=False):
     '''
     writes a copy of the template, below, into a file in this /srv/salt directory
     substituting the actual path to the ../bevy_srv salt and pillar subdirectories,
@@ -226,7 +228,9 @@ grains:
     - bevy_member
 """
     bevy_srv_path = PurePosixPath('/vagrant') if virtual else PurePosixPath(this_file.parent.parent.as_posix())
-    master = 'localhost' if is_master else settings['bevymaster_url']
+    master_url = settings.get('master_vagrant_ip', '') \
+        if master_host else settings.get('bevymaster_url', '')
+    master = 'localhost' if is_master else master_url
 
     more_roots, more_pillars = format_additional_roots(settings, virtual)
 
@@ -236,8 +240,11 @@ grains:
     os.makedirs(str(config_file_name.parent), exist_ok=True)  # old Python 3.4 method
     # config_file_name.parent.mkdir(parents=True, exist_ok=True)  # 3.5+
     newline = '\r\n' if windows else '\n'
-    with config_file_name.open('w', newline=newline) as config_file:
-        config_file.write(template.format(config_file_name, this_file, master, file_roots, pillar_roots))
+    try:
+        with config_file_name.open('w', newline=newline) as config_file:
+            config_file.write(template.format(config_file_name, this_file, master, file_roots, pillar_roots))
+    except PermissionError:
+        print('Sorry. Permission error when trying to write {}'.format(config_file_name))
 
 
 def salt_state_apply(salt_state, **kwargs):
@@ -396,11 +403,10 @@ def salt_install(master=True):
         return ret == 0  # show whether we installed Salt
 
 
-def request_bevy_username_and_password(master: bool, user_name: str):
+def request_bevy_username_and_password(user_name: str):
     """
     get user's information so that we can build a user for her on each minion
 
-    :param master: whether we are installing a salt-master here
     :param user_name: system default user name
     """
     bevy = my_linux_user = pub_key = ''
@@ -413,8 +419,6 @@ def request_bevy_username_and_password(master: bool, user_name: str):
 
         default_user = settings.get('my_linux_user') or user_name
         print('Please supply your desired user name to be used on all minions.')
-        if master:
-            print(' Hint: "vagrant" will be automatically created, too.')
         print('(Hit <enter> to use "{}")'.format(default_user))
         my_linux_user = input('User Name:') or default_user
         print()
@@ -428,57 +432,58 @@ def request_bevy_username_and_password(master: bool, user_name: str):
             input('Use user name "{}" in bevy "{}"'
                   '? [Y/n]:'.format(my_linux_user, bevy)),
             default=True)  # stop looping if done
+    return bevy, my_linux_user
 
-    if master:
-        pub = None  # object to contain the user's ssh public key
-        okay = 'n'
-        try:
-            user_home_pub = Path.home() / '.ssh' / 'id_rsa.pub'  # only works on Python 3.5+
-        except AttributeError:  # older Python3
-            user_home_pub = Path('/home/') / getpass.getuser() / '.ssh' / 'id_rsa.pub'
-        if master_host:
-            user_key_file = Path(SALT_SRV_ROOT) / 'ssh_keys' / (my_linux_user + '.pub')
-        else:
-            user_key_file = Path(USER_SSH_KEY_FILE_NAME.format(my_linux_user))
-        try:  # named user's default location on this machine?
+
+def write_ssh_key_file(my_linux_user):
+    pub = None  # object to contain the user's ssh public key
+    okay = 'n'
+    try:
+        user_home_pub = Path.home() / '.ssh' / 'id_rsa.pub'  # only works on Python 3.5+
+    except AttributeError:  # older Python3
+        user_home_pub = Path('/home/') / getpass.getuser() / '.ssh' / 'id_rsa.pub'
+    if master_host:
+        user_key_file = Path(SALT_SRV_ROOT) / 'ssh_keys' / (my_linux_user + '.pub')
+    else:
+        user_key_file = Path(USER_SSH_KEY_FILE_NAME.format(my_linux_user))
+    try:  # named user's default location on this machine?
+        print('trying file: "{}"'.format(user_home_pub))
+        pub = user_home_pub.open()
+    except OSError:
+        try:  # maybe it is already in the /srv tree?
+            user_home_pub = user_key_file
             print('trying file: "{}"'.format(user_home_pub))
             pub = user_home_pub.open()
         except OSError:
-            try:  # maybe it is already in the /srv tree?
-                user_home_pub = user_key_file
-                print('trying file: "{}"'.format(user_home_pub))
-                pub = user_home_pub.open()
-            except OSError:
-                print('No ssh public key found. You will have to supply it the hard way...')
-        if pub:
-            pub_key = pub.read()
-            okay = input(
-                '{} exists, and contains:"{}"\n  Use that on all minions? [Y/n]:'.format(
-                    user_home_pub, pub_key))
+            print('No ssh public key found. You will have to supply it the hard way...')
+    if pub:
+        pub_key = pub.read()
+        okay = input(
+            '{} exists, and contains:"{}"\n  Use that on all minions? [Y/n]:'.format(
+                user_home_pub, pub_key))
 
-        while not affirmative(okay, default=True):
-            print('Next, cut the text of your ssh public key to transmit it\n')
-            print('to your new server.\n')
-            print('You can usually get it by typing:\n')
-            print('   cat ~/.ssh/id_rsa.pub\n')
-            print()
-            pub_key = input('Paste it here --->')
-            print('.......... (checking) ..........')
-            if len(pub_key) < 64:
-                print('too short!')
-                continue
-            print('I received ===>{}\n'.format(pub_key))
-            okay = input("Use that? ('exit' to bypass ssh keys)[Y/n]:")
-            if affirmative(okay) or okay.lower() == 'exit':
-                break
-        if affirmative(okay, default=True):
-            # user_key_file.parent.mkdir(parents=True, exist_ok=True) # only works for Python3.5+
-            os.makedirs(str(user_key_file.parent), exist_ok=True)  # 3.4
-            # 3.5 user_key_file.write_text(pub_key)
-            with user_key_file.open('w') as f:  # 3.4
-                f.write(pub_key)  # 3.4
-                print('file {} written.'.format(str(user_key_file)))
-    return bevy, my_linux_user
+    while not affirmative(okay, default=True):
+        print('Next, cut the text of your ssh public key to transmit it\n')
+        print('to your new server.\n')
+        print('You can usually get it by typing:\n')
+        print('   cat ~/.ssh/id_rsa.pub\n')
+        print()
+        pub_key = input('Paste it here --->')
+        print('.......... (checking) ..........')
+        if len(pub_key) < 64:
+            print('too short!')
+            continue
+        print('I received ===>{}\n'.format(pub_key))
+        okay = input("Use that? ('exit' to bypass ssh keys)[Y/n]:")
+        if affirmative(okay) or okay.lower() == 'exit':
+            break
+    if affirmative(okay, default=True):
+        # user_key_file.parent.mkdir(parents=True, exist_ok=True) # only works for Python3.5+
+        os.makedirs(str(user_key_file.parent), exist_ok=True)  # 3.4
+        # 3.5 user_key_file.write_text(pub_key)
+        with user_key_file.open('w') as f:  # 3.4
+            f.write(pub_key)  # 3.4
+            print('file {} written.'.format(str(user_key_file)))
 
 
 def get_salt_master_id():
@@ -592,6 +597,7 @@ def get_linux_password():
         linux_password = f.read().strip()  # 3.4
     return linux_password
 
+
 if __name__ == '__main__':
     user_name = getpass.getuser()
 
@@ -646,9 +652,18 @@ if __name__ == '__main__':
     if not bevy_root_node.is_dir():
         raise SystemError('Unexpected situation: Expected directory not present -->{}'.format(bevy_root_node))
 
-    bevy, settings['my_linux_user'] = request_bevy_username_and_password(master or master_host, user_name)
+    bevy, settings['my_linux_user'] = request_bevy_username_and_password(user_name)
     settings['bevy'] = bevy
     print('Setting up user "{}" on bevy "{}" node "{}"'.format(settings['my_linux_user'], bevy, node_name))
+
+    if '--no-sudo' in argv:  # "sudo off" switch for testing
+        print('\nRunning in "--no-sudo" mode. Expect permissions violations...\n')
+    else:
+        print('Okay. Now checking for and requesting elevated (sudo) privileges...')
+        sudo.run_elevated()  # Run this script using Administrator privileges
+
+    if master or master_host:
+        write_ssh_key_file(settings['my_linux_user'])
 
     # check for use of virtualbox and Vagrant
     isvagranthost = False
@@ -760,23 +775,25 @@ if __name__ == '__main__':
         master_pub = Path(r'C:\salt{}\conf\pki\minion\minion_master.pub'.format(two))
     else:
         master_pub = Path('/etc/salt{}/pki/minion/minion_master.pub'.format(two))
-    if master_pub.exists():
-        if affirmative(input('Will this be a new minion<-->master relationship? [y/N]:')):
-            print("/n** Remember to accept this machine's Minion key on its new Master. **/n")
-            try:  # forget a former master's key (if any)
+    try:
+        if master_pub.exists():
+            if affirmative(input('Will this be a new minion<-->master relationship? [y/N]:')):
+                print("/n** Remember to accept this machine's Minion key on its new Master. **/n")
                 print('Removing master public key "{}"'.format(master_pub))
                 master_pub.unlink()
-            except (FileNotFoundError, PermissionError):
-                pass
+    except FileNotFoundError:
+        pass
+    except PermissionError:
+        print("Sorry. Permission error when trying to read or remove {}".format(master_pub))
 
     if master_host:
         settings.setdefault('master_vagrant_ip', settings['vagrant_prefix'] + '.2.2')
-        write_config_file(Path(SALT_SRV_ROOT) / GUEST_MASTER_CONFIG_FILE, is_master=True, virtual=True)
+        write_config_file(Path(SALT_SRV_ROOT) / GUEST_MASTER_CONFIG_FILE, is_master=True, virtual=True, master_host=master_host)
 
-    write_config_file(Path(SALTCALL_CONFIG_FILE), master, virtual=False, windows=platform.system()=='Windows')
+    write_config_file(Path(SALTCALL_CONFIG_FILE), master, virtual=False, windows=platform.system()=='Windows', master_host=master_host)
     if isvagranthost or master_host:
-        write_config_file(Path(GUEST_MINION_CONFIG_FILE), is_master=False, virtual=True)
-        write_config_file(Path(WINDOWS_GUEST_CONFIG_FILE), is_master=False, virtual=True, windows=True)
+        write_config_file(Path(GUEST_MINION_CONFIG_FILE), is_master=False, virtual=True, master_host=master_host)
+        write_config_file(Path(WINDOWS_GUEST_CONFIG_FILE), is_master=False, virtual=True, windows=True, master_host=master_host)
 
     settings.setdefault('force_linux_user_password', True)
     settings['linux_password_hash'] = get_linux_password()

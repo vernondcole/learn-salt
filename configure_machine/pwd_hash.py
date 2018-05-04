@@ -12,11 +12,10 @@ from pathlib import Path
 
 HASHFILE_NAME = 'bevy_linux_password.hash'  # Salt scripts will expect this name
 try:
-    hashdir = Path.home() / '.ssh'
-    hashpath = hashdir  / HASHFILE_NAME  # only works on Python 3.5+
+    hashdir = Path.home() / '.ssh'  # only works on Python 3.5+
 except AttributeError:  # older Python3
     hashdir = Path('/home/') / getpass.getuser() / '.ssh'
-    hashpath = hashdir / HASHFILE_NAME
+hashpath = hashdir / HASHFILE_NAME
 
 def make_file():
     dashline = 78 * '-'
