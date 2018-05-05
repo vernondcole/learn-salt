@@ -15,17 +15,23 @@ the [README.md](../README.md) file in this repository.
 
 [Basics of GIT](git/how_to_git_stuff.md)
 
-### Using a Guest Network on my Workstation
+[Using Salt on *this* machine (salt-call)](basics/salt-call.md) . . . Examples at `cd lessons/basics`
 
-[Using Salt on one machine (salt-call)](basics/salt-call.md) . . . Examples at `cd lessons/basics`
+[Sending Salt Commands to Other Machines](basics/execution.md) . . . `cd lessons/basics`
+
+### Other Operating Systems
+
+All things [Windows](windows/index.md)
+
+TODO: add a section for MacOS
+
+### Using a Guest Network on my Workstation
 
 [Basics of Vagrant](about_vagrant/vagrant_basics.md) . . . Examples at `cd lessons/vagrant_basics`
 
 [Connecting to a Salt Master](basics/master.md)  . . . `cd lessons/basics`
 
-[Sending Salt Commands to Other Machines](basics/execution.md) . . . `cd lessons/basics`
-
-Provisioning Software Enviranments [Using Salt States](basics/states.md)
+Provisioning Software Environments [Using Salt States](basics/states.md)
 
 ### Using Cloud Resources (Manually)
 
